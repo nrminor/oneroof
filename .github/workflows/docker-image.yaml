@@ -1,0 +1,22 @@
+name: Docker CI
+
+on:
+    push:
+        branches: [ "main", "dev" ]
+        paths:
+        - 'Dockerfile'
+    pull_request:
+        branches: [ "main" ]
+        paths:
+        - 'Dockerfile'
+
+jobs:
+    
+    build:
+
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v3
+        - name: Build the Docker image
+          run: docker build . --tag 30252:ci_test_$(date +%s)

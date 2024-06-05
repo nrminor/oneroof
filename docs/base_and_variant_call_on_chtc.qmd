@@ -1,0 +1,14 @@
+---
+title: ""
+author: "Nick Minor"
+date: ""
+toc: true
+format:
+    html:
+        embed-resources: true
+        keep-ipynb: false
+    typst: default
+    gfm: default
+editor: source
+engine: knitr
+---
