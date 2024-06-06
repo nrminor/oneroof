@@ -24,7 +24,8 @@ workflow VARIANTS {
         )
 
         CONVERT_TO_VCF (
-            CALL_VARIANTS
+            CALL_VARIANTS,
+            ch_refseq
         )
 
         BUILD_DB (
