@@ -32,7 +32,7 @@ process BUILD_DB {
 process ANNOTATE_VCF {
 
     tag "${barcode}"
-    publishDir params.variants, mode: 'copy', overwrite: true
+    publishDir params.vcf, mode: 'copy', overwrite: true
 
     input:
     each path(snpeff_db)

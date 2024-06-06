@@ -25,7 +25,7 @@ workflow VARIANTS {
         )
 
         CONVERT_TO_VCF (
-            CALL_VARIANTS
+            CALL_VARIANTS.out
         )
 
         BUILD_DB (
