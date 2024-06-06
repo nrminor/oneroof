@@ -6,7 +6,7 @@ process DOWNLOAD_MODELS {
     path "*"
 
     script:
-    println("Downloading basecaller models.")
+    println "Downloading basecaller models."
     """
     dorado download --verbose
     """

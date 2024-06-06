@@ -16,7 +16,7 @@ process FIND_COMPLETE_AMPLICONS {
     tuple val(barcode), path("${barcode}_amplicons.fastq.gz")
 
     script:
-	barcode = file(reads).getSimpleName()
+	String barcode = file(reads).getSimpleName()
     """
 	cat ${reads} | \
     seqkit grep \

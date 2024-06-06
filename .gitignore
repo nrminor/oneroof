@@ -169,7 +169,7 @@ pixi.lock
 work/
 results/
 
-.nextflow.log*\
+.nextflow.log*
 trace.txt*
 report.html.*
 timeline.html*

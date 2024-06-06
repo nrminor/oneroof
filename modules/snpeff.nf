@@ -11,7 +11,7 @@ process BUILD_DB {
     path "config"
 
     script:
-    config_dir = "config/genome/ref_genome/"
+    String config_dir = "config/genome/ref_genome/"
     """
     # 
     mkdir -p ${config_dir}
