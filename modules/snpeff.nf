@@ -1,6 +1,6 @@
 process BUILD_DB {
 
-    cache params.snpeff_cache
+    storeDir params.snpeff_cache
 
     input:
     path refseq

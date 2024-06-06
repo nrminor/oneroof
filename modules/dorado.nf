@@ -1,6 +1,6 @@
 process DOWNLOAD_MODELS {
 
-    cache params.model_cache
+    storeDir params.model_cache
 
     output:
     path "*"
@@ -38,7 +38,6 @@ process BASECALL {
 process DEMULTIPLEX {
 
     publishDir params.basecall_bams, mode: 'copy', overwrite: true
-
     maxForks params.basecall_max
 
     input:
