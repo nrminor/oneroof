@@ -13,7 +13,7 @@ process GET_PRIMER_SEQS {
 	path "${primer_combo}.txt"
 
 	script:
-	String primer_combo = file(bed.toString()).getSimpleName()
+	primer_combo = file(bed.toString()).getSimpleName()
 	"""
 	# get a fasta that contains the primer sequences
 	bedtools getfasta -fi ${refseq} -bed ${bed} > ${primer_combo}.fasta

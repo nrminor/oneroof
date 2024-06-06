@@ -14,7 +14,7 @@ process ALIGN_WITH_PRESET {
     tuple val(barcode), path("${barcode}.sam")
 
     script:
-    String preset = platform == "ont" ? "map-ont" : "sr"
+    preset = platform == "ont" ? "map-ont" : "sr"
     """
     minimap2 -ax ${preset} ${refseq} <(zcat ${fastq}) > ${barcode}.sam
     """
