@@ -49,7 +49,7 @@ workflow NANOPORE {
         GATHER_DATA ( )
 
         PRIMER_HANDLING (
-            DORADO.out,
+            GATHER_DATA.out,
             ch_primer_bed,
             ch_refseq
         )
