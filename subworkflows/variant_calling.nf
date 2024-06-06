@@ -37,7 +37,7 @@ workflow VARIANTS {
         ANNOTATE_VCF (
             BUILD_DB.out,
             ch_snpeff_config,
-            ANNOTATE_VCF.out
+            CONVERT_TO_VCF.out
         )
 
     // emit:
