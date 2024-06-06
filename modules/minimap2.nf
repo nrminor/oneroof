@@ -1,5 +1,7 @@
 process ALIGN_WITH_PRESET {
 
+    tag "${barcode}, ${platform}"
+
     input:
     tuple val(barcode), path(fastq)
     each path(refseq)

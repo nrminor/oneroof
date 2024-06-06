@@ -40,7 +40,6 @@ process ANNOTATE_VCF {
     tuple val(barcode), path(vcf)
 
     output:
-
     tuple val(barcode), path("${barcode}.annotated.vcf")
 
     script:

@@ -6,7 +6,7 @@ process FIND_COMPLETE_AMPLICONS {
 	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
 	maxRetries 2
 
-	cpus params.max_cpus
+	cpus 3
 
     input:
 	each path(reads)
