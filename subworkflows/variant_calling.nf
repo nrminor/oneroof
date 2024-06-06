@@ -1,5 +1,9 @@
 #!/usr/bin/env nextflow
 
+include { GENERATE_MPILEUP } from "../modules/samtools"
+include { CALL_VARIANTS; CONVERT_TO_VCF } from "../modules/ivar"
+include { BUILD_DB; ANNOTATE_VCF } from "../modules/snpeff"
+
 workflow VARIANTS {
 
     /* */
@@ -10,11 +14,27 @@ workflow VARIANTS {
         ch_platform
 
     main:
-        MEDAKA_VARIANTS (
+        GENERATE_MPILEUP (
             ch_amplicons,
             ch_refseq
         )
-    
-    emit:
-        MEDAKA_VARIANTS.out
+
+        CALL_VARIANTS (
+            GENERATE_MPILEUP.out
+        )
+
+        CONVERT_TO_VCF (
+            CALL_VARIANTS
+        )
+
+        BUILD_DB ( )
+
+        ANNOTATE_VCF (
+            BUILD_DB.out,
+            ANNOTATE_VCF.out
+        )
+
+    // emit:
+    //     MEDAKA_VARIANTS.out
+
 }

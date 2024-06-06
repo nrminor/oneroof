@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { ALIGN_WITH_MINIMAP } from "../modules/minimap2"
-include { TRANSFORM_WITH_SAMTOOLS } from "../modules/samtools"
+include { CONVERT_AND_SORT; INDEX } from "../modules/samtools"
 
 workflow ALIGNMENT {
 
@@ -17,11 +17,17 @@ workflow ALIGNMENT {
             ch_refseq
         )
 
-        TRANSFORM_WITH_SAMTOOLS (
+        CONVERT_AND_SORT (
             ALIGN_WITH_MINIMAP.out
         )
 
+        INDEX (
+            CONVERT_AND_SORT.out
+        )
+
+
+
     emit:
-        TRANSFORM_WITH_SAMTOOLS.out
+        INDEX.out
 
 }

@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+include { CALL_CONSENSUS } from "../modules/samtools"
+
 workflow CONSENSUS {
 
     /* */
@@ -9,12 +11,12 @@ workflow CONSENSUS {
         ch_refseq
 
     main:
-        MEDAKA_CONSENSUS (
+        CALL_CONSENSUS (
             ch_amplicons,
             ch_refseq
         )
 
     emit:
-        MEDAKA_CONSENSUS.out
+        CALL_CONSENSUS.out
 
 }

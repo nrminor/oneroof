@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { DORADO } from "../subworkflows/dorado"
+include { GATHER_DATA } from "../subworkflows/gather_data"
 include { ALIGNMENT } from "../subworkflows/alignment"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
@@ -15,7 +15,7 @@ workflow NANOPORE {
         ch_refseq
 
     main:
-        DORADO ( )
+        GATHER_DATA ( )
 
         PRIMER_HANDLING (
             DORADO.out,
@@ -29,12 +29,12 @@ workflow NANOPORE {
         )
 
         CONSENSUS (
-            PRIMER_HANDLING.out,
+            ALIGNMENT.out.groupTuple( by:  ),
             ch_refseq
         )
 
         VARIANTS (
-            PRIMER_HANDLING.out,
+            ALIGNMENT.out,
             ch_refseq,
             "ont"
         )

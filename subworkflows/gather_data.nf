@@ -1,10 +1,10 @@
 #!/usr/bin/env nextflow
 
 include { WATCH_FOR_POD5S } from "../modules/pod5_watcher"
-include { DORADO_BASECALL } from "../modules/basecall"
-include { DORADO_DEMUX } from "../modules/demux"
+include { DORADO_BASECALL } from "../modules/dorado"
+include { DORADO_DEMUX } from "../modules/dorado"
 
-workflow DORADO {
+workflow gather_data {
 
     /* */
 
@@ -20,10 +20,10 @@ workflow DORADO {
 
             ch_staged_pod5s = Channel
                 .watchPath ( "${params.pod5_staging}/*.bam", 'create' )
-                .subscribe { println "A new POD5 has arrived: $it" }
+                .map { pod5 -> tuple( file(pod5).getParent(), file(pod5) ) }
                 // .until( ??? ) TODO
 
-            DORADO_BASECALL (
+            BASECALL (
                 ch_staged_pod5s
             )
 
@@ -34,17 +34,18 @@ workflow DORADO {
 
             ch_pod5_dir = Channel
                 .fromPath ( "${params.pod5_dir}/*.pod5" )
+                .map { pod5 -> tuple( file(pod5).getParent(), file(pod5) ) }
 
-            DORADO_BASECALL (
+            BASECALL (
                 ch_pod5_dir
             )
 
         }
 
-        DORADO_DEMUX (
-            DORADO_BASECALL.out.collect()
+        DEMULTIPLEX (
+            BASECALL.out.groupTuple( by: 0 )
         )
     
     emit:
-        DORADO_DEMUX.out.flatten()
+        DEMULTIPLEX.out.flatten()
 }
