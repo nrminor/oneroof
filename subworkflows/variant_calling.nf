@@ -16,8 +16,7 @@ workflow VARIANTS {
 
     main:
         GENERATE_MPILEUP (
-            ch_amplicons,
-            ch_refseq
+            ch_amplicons
         )
 
         CALL_VARIANTS (
