@@ -5,7 +5,7 @@ include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_SEQS } from "../modules/get_primer_seqs"
 include { FASTQ_CONVERSION } from "../modules/samtools"
 include { ORIENT_READS } from "../modules/vsearch"
-include { FIND_COMPLETE_AMPLICONS; MERGE_PER_SAMPLE } from "../modules/find_amplicons"
+include { FIND_COMPLETE_AMPLICONS; MERGE_BY_SAMPLE } from "../modules/find_amplicons"
 
 workflow PRIMER_HANDLING {
 
@@ -45,10 +45,10 @@ workflow PRIMER_HANDLING {
             GET_PRIMER_SEQS.out
         )
 
-        MERGE_PER_SAMPLE (
+        MERGE_BY_SAMPLE (
             FIND_COMPLETE_AMPLICONS.out.groupTuple( by: 0 )
         )
     
     emit:
-        MERGE_PER_SAMPLE.out
+        MERGE_BY_SAMPLE.out
 }
