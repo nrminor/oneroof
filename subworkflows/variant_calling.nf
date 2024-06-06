@@ -20,12 +20,12 @@ workflow VARIANTS {
         )
 
         CALL_VARIANTS (
-            GENERATE_MPILEUP.out
+            GENERATE_MPILEUP.out,
+            ch_refseq
         )
 
         CONVERT_TO_VCF (
-            CALL_VARIANTS,
-            ch_refseq
+            CALL_VARIANTS
         )
 
         BUILD_DB (
