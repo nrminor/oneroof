@@ -25,7 +25,7 @@ process BASECALL {
 
     input:
     each path(models)
-    path pod5_dir
+    path "pod5s/???.pod5"
 
     output:
     val "basecalled.bam"
@@ -33,7 +33,7 @@ process BASECALL {
     script:
     """
     dorado basecaller \
-    ${params.model} ${pod5_dir} \
+    ${params.model} pod5s/ \
     --kit-name ${params.kit} \
     > "basecalled.bam"
     """
