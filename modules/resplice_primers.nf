@@ -5,7 +5,7 @@ process RESPLICE_PRIMERS {
 
 	publishDir params.respliced, mode: 'copy', overwrite: true
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
     input:

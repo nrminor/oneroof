@@ -2,6 +2,9 @@ process CONVERT_AND_SORT {
 
     tag "${barcode}"
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     input:
     tuple val(barcode), path(sam)
 
@@ -21,6 +24,9 @@ process INDEX {
     tag "${barcode}"
     publishDir params.alignment, mode: 'copy', overwrite: true
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     input:
     tuple val(barcode), path(bam)
 
@@ -38,6 +44,9 @@ process CALL_CONSENSUS {
 
     tag "${barcode}"
     publishDir params.consensus, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     tuple val(barcode), path(bam), path(bai)
@@ -61,6 +70,9 @@ process GENERATE_MPILEUP {
 
     tag "${barcode}"
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     input:
     tuple val(barcode), path(bam)
 
@@ -78,6 +90,9 @@ process FASTQ_CONVERSION {
 
     tag "${barcode}"
     publishDir params.basecall_fastqs
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     tuple val(barcode), path(bam)

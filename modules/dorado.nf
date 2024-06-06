@@ -2,6 +2,9 @@ process DOWNLOAD_MODELS {
 
     storeDir params.model_cache
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     output:
     path "*"
 
@@ -17,6 +20,9 @@ process BASECALL {
 
     tag "${sample_id}"
     maxForks params.basecall_max
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     each path(models)
@@ -39,6 +45,9 @@ process DEMULTIPLEX {
 
     publishDir params.basecall_bams, mode: 'copy', overwrite: true
     maxForks params.basecall_max
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     path "bams/???.bam"

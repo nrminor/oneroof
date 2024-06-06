@@ -1,9 +1,8 @@
 process FIND_COMPLETE_AMPLICONS {
 
-    /*
-    */
+    /* */
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
 	cpus 3
@@ -33,8 +32,13 @@ process FIND_COMPLETE_AMPLICONS {
 
 process MERGE_BY_SAMPLE {
 
+    /* */
+
 	tag "${barcode}"
 	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
 	cpus 3
 

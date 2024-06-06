@@ -1,9 +1,8 @@
 process GET_PRIMER_SEQS {
 
-    /*
-    */
+    /* */
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
 	input:

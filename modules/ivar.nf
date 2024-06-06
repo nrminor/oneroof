@@ -3,6 +3,9 @@ process CALL_VARIANTS {
     tag "${barcode}"
     publishDir params.ivar, mode: 'copy', overwrite: true
 
+	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	maxRetries 2
+
     input:
     tuple val(barcode), path("${barcode}.mpileup")
     each path(refseq)
@@ -25,6 +28,9 @@ process CALL_VARIANTS {
 process CONVERT_TO_VCF {
 
     tag "${barcode}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     tuple val(barcode), path(ivar_table)

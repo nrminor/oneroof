@@ -2,6 +2,9 @@ process ORIENT_READS {
 
     tag "${barcode}"
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     input:
     tuple val(barcode), path(reads)
     each path(refseq)

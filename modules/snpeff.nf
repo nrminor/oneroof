@@ -2,6 +2,9 @@ process BUILD_DB {
 
     storeDir params.snpeff_cache
 
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
     input:
     path refseq
     path genbank
