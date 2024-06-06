@@ -38,8 +38,8 @@ workflow GATHER_DATA {
             "Please double check that the provided POD5 directory exists: $params.pod5_dir"
 
             ch_pod5_dir = Channel
-                .fromPath ( "${params.pod5_dir}/*.pod5" )
-                .take ( params.pod5_batch_size )
+                .fromPath ( params.pod5_dir )
+                // .take ( params.pod5_batch_size )
 
             BASECALL (
                 DOWNLOAD_MODELS.out,

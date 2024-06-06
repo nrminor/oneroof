@@ -9,7 +9,6 @@ process DOWNLOAD_MODELS {
     path "*"
 
     script:
-    println "Downloading basecaller models."
     """
     dorado download --verbose
     """
@@ -25,7 +24,7 @@ process BASECALL {
 
     input:
     each path(models)
-    path "pod5s/???.pod5"
+    path pod5_dir
 
     output:
     val "basecalled.bam"
@@ -33,7 +32,7 @@ process BASECALL {
     script:
     """
     dorado basecaller \
-    ${params.model} pod5s/ \
+    ${params.model} ${pod5_dir} \
     --kit-name ${params.kit} \
     > "basecalled.bam"
     """
