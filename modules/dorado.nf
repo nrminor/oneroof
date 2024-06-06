@@ -23,7 +23,7 @@ process BASECALL {
 	maxRetries 2
 
     input:
-    each path(models)
+    path models
     path pod5_dir
 
     output:
