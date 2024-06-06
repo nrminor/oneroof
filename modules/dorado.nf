@@ -18,7 +18,6 @@ process DOWNLOAD_MODELS {
 
 process BASECALL {
 
-    tag "${sample_id}"
     maxForks params.basecall_max
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
@@ -26,17 +25,17 @@ process BASECALL {
 
     input:
     each path(models)
-    tuple val(sample_id), path("pod5s/???.pod5")
+    path pod5_dir
 
     output:
-    tuple val(sample_id), path("")
+    val "basecalled.bam"
 
     script:
     """
     dorado basecaller \
-    ${params.model} pod5s/ \
+    ${params.model} ${pod5_dir} \
     --kit-name ${params.kit} \
-    > "${sample_id}.bam"
+    > "basecalled.bam"
     """
 
 }
