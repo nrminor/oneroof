@@ -3,9 +3,6 @@ process GET_PRIMER_SEQS {
     /*
     */
 
-	tag "${params.desired_amplicon}"
-    label "general"
-
 	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
 	maxRetries 2
 
@@ -14,16 +11,16 @@ process GET_PRIMER_SEQS {
 	each path(refseq)
 
 	output:
-	path "patterns/"
+	path "${primer_combo}.txt"
 
 	script:
 	primer_combo = file(bed.toString()).getSimpleName()
 	"""
-	bedtools getfasta -fi ${refseq} -bed ${bed} > primer_seqs.fasta
-	seqkit seq --complement --validate-seq --seq-type DNA primer_seqs.fasta | \
-	grep -v "^>" > ${primer_combo}_comp_patterns.txt
-	cat primer_seqs.fasta | grep -v "^>" > ${primer_combo}_patterns.txt
-	mkdir patterns
-	mv ${primer_combo}_comp_patterns.txt ${primer_combo}_patterns.txt patterns/
+	# get a fasta that contains the primer sequences
+	bedtools getfasta -fi ${refseq} -bed ${bed} > ${primer_combo}.fasta
+	
+	# pull out the correct regex patterns for the amplicon
+	make_primer_patterns.py ${primer_combo}.fasta ${primer_combo}
 	"""
+
 }

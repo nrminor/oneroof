@@ -185,6 +185,10 @@ report.html*
 *.fa*
 *.gtf
 *.bam*
+*.gbk
+*.bed
+models/
+snpEff_cache/
 input/
 inputs/
 data/

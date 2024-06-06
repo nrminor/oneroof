@@ -1,5 +1,12 @@
 #!/usr/bin/env nextflow
 
+include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
+include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
+include { GET_PRIMER_SEQS } from "../modules/get_primer_seqs"
+include { FASTQ_CONVERSION } from "../modules/samtools"
+include { ORIENT_READS } from "../modules/vsearch"
+include { FIND_COMPLETE_AMPLICONS; MERGE_PER_SAMPLE } from "../modules/find_amplicons"
+
 workflow PRIMER_HANDLING {
 
     /* */
@@ -27,20 +34,21 @@ workflow PRIMER_HANDLING {
             ch_basecalls
         )
 
-        FIND_TEMPLATE_AMPLICONS (
+        ORIENT_READS (
             FASTQ_CONVERSION.out,
-            GET_PRIMER_SEQS.out
+            ch_refseq
         )
 
-        FIND_COMPLEMENT_AMPLICONS (
-            FASTQ_CONVERSION.out,
+        FIND_COMPLETE_AMPLICONS (
+            ORIENT_READS.out
+                .map { barcode, fastq -> fastq },
             GET_PRIMER_SEQS.out
         )
 
         MERGE_PER_SAMPLE (
-            
+            FIND_COMPLETE_AMPLICONS.out.groupTuple( by: 0 )
         )
     
     emit:
-        MERGE_AMPLICONS.out
+        MERGE_PER_SAMPLE.out
 }

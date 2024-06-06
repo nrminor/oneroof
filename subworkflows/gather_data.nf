@@ -1,15 +1,20 @@
 #!/usr/bin/env nextflow
 
 include { WATCH_FOR_POD5S } from "../modules/pod5_watcher"
-include { DORADO_BASECALL } from "../modules/dorado"
-include { DORADO_DEMUX } from "../modules/dorado"
+include { DOWNLOAD_MODELS; BASECALL; DEMULTIPLEX } from "../modules/dorado"
 
-workflow gather_data {
+workflow GATHER_DATA {
 
     /* */
 
     main:
+        DOWNLOAD_MODELS ( )
+
         if ( params.remote_pod5_location ) {
+
+            error(
+                message = "Watching a remote directory for pod5's is not yet supported. Please transfer the directory of pod5's yourself and supply it with the `--pod5_dir` command line argument."
+            )
 
             ch_remote_pod5s = Channel
                 .from ( params.remote_pod5_location )
@@ -20,10 +25,10 @@ workflow gather_data {
 
             ch_staged_pod5s = Channel
                 .watchPath ( "${params.pod5_staging}/*.bam", 'create' )
-                .map { pod5 -> tuple( file(pod5).getParent(), file(pod5) ) }
                 // .until( ??? ) TODO
 
             BASECALL (
+                DOWNLOAD_MODELS.out,
                 ch_staged_pod5s
             )
 
@@ -34,18 +39,25 @@ workflow gather_data {
 
             ch_pod5_dir = Channel
                 .fromPath ( "${params.pod5_dir}/*.pod5" )
-                .map { pod5 -> tuple( file(pod5).getParent(), file(pod5) ) }
+                .take ( params.pod5_batch_size )
 
             BASECALL (
+                DOWNLOAD_MODELS.out,
                 ch_pod5_dir
             )
 
         }
 
         DEMULTIPLEX (
-            BASECALL.out.groupTuple( by: 0 )
+            BASECALL.out.collect()
         )
     
     emit:
-        DEMULTIPLEX.out.flatten()
+        DEMULTIPLEX.out
+            .flatten()
+            .map { demux_bam -> tuple( 
+                        file(demux_bam).getSimpleName().replace("${params.kit}_", ""),
+                        file(demux_bam)
+                    ) 
+            }
 }

@@ -1,39 +1,93 @@
 process CONVERT_AND_SORT {
 
+    tag "${barcode}"
+
+    input:
+    tuple val(barcode), path(sam)
+
+    output:
+    tuple val(barcode), path("${barcode}.bam")
+
     script:
     """
     samtools view -bS ${sam} \
-    | samtools sort -o {output.bam}
+    | samtools sort -o ${barcode}.bam
     """
 
 }
 
 process INDEX {
 
+    tag "${barcode}"
+    publishDir params.alignment, mode: 'copy', overwrite: true
+
+    input:
+    tuple val(barcode), path(bam)
+
     output:
-    tuple path(alignment), path("${alignment}.bai")
+    tuple val(barcode), path(alignment), path("${alignment}.bai")
 
     script:
     """
-    samtools index ${alignment}
+    samtools index ${bam}
     """
 
 }
 
 process CALL_CONSENSUS {
 
+    tag "${barcode}"
+    publishDir params.consensus, mode: 'copy', overwrite: true
+
+    input:
+    tuple val(barcode), path(bam), path(bai)
+
+    output:
+    tuple val(barcode), path("${barcode}.consensus.fasta")
+
     script:
     """
-    samtools consensus -m simple -c {params.min_variant_frequency} -d {params.min_depth_coverage} {input.bam} > {output.consensus}
+    samtools consensus \
+    -m simple \
+    -c ${params.min_variant_frequency} \
+    -d ${params.min_depth_coverage} \
+    ${bam} \
+    > ${barcode}.consensus.fasta
     """
 
 }
 
 process GENERATE_MPILEUP {
 
+    tag "${barcode}"
+
+    input:
+    tuple val(barcode), path(bam)
+
+    output:
+    tuple val(barcode), path("${barcode}.mpileup")
+
     script:
     """
-    samtools mpileup -aa -A -Q 0 -d 0 {input.bam} > ???
+    samtools mpileup -aa -A -Q 0 -d 0 ${bam} > ${barcode}.mpileup
+    """
+
+}
+
+process FASTQ_CONVERSION {
+
+    tag "${barcode}"
+    publishDir params.basecall_fastqs
+
+    input:
+    tuple val(barcode), path(bam)
+
+    output:
+    tuple val(barcode), path("${barcode}.fastq.gz")
+
+    script:
+    """
+    samtools fastq ${bam} | gzip -c > ${barcode}.fastq.gz
     """
 
 }

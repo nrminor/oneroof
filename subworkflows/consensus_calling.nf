@@ -7,13 +7,11 @@ workflow CONSENSUS {
     /* */
 
     take:
-        ch_amplicons
-        ch_refseq
+        ch_aligned_amplicons
 
     main:
         CALL_CONSENSUS (
-            ch_amplicons,
-            ch_refseq
+            ch_aligned_amplicons
         )
 
     emit:

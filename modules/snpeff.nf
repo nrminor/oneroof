@@ -1,19 +1,56 @@
 process BUILD_DB {
 
+    cache params.snpeff_cache
+
+    input:
+    path refseq
+    path genbank
+    path snpeff_config
+
+    output:
+    path "config"
+
     script:
+    config_dir = "config/genome/ref_genome/"
     """
-    mkdir -p config/genome/ref_genome
-    cp {input.gbk} {output.snpeff_gbk}
-    snpEff build -c {input.config} -dataDir genome/ -genbank -v ref_genome
+    # 
+    mkdir -p ${config_dir}
+
+    # 
+    cp ${genbank} ${config_dir}/genes.gbk
+
+    # 
+    snpEff build \
+    -c ${snpeff_config} \
+    -dataDir genome/ \
+    -genbank \
+    -v ref_genome
     """
 
 }
 
 process ANNOTATE_VCF {
 
+    tag "${barcode}"
+    publishDir params.variants, mode: 'copy', overwrite: true
+
+    input:
+    each path(snpeff_db)
+    each path(snpeff_config)
+    tuple val(barcode), path(vcf)
+
+    output:
+
+    tuple val(barcode), path("${barcode}.annotated.vcf")
+
     script:
     """
-    snpEff -c {input.config} -dataDir genome/ -v ref_genome {input.vcf} > {output.vcf}
+    snpEff \
+    -c ${snpeff_config} \
+    -dataDir genome/ \
+    -v ref_genome \
+    ${vcf} \
+    > ${barcode}.annotated.vcf
     """
 
 }
