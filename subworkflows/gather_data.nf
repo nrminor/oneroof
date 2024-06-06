@@ -42,7 +42,7 @@ workflow GATHER_DATA {
                 // .take ( params.pod5_batch_size )
 
             BASECALL (
-                DOWNLOAD_MODELS.out,
+                DOWNLOAD_MODELS.out.collect(),
                 ch_pod5_dir
             )
 
