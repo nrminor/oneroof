@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { GATHER_DATA } from "../subworkflows/gather_data"
+include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
