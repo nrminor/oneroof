@@ -20,6 +20,7 @@ options:
 
 
 import argparse
+import shutil
 from itertools import product
 from pathlib import Path
 from typing import List, Tuple
@@ -185,11 +186,14 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
 
     mutated_frames: List[pl.DataFrame] = []
     for i, df in enumerate(dedup_partitioned):
-        if df.shape[0] % 2 != 0:
+        if df.shape[0] % 2 != 0 and df.shape[0] > 2:
             primers = df["NAME"]
 
-            fwd_primers = [primer for primer in primers if "_LEFT" in primer]
-            rev_primers = [primer for primer in primers if "_RIGHT" in primer]
+            fwd_primers = [primer for primer in primers if "LEFT" in primer]
+            rev_primers = [primer for primer in primers if "RIGHT" in primer]
+            
+            if len(fwd_primers) == 0 and len(rev_primers) == 0:
+                return mutated_frames
 
             if len(fwd_primers) > len(rev_primers):
                 to_combine = rev_primers
@@ -288,11 +292,9 @@ def main() -> None:
         .with_columns(pl.col("NAME").alias("ORIG_NAME"))
         .with_columns(
             pl.col("NAME")
-            .str.replace_all("_LEFT", "")
-            .str.replace_all("_RIGHT", "")
-            .str.replace_all("-2", "")
-            .str.replace_all("-3", "")
-            .str.replace_all("-4", "")
+            .str.replace_all("_", "-")
+            .str.replace_all("-LEFT", "")
+            .str.replace_all("-RIGHT", "")
             .alias("Amplicon")
         )
         .select(
@@ -312,6 +314,10 @@ def main() -> None:
     dedup_partitioned = dedup_primers(partitioned_bed)
 
     mutated_frames = resplice_primers(dedup_partitioned)
+    
+    if len(mutated_frames) == 0:
+        shutil.copy(bed_file, f"{output_prefix}.bed")
+        return
 
     final_df = finalize_primer_pairings(mutated_frames)
 

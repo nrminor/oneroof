@@ -200,3 +200,6 @@ scratch*# pixi environments
 .pixi
 *.egg-info
 
+# pixi environments
+.pixi
+

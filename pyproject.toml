@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [{name = "Nicholas Minor", email = "nrminor@wisc.edu"}]
 requires-python = ">= 3.10"
-dependencies = ["ruff", "uv", "ipykernel", "pyright", "quarto", "polars", "pandas", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam"]
+dependencies = ["ruff", "uv", "ipykernel", "pyright", "quarto", "polars", "pandas", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo"]
 
 [build-system]
 requires = ["setuptools"]
