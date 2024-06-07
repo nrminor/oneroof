@@ -4,10 +4,10 @@ include { GATHER_DATA } from "../subworkflows/gather_data"
 // include { ERROR_CORRECTION } from "../subworkflows/error_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
-// include { QUALITY_CONTROL } from "../subworkflows/quality_control"
+include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
-// include { PHYLO } from "../subworkflows/phylo"
+include { PHYLO } from "../subworkflows/phylo"
 
 // parameters derived from user-supplied parameters
 // -----------------------------------------------------------------------------

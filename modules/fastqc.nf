@@ -1,4 +1,30 @@
-process FASTQC {}
+process FASTQC {
+
+    /* */
+
+	tag "${sample_id}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	maxRetries 2
+
+	cpus 1
+
+	input:
+	path reads
+
+	output:
+    path "*.html", emit: html
+    path "*.zip", emit: zip
+
+	script:
+	"""
+	fastqc \
+	--threads ${task.cpus} \
+	--memory ${fastqc_memory} \
+	${reads}
+	"""
+
+}
 
 process FASTQC_RS {
 

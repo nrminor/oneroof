@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { FASTQC_RS } from "../modules/fastqc"
+include { FASTQC } from "../modules/fastqc"
 include { CRAMINO } from "../modules/cramino"
 include { MULTIQC } from "../modules/multiqc"
 
@@ -20,7 +20,7 @@ workflow QUALITY_CONTROL {
         // )
 
         MULTIQC (
-            FASTQC.out
+            FASTQC.out.zip.collect()
         )
 
 }
