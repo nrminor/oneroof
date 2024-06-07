@@ -27,7 +27,7 @@ process BASECALL {
     path pod5_dir
 
     output:
-    val "basecalled.bam"
+    path "basecalled.bam"
 
     script:
     """
@@ -41,14 +41,16 @@ process BASECALL {
 
 process DEMULTIPLEX {
 
+    /* */
+
     publishDir params.basecall_bams, mode: 'copy', overwrite: true
     maxForks params.basecall_max
 
-	// errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	// maxRetries 2
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
-    path bams, stageAs: "bams/*"
+    path bams, stageAs: "bams/???.bam"
 
     output:
     path "demux/*barcode*"
