@@ -49,7 +49,7 @@ process AMPLICON_STATS {
 
     script:
     """
-    seqkit stats --all --tabular amplicons/*.f{a,q}.gz
+    seqkit stats --threads ${task.cpus} --all --tabular amplicons/*.fastq.gz
     """
 
 }
@@ -76,7 +76,7 @@ process MERGE_BY_SAMPLE {
 	"""
 	seqkit scat \
 	--find-only \
-	--threads ${task.cus}
+	--threads ${task.cpus}
 	fastqs/ \
 	| gzip -c > ${barcode}.amplicons.fastq.gz
 	"""
