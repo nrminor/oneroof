@@ -14,19 +14,17 @@ process TRIM_ENDS_TO_PRIMERS {
     tuple val(barcode), path("${barcode}.trimmed.amplicons.fastq.gz")
 
     script:
-    patterns = file(patterns_file).readLines()
-    assert patterns.size() == 2 : "Too many patterns provided in ${patterns_file}"
-    forward_pattern = patterns[0]
-    reverse_pattern = patterns[1]
     """
+    FORWARD_PATTERN=\$(head -n 1 ${patterns_file})
+    REVERSE_PATTERN=\$(tail -n 1 ${patterns_file})
     cutadapt \
     -j ${task.cpus} \
-    -a ${reverse_pattern} \
+    -a \$FORWARD_PATTERN \
     ${untrimmed} \
     -o tmp.fq && \
     cutadapt \
     -j ${task.cpus} \
-    -g ${forward_pattern} \
+    -g \$REVERSE_PATTERN \
     tmp.fq \
     -o ${barcode}.trimmed.amplicons.fastq.gz && \
     rm tmp.fq
