@@ -84,8 +84,7 @@ workflow NANOPORE {
         )
 
         PHYLO (
-            CONSENSUS.out,
-            ch_refseq
+            CONSENSUS.out
         )
 
 }
