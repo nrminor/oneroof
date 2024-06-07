@@ -10,12 +10,11 @@ process GET_PRIMER_SEQS {
 	each path(refseq)
 
 	output:
-	path "${primer_combo}.txt"
+	path "${primer_combo}.fasta"
 
 	script:
 	primer_combo = file(bed.toString()).getSimpleName()
 	"""
-	# get a fasta that contains the primer sequences
 	bedtools getfasta -fi ${refseq} -bed ${bed} > ${primer_combo}.fasta
 	
 	# pull out the correct regex patterns for the amplicon

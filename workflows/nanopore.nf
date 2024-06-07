@@ -1,11 +1,13 @@
 #!/usr/bin/env nextflow
 
 include { GATHER_DATA } from "../subworkflows/gather_data"
+// include { ERROR_CORRECTION } from "../subworkflows/error_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
+// include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
-// include { REPORTING } from "../subworkflows/reporting"
+// include { PHYLO } from "../subworkflows/phylo"
 
 // parameters derived from user-supplied parameters
 // -----------------------------------------------------------------------------
@@ -49,6 +51,10 @@ workflow NANOPORE {
 
         GATHER_DATA ( )
 
+        // ERROR_CORRECTION (
+        //     GATHER_DATA.out
+        // )
+
         PRIMER_HANDLING (
             GATHER_DATA.out,
             ch_primer_bed,
@@ -59,6 +65,11 @@ workflow NANOPORE {
             PRIMER_HANDLING.out,
             ch_refseq,
             "ont"
+        )
+
+        QUALITY_CONTROL (
+            PRIMER_HANDLING.out,
+            ALIGNMENT.out
         )
 
         CONSENSUS (
@@ -72,14 +83,9 @@ workflow NANOPORE {
             ch_snpeff_config
         )
 
-        // if ( params.reporting ) {
-            
-        //     REPORTING (
-        //         ALIGNMENT.out,
-        //         CONSENSUS.out,
-        //         VARIANTS.out
-        //     )
-
-        // }
+        PHYLO (
+            CONSENSUS.out,
+            ch_refseq
+        )
 
 }

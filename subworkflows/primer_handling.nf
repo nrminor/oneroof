@@ -2,10 +2,11 @@
 
 include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
-include { GET_PRIMER_SEQS } from "../modules/get_primer_seqs"
+include { GET_PRIMER_SEQS } from "../modules/bedtools"
+include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { FASTQ_CONVERSION } from "../modules/samtools"
 include { ORIENT_READS } from "../modules/vsearch"
-include { FIND_COMPLETE_AMPLICONS; MERGE_BY_SAMPLE } from "../modules/find_amplicons"
+include { FIND_COMPLETE_AMPLICONS; MERGE_BY_SAMPLE } from "../modules/seqkit"
 
 workflow PRIMER_HANDLING {
 
@@ -30,6 +31,10 @@ workflow PRIMER_HANDLING {
             ch_refseq
         )
 
+        GET_PRIMER_PATTERNS (
+            GET_PRIMER_SEQS.out
+        )
+
         FASTQ_CONVERSION (
             ch_basecalls
         )
@@ -42,7 +47,7 @@ workflow PRIMER_HANDLING {
         FIND_COMPLETE_AMPLICONS (
             ORIENT_READS.out
                 .map { barcode, fastq -> fastq },
-            GET_PRIMER_SEQS.out
+            GET_PRIMER_PATTERNS.out
         )
 
         MERGE_BY_SAMPLE (

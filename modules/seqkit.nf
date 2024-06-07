@@ -15,7 +15,7 @@ process FIND_COMPLETE_AMPLICONS {
     tuple val(barcode), path("${barcode}_amplicons.fastq.gz")
 
     script:
-	String barcode = file(reads).getSimpleName()
+	barcode = file(reads).getSimpleName()
     """
 	cat ${reads} | \
     seqkit grep \
@@ -56,4 +56,29 @@ process MERGE_BY_SAMPLE {
 	fastqs/ \
 	| gzip -c > ${barcode}.amplicons.fastq.gz
 	"""
+}
+
+process AMPLICON_STATS {
+
+    /* */
+
+	tag "${barcode}"
+	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 3
+
+	input:
+	tuple val(barcode), path("amplicons/*")
+
+    output:
+    path "*"
+
+    script:
+    """
+    seqkit stats --all --tabular amplicons/*.f{a,q}.gz
+    """
+
 }
