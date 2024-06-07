@@ -74,7 +74,7 @@ process GENERATE_MPILEUP {
 	maxRetries 2
 
     input:
-    tuple val(barcode), path(bam)
+    tuple val(barcode), path(bam), path(bai)
 
     output:
     tuple val(barcode), path("${barcode}.mpileup")
