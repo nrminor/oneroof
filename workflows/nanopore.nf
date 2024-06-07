@@ -61,10 +61,12 @@ workflow NANOPORE {
             ch_refseq
         )
 
+        ch_platform = Channel.of("ont")
+
         ALIGNMENT (
             PRIMER_HANDLING.out,
             ch_refseq,
-            "ont"
+            ch_platform
         )
 
         QUALITY_CONTROL (
