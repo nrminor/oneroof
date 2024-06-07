@@ -1,6 +1,6 @@
 process ALIGN_WITH_PRESET {
 
-    tag "${barcode}, ${platform}"
+    tag "${barcode}, ${params.platform}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2

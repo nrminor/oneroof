@@ -7,7 +7,7 @@ process CALL_VARIANTS {
 	maxRetries 2
 
     input:
-    tuple val(barcode), path("${barcode}.mpileup")
+    tuple val(barcode), path(mpileup)
     each path(refseq)
 
     output:
