@@ -2,13 +2,15 @@ process FASTQC {
 
     /* */
 
+	tag "${barcode}"
+
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
 	cpus 1
 
 	input:
-	path reads
+	tuple val(barcode), path(reads)
 
 	output:
     path "*.html", emit: html
