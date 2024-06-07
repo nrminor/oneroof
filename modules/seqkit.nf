@@ -42,7 +42,7 @@ process AMPLICON_STATS {
 	cpus 3
 
 	input:
-	tuple val(barcode), path("amplicons/*")
+	tuple val(barcode), path("amplicons/???.fastq.gz")
 
     output:
     path "*"
