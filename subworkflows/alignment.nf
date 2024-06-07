@@ -10,13 +10,11 @@ workflow ALIGNMENT {
     take:
         ch_amplicons
         ch_refseq
-        ch_platform
 
     main:
         ALIGN_WITH_PRESET (
             ch_amplicons,
-            ch_refseq,
-            ch_platform
+            ch_refseq
         )
 
         CONVERT_AND_SORT (

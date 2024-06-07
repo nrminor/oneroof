@@ -12,6 +12,9 @@ include { PHYLO } from "../subworkflows/phylo"
 // parameters derived from user-supplied parameters
 // -----------------------------------------------------------------------------
 
+// platform setting
+params.platform = "ont"
+
 // basecalling and demultiplexing results
 params.basecall_results = params.results + "/01_basecalled_demuxed"
 params.basecall_bams = params.basecall_results + "bams"
@@ -63,8 +66,7 @@ workflow NANOPORE {
 
         ALIGNMENT (
             PRIMER_HANDLING.out,
-            ch_refseq,
-            Channel.value("ont")
+            ch_refseq
         )
 
         QUALITY_CONTROL (
