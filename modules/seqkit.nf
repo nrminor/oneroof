@@ -76,7 +76,7 @@ process MERGE_BY_SAMPLE {
 	"""
 	seqkit scat \
 	--find-only \
-	--threads ${task.cpus}
+	--threads ${task.cpus} \
 	fastqs/ \
 	| gzip -c > ${barcode}.amplicons.fastq.gz
 	"""
