@@ -8,7 +8,7 @@ include { NANOPORE } from "$projectDir/workflows/nanopore"
 workflow {
 
     // the sequencing platform used
-    params.platform = illumina_fastq_dir == "" ? "ont" : "illumina"
+    params.platform = params.illumina_fastq_dir == "" ? "ont" : "illumina"
 
     // make sure required primer bed is provided and exists
     assert params.primer_bed != "" 
