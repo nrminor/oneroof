@@ -1,7 +1,5 @@
 ---
-title: ""
-author: "Nick Minor"
-date: ""
+title: "Base-, Variant-, and Consensus-calling under One Roof"
 toc: true
 format:
     html:
@@ -12,3 +10,4 @@ format:
 editor: source
 engine: knitr
 ---
+
