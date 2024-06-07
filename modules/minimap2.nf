@@ -8,7 +8,7 @@ process ALIGN_WITH_PRESET {
     input:
     tuple val(barcode), path(fastq)
     each path(refseq)
-    each path(platform)
+    each val(platform)
 
     output:
     tuple val(barcode), path("${barcode}.sam")
