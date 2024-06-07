@@ -44,11 +44,11 @@ process DEMULTIPLEX {
     publishDir params.basecall_bams, mode: 'copy', overwrite: true
     maxForks params.basecall_max
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+	// errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	// maxRetries 2
 
     input:
-    path "bams/???.bam"
+    path bams, stageAs: "bams/*"
 
     output:
     path "demux/*barcode*"
