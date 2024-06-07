@@ -191,7 +191,7 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
 
             fwd_primers = [primer for primer in primers if "LEFT" in primer]
             rev_primers = [primer for primer in primers if "RIGHT" in primer]
-            
+
             if len(fwd_primers) == 0 and len(rev_primers) == 0:
                 return mutated_frames
 
@@ -314,7 +314,7 @@ def main() -> None:
     dedup_partitioned = dedup_primers(partitioned_bed)
 
     mutated_frames = resplice_primers(dedup_partitioned)
-    
+
     if len(mutated_frames) == 0:
         shutil.copy(bed_file, f"{output_prefix}.bed")
         return

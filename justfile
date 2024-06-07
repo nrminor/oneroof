@@ -42,13 +42,13 @@ docker_push:
 docker: docker_build docker_push
 
 py-lints:
-    ruff check --exit-zero --fix --unsafe-fixes
+    ruff check . --exit-zero --fix --unsafe-fixes
 
 py-format:
-    ruff format
+    ruff format .
 
 py-sort-imports:
-    ruff check -n --select=I --fix
+    ruff check . -n --select=I --fix
 
 python: py-lints py-format py-sort-imports
 

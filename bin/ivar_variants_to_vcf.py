@@ -3,10 +3,8 @@
 import argparse
 import errno
 import os
-import re
 import sys
 from collections import OrderedDict, deque
-from email.charset import QP
 
 import numpy as np
 from Bio import SeqIO
@@ -99,11 +97,11 @@ def parse_ivar_line(line):
         print(line[4])
         exit(-1)
     REF_RV = int(line[5])
-    REF_FW = REF_DP - REF_RV
+    REF_DP - REF_RV
     REF_QUAL = int(line[6])
     ALT_RV = int(line[8])
     ALT_DP = int(line[7])
-    ALT_FW = ALT_DP - ALT_RV
+    ALT_DP - ALT_RV
     ALT_QUAL = int(line[9])
     ALT_FREQ = float(line[10])
     FORMAT = [REF_DP, REF_RV, REF_QUAL, ALT_DP, ALT_RV, ALT_QUAL, ALT_FREQ]
@@ -369,7 +367,7 @@ def check_merge_codons(q_pos, fe_codon_ref, fe_codon_alt):
         elif get_diff_position(fe_codon_ref, fe_codon_alt) == 2:
             num_collapse = 1
     # If no consecutive process only one line.
-    elif check_consecutive(list(q_pos)) == False:
+    elif check_consecutive(list(q_pos)) is False:
         num_collapse = 1
 
     return num_collapse
@@ -569,9 +567,17 @@ def main(args=None):
                 break
             else:
                 num_collapse = check_merge_codons(q_pos, fe_codon_ref, fe_codon_alt)
-                (chrom, pos, id, ref, alt, qual, filter, info, format) = (
-                    process_variants(variants, num_collapse)
-                )
+                (
+                    chrom,
+                    pos,
+                    id,
+                    ref,
+                    alt,
+                    qual,
+                    filter,
+                    info,
+                    format,
+                ) = process_variants(variants, num_collapse)
 
                 var_count_dict[q_pos[0][1]] += 1
                 write_vcf_line(
