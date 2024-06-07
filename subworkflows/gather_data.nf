@@ -55,7 +55,8 @@ workflow GATHER_DATA {
     emit:
         DEMULTIPLEX.out
             .flatten()
-            .map { demux_bam -> tuple( 
+            .map { demux_bam -> 
+                    tuple( 
                         file(demux_bam).getSimpleName().replace("${params.kit}_", ""),
                         file(demux_bam)
                     ) 

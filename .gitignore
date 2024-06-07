@@ -189,6 +189,7 @@ report.html*
 *.bed
 models/
 snpEff_cache/
+nextclade_datasets/
 input/
 inputs/
 data/
