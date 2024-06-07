@@ -2,7 +2,7 @@ process FASTQC {
 
     /* */
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
 	cpus 1
@@ -27,7 +27,7 @@ process FASTQC_RS {
 
     /* */
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
 	cpus 1
