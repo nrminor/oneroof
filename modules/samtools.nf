@@ -31,7 +31,7 @@ process INDEX {
     tuple val(barcode), path(bam)
 
     output:
-    tuple val(barcode), path(alignment), path("${alignment}.bai")
+    tuple val(barcode), path(bam), path("${alignment}.bai")
 
     script:
     """
