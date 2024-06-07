@@ -46,8 +46,6 @@ workflow {
 
     if ( params.remote_pod5_location != "" || params.pod5_dir != "" ) {
 
-        ch_platform = Channel.of("ont")
-
         NANOPORE (
             ch_primer_bed,
             ch_refseq,
