@@ -18,7 +18,7 @@ process DOWNLOAD_DATASET {
 
 }
 
-process NEXTCLADE_RUN {
+process RUN_NEXTCLADE {
 
     publishDir params.nextclade, mode: 'copy'
 

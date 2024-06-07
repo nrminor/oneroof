@@ -2,8 +2,6 @@ process FASTQC {
 
     /* */
 
-	tag "${sample_id}"
-
 	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
 	maxRetries 2
 
@@ -20,7 +18,6 @@ process FASTQC {
 	"""
 	fastqc \
 	--threads ${task.cpus} \
-	--memory ${fastqc_memory} \
 	${reads}
 	"""
 
@@ -29,8 +26,6 @@ process FASTQC {
 process FASTQC_RS {
 
     /* */
-
-	tag "${sample_id}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
 	maxRetries 2
@@ -41,15 +36,15 @@ process FASTQC_RS {
 	path reads
 
 	output:
-	path "${sample_id}_qc.html", emit: html
-	path "${sample_id}/", emit: multiqc_data
+	path "${label}_qc.html", emit: html
+	path "${label}/", emit: multiqc_data
 
 	script:
     label = file(reads.toString()).getSimpleName()
 	"""
 	fqc -q ${reads} -s . > ${label}_qc.html
-	mkdir ${sample_id}
-	mv fastqc_data.txt ${sample_id}/fastqc_data.txt
+	mkdir ${label}
+	mv fastqc_data.txt ${label}/fastqc_data.txt
 	"""
 
 }
