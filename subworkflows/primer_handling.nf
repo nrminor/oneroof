@@ -2,6 +2,7 @@
 
 include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
+include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
 include { TRIM_ENDS_TO_PRIMERS } from "../modules/cutadapt"
 include { FASTQ_CONVERSION } from "../modules/samtools"
