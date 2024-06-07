@@ -3,11 +3,15 @@
 
 alias readme := make_readme
 alias zip := compress_html
-alias install := setup_local_env
-alias local := setup_local_env
-alias dev := setup_local_env
+alias doc := docs
+alias env := setup_env
+alias install := setup_env
+alias local := setup_env
+alias dev := setup_env
 alias all_docker := docker
 alias container_prep := docker
+alias py := python
+alias doit := all
 
 render:
     quarto render docs/base_and_variant_call.qmd
@@ -26,7 +30,7 @@ qmd: render render_dev
 
 docs: render make_readme render_dev compress_html
 
-setup_local_env:
+setup_env:
     pixi install
 
 docker_build:
@@ -37,4 +41,15 @@ docker_push:
 
 docker: docker_build docker_push
 
-all: docs docker
+py-lints:
+    ruff check --exit-zero --fix --unsafe-fixes
+
+py-format:
+    ruff format
+
+py-sort-imports:
+    ruff check -n --select=I --fix
+
+python: py-lints py-format py-sort-imports
+
+all: docs setup_env python docker
