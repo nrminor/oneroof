@@ -46,11 +46,14 @@ workflow {
 
     if ( params.remote_pod5_location != "" || params.pod5_dir != "" ) {
 
+        ch_platform = Channel.of("ont")
+
         NANOPORE (
             ch_primer_bed,
             ch_refseq,
             ch_ref_gbk,
-            ch_snpeff_config
+            ch_snpeff_config,
+            ch_platform
         )
 
     } // else {

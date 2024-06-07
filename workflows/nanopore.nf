@@ -45,6 +45,7 @@ workflow NANOPORE {
         ch_refseq
         ch_refgbk
         ch_snpeff_config
+        ch_platform
 
     main:
         assert params.kit : "Please provide the Nanopore barcoding kit used."
@@ -60,8 +61,6 @@ workflow NANOPORE {
             ch_primer_bed,
             ch_refseq
         )
-
-        ch_platform = Channel.of("ont")
 
         ALIGNMENT (
             PRIMER_HANDLING.out,
