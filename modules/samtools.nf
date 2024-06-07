@@ -57,7 +57,7 @@ process CALL_CONSENSUS {
     script:
     """
     samtools consensus \
-    -m simple \
+    -A \
     -c ${params.min_variant_frequency} \
     -d ${params.min_depth_coverage} \
     ${bam} \
