@@ -43,7 +43,7 @@ def parse_command_line_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--reverse_pattern",
-        "-f",
+        "-r",
         type=str,
         required=False,
         default=r"^(.*?)",
