@@ -9,7 +9,32 @@ include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { PHYLO } from "../subworkflows/phylo"
 
-includeConfig '../config/nanopore.config'
+// parameters derived from user-supplied parameters
+// -----------------------------------------------------------------------------
+
+// basecalling and demultiplexing results
+params.basecall_results = params.results + "/01_basecalled_demuxed"
+params.basecall_bams = params.basecall_results + "bams"
+params.basecall_fastqs = params.basecall_results + "fastqs"
+
+// primer handling results
+params.primer_handling = params.results + "/02_primer_handling"
+params.respliced = params.primer_handling + "/01_respliced_primers"
+params.complete_amplicons = params.primer_handling + "/02_complete_amplicons"
+params.merged_by_sample = params.primer_handling + "/03_merged_by_sampe"
+
+// alignment results
+params.alignment = params.results + "/03_alignment_results"
+
+// consensus results
+params.consensus = params.results + "/04_consensus_seqs"
+
+// variant results
+params.variants = params.results + "/05_variants"
+params.ivar = params.variants + "/01_ivar_tables"
+params.vcf = params.variants + "/02_annotated_vcfs"
+
+// -----------------------------------------------------------------------------
 
 workflow NANOPORE {
 

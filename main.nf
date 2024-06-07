@@ -44,7 +44,7 @@ workflow {
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
 
-    if ( params.remote_pod5_location != "" || params.pod5_dir != "" ) {
+    if ( params.platform == "ont" ) {
 
         NANOPORE (
             ch_primer_bed,
