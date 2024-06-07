@@ -14,7 +14,11 @@ process GET_PRIMER_PATTERNS {
 	script:
 	primer_combo = file(primer_fasta.toString()).getSimpleName()
 	"""
-	make_primer_patterns.py ${primer_combo}.fasta ${primer_combo}
+	make_primer_patterns.py \
+	-i ${primer_combo}.fasta \
+	-o ${primer_combo} \
+	-f "" \
+	-r ""
 	"""
 
 }

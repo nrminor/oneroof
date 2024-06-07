@@ -3,16 +3,60 @@
 """
 Usage:
 ```
-python3 make_primer_patterns.py <FASTA> <OUTPUT_PREFIX>
+python3 make_primer_patterns.py -f <FASTA> -o <OUTPUT_PREFIX>
 ```
 """
 
+import argparse
 import os
-import sys
+from pathlib import Path
 from typing import List
 
 
-def generate_regex_patterns(primer_fasta: str, label: str) -> None:
+def parse_command_line_args() -> argparse.Namespace:
+    """
+    Strictly parse command line arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--input_fasta",
+        "-i",
+        type=Path,
+        required=True,
+        help="FASTA file of primer sequences for a given amplicon",
+    )
+    parser.add_argument(
+        "--output_prefix",
+        "-o",
+        type=str,
+        required=False,
+        default="primer_patterns",
+        help="Prefix for primer output file",
+    )
+    parser.add_argument(
+        "--forward_pattern",
+        "-f",
+        type=str,
+        required=False,
+        default=r"^(.*?)",
+        help="Pattern to prepend to forward primer sequence.",
+    )
+    parser.add_argument(
+        "--reverse_pattern",
+        "-f",
+        type=str,
+        required=False,
+        default=r"^(.*?)",
+        help="Pattern to append to reverse primer sequence.",
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+def generate_regex_patterns(
+    primer_fasta: str, label: str, forward_pattern: str, reverse_pattern: str
+) -> None:
     """
     Generates regular expression patterns based on primer sequences from a FASTA file.
 
@@ -74,8 +118,8 @@ def generate_regex_patterns(primer_fasta: str, label: str) -> None:
     forward_primer, reverse_primer = seqs
 
     # use raw strings and '+' operator overloading to construct the patterns
-    forward_pattern = r"(?<=" + forward_primer + r")[^\s]*"
-    reverse_pattern = r"[^\s]*(?=" + reverse_primer + r")"
+    forward_pattern = forward_pattern + forward_primer
+    reverse_pattern = reverse_primer + reverse_pattern
 
     # iterate through the patterns to write the lines of the pattern file
     with open(f"{label}.txt", "w", encoding="utf8") as output_handle:
@@ -100,16 +144,17 @@ def main() -> None:
     AssertionError: If the provided primer FASTA file does not exist.
     """
     # pull  the primer FASTA from the command line
-    primer_fasta_path = sys.argv[1]
-    label = sys.argv[2]
+    args = parse_command_line_args()
 
     # make sure the file provided by the user exists
     assert os.path.isfile(
-        primer_fasta_path
-    ), f"The provided primer FASTA, {primer_fasta_path}, does not exist"
+        args.input_fasta
+    ), f"The provided primer FASTA, {args.input_fasta}, does not exist"
 
     # generate the new regex patterns
-    generate_regex_patterns(primer_fasta_path, label)
+    generate_regex_patterns(
+        args.input_fasta, args.output_prefix, args.forward_pattern, args.reverse_pattern
+    )
 
 
 if __name__ == "__main__":
