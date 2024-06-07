@@ -7,7 +7,7 @@ include { GET_PRIMER_SEQS } from "../modules/bedtools"
 include { TRIM_ENDS_TO_PRIMERS } from "../modules/cutadapt"
 include { FASTQ_CONVERSION } from "../modules/samtools"
 include { ORIENT_READS } from "../modules/vsearch"
-include { FIND_COMPLETE_AMPLICONS; MERGE_BY_SAMPLE; DOWNSAMPLE_READS } from "../modules/seqkit"
+include { FIND_COMPLETE_AMPLICONS; MERGE_BY_SAMPLE; AMPLICON_STATS; DOWNSAMPLE_READS } from "../modules/seqkit"
 
 workflow PRIMER_HANDLING {
 
