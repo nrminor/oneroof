@@ -1,4 +1,5 @@
-# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
+# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial
+Roof
 
 
 - [Overview](#overview)
@@ -85,7 +86,7 @@ following parameters:
 `oneroof` depends on software packages supplied through various `conda`
 registries as well as through `PyPI`, the Python Package Index. To unify
 these various channels, we used the relatively new `pixi` package and
-environment channel, which stores all dependencies from both locations
+environment manager, which stores all dependencies from both locations
 in the file [`pyproject.toml`](pyproject.toml).
 
 To reproduce the environment required by this pipeline, make sure you

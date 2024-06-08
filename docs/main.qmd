@@ -64,7 +64,7 @@ Most users should configure `oneroof` through the command line via the following
 
 ## Developer Setup
 
-`oneroof` depends on software packages supplied through various `conda` registries as well as through `PyPI`, the Python Package Index. To unify these various channels, we used the relatively new `pixi` package and environment channel, which stores all dependencies from both locations in the file [`pyproject.toml`](pyproject.toml).
+`oneroof` depends on software packages supplied through various `conda` registries as well as through `PyPI`, the Python Package Index. To unify these various channels, we used the relatively new `pixi` package and environment manager, which stores all dependencies from both locations in the file [`pyproject.toml`](pyproject.toml).
 
 To reproduce the environment required by this pipeline, make sure you are on a Mac with an x86_64 (Intel) processor, a 64-bit linux machine, or a 64-bit Windows machine using Windows Subsystem for Linux (Apple Silicon coming soon!). Then, to reproduce the environment, install pixi with:
 

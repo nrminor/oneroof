@@ -1,6 +1,6 @@
 project:
   output-dir: docs
-  post-render: just docs
+  post-render: just readme
 
 toc: true
 number-sections: true
