@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 include { NANOPORE } from "$projectDir/workflows/nanopore"
-// include { ILLUMINA } from "$projectDir/workflows/illumina"
+include { ILLUMINA } from "$projectDir/workflows/illumina"
 
 workflow {
 
@@ -56,17 +56,26 @@ workflow {
             ch_snpeff_config
         )
 
-    } // else {
+    }  else if ( params.platform == "illumina" ) {
 
-    //     error(message = "Execution with Illumina reads is not yet supported.")
+        error "Execution with Illumina reads is not yet supported."
 
-    //     assert params.illumina_fastq_dir != "" : "Please double check that a directory of Illumina FASTQs or Nanopore POD5s is provided." 
-    //     assert file( params.illumina_fastq_dir ).isDirectory() : "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
+        assert params.illumina_fastq_dir != "" : 
+        "Please double check that a directory of Illumina FASTQs or Nanopore POD5s is provided." 
+        assert file( params.illumina_fastq_dir ).isDirectory() : 
+        "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
 
-    //     ILLUMINA (
-    //         ch_primer_bed,
-    //         ch_refseq
-    //     )
-    // }
+        ILLUMINA (
+            ch_primer_bed,
+            ch_refseq
+        )
+    } else {
+
+        error """
+        Unrecognized platform provided with ${params.platform}. This pipeline only supports
+        Nanopore data with the keyword 'ont' and Illumina data with the keyword 'illumina'.
+        """
+
+    }
 
 }
