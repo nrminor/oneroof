@@ -10,6 +10,9 @@ workflow {
     // the sequencing platform used
     params.platform = params.illumina_fastq_dir == "" ? "ont" : "illumina"
 
+    // Checking for required files
+    // ---------------------------------------------------------------------- //
+
     // make sure required primer bed is provided and exists
     assert params.primer_bed != "" :
     "Please provide a primer bed file with the parameter `primer_bed`."
@@ -34,6 +37,8 @@ workflow {
     assert file(params.snpEff_config).isFile() :
     "Please double check that the snpEff config file provided with the parameter `snpEff_config` exists."
 
+    // ---------------------------------------------------------------------- //
+
     // initialize input channels
     ch_primer_bed = Channel
         .fromPath( params.primer_bed )
@@ -47,6 +52,8 @@ workflow {
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
 
+
+    // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
         NANOPORE (
@@ -60,15 +67,11 @@ workflow {
 
         error "Execution with Illumina reads is not yet supported."
 
-        assert params.illumina_fastq_dir != "" : 
-        "Please double check that a directory of Illumina FASTQs or Nanopore POD5s is provided." 
-        assert file( params.illumina_fastq_dir ).isDirectory() : 
-        "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
-
         ILLUMINA (
             ch_primer_bed,
             ch_refseq
         )
+
     } else {
 
         error """

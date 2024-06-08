@@ -26,7 +26,7 @@ workflow NANOPORE {
         GATHER_NANOPORE ( )
 
         // ERROR_CORRECTION (
-        //     GATHER_DATA.out
+        //     GATHER_NANOPORE.out
         // )
 
         PRIMER_HANDLING (

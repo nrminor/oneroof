@@ -3,6 +3,7 @@
 include { GENERATE_MPILEUP } from "../modules/samtools"
 include { CALL_VARIANTS; CONVERT_TO_VCF } from "../modules/ivar"
 include { BUILD_DB; ANNOTATE_VCF } from "../modules/snpeff"
+include { MERGE_VCF_FILES } from "../modules/bcftools"
 
 workflow VARIANTS {
 
@@ -40,7 +41,13 @@ workflow VARIANTS {
             CONVERT_TO_VCF.out
         )
 
+        MERGE_VCF_FILES (
+            ANNOTATE_VCF.out
+                .map { label, vcf -> vcf }
+                .collect()
+        )
+
     // emit:
-    //     ANNOTATE_VCF.out
+    //     MERGE_VCF_FILES.out
 
 }

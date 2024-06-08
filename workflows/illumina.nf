@@ -10,6 +10,10 @@ workflow ILLUMINA {
     
     main:
         assert params.platform == "illumina"
+        assert params.illumina_fastq_dir != "" : 
+        "Please double check that a directory of Illumina FASTQs or Nanopore POD5s is provided." 
+        assert file( params.illumina_fastq_dir ).isDirectory() : 
+        "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
 
         GATHER_ILLUMINA ( )
 

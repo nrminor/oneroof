@@ -14,16 +14,16 @@ alias py := python
 alias doit := all
 
 render:
-    quarto render docs/base_and_variant_call.qmd
+    quarto render docs/main.qmd
 
 make-readme:
-    @mv docs/base_and_variant_call.md ./README.md
+    @mv docs/main.md ./README.md
 
 render-dev:
     quarto render docs/developer.qmd
 
 compress_html:
-    @gzip -f docs/base_and_variant_call.html
+    @gzip -f docs/main.html
     @gzip -f docs/developer.html
 
 qmd: render render-dev
