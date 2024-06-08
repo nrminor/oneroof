@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { GATHER_DATA } from "../subworkflows/gather_data"
+include { GATHER_NANOPORE } from "../subworkflows/gather_nanopore"
 // include { ERROR_CORRECTION } from "../subworkflows/error_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
@@ -8,8 +8,6 @@ include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { PHYLO } from "../subworkflows/phylo"
-
-
 
 workflow NANOPORE {
 
@@ -25,7 +23,7 @@ workflow NANOPORE {
         assert params.platform == "ont"
         assert params.kit : "Please provide the Nanopore barcoding kit used."
 
-        GATHER_DATA ( )
+        GATHER_NANOPORE ( )
 
         // ERROR_CORRECTION (
         //     GATHER_DATA.out

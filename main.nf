@@ -11,28 +11,28 @@ workflow {
     params.platform = params.illumina_fastq_dir == "" ? "ont" : "illumina"
 
     // make sure required primer bed is provided and exists
-    assert params.primer_bed != "" 
-    : "Please provide a primer bed file with the parameter `primer_bed`."
-    assert file(params.primer_bed).isFile() 
-    : "Please double check that the primer bed file provided with the parameter `primer_bed` exists."
+    assert params.primer_bed != "" :
+    "Please provide a primer bed file with the parameter `primer_bed`."
+    assert file(params.primer_bed).isFile() :
+    "Please double check that the primer bed file provided with the parameter `primer_bed` exists."
     
     // make sure provided refseq is provided and exists
-    assert params.refseq != "" 
-    : "Please provide a reference FASTA file with the parameter `refseq`."
-    assert file(params.refseq).isFile() 
-    : "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
+    assert params.refseq != "" :
+    "Please provide a reference FASTA file with the parameter `refseq`."
+    assert file(params.refseq).isFile() :
+    "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
     
     // make sure required reference genbank is provided and exists
-    assert params.ref_gbk != "" 
-    : "Please provide a reference Genbank file with the parameter `ref_gbk`."
-    assert file(params.ref_gbk).isFile() 
-    : "Please double check that the reference Genbank file provided with the parameter `ref_gbk` exists."
+    assert params.ref_gbk != "" :
+    "Please provide a reference Genbank file with the parameter `ref_gbk`."
+    assert file(params.ref_gbk).isFile() :
+    "Please double check that the reference Genbank file provided with the parameter `ref_gbk` exists."
     
     // make sure required snpeff config is provided and exists
-    assert params.snpEff_config != "" 
-    : "Please provide a snpEff config file with the parameter `snpEff_config`."
-    assert file(params.snpEff_config).isFile() 
-    : "Please double check that the snpEff config file provided with the parameter `snpEff_config` exists."
+    assert params.snpEff_config != "" :
+    "Please provide a snpEff config file with the parameter `snpEff_config`."
+    assert file(params.snpEff_config).isFile() :
+    "Please double check that the snpEff config file provided with the parameter `snpEff_config` exists."
 
     // initialize input channels
     ch_primer_bed = Channel
