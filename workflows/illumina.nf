@@ -1,12 +1,12 @@
 #!/usr/bin/env nextflow
 
 include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
-include { PRIMER_HANDLING } from "./subworkflows/primer_handling"
-include { ALIGNMENT } from "./subworkflows/alignment"
-include { QUALITY_CONTROL } from "./subworkflows/quality_control"
-include { CONSENSUS } from "./subworkflows/consensus_calling"
-include { VARIANTS } from "./subworkflows/variant_calling"
-include { PHYLO } from "./subworkflows/phylo"
+include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
+include { ALIGNMENT } from "../subworkflows/alignment"
+include { QUALITY_CONTROL } from "../subworkflows/quality_control"
+include { CONSENSUS } from "../subworkflows/consensus_calling"
+include { VARIANTS } from "../subworkflows/variant_calling"
+include { PHYLO } from "../subworkflows/phylo"
 
 workflow ILLUMINA {
 

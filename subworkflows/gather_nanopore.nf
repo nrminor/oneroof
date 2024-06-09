@@ -45,9 +45,9 @@ workflow GATHER_NANOPORE {
                 assert file(params.pod5_dir).isDirectory() :
                 "Please double check that the provided POD5 directory exists: ${params.pod5_dir}"
 
-                ch_pod5_dir = Channel
+                ch_local_pod5s = Channel
                     .fromPath ( "${params.pod5_dir}/*.pod5" )
-                    // .take ( params.pod5_batch_size )
+                    .take ( params.pod5_batch_size )
 
                 BASECALL (
                     DOWNLOAD_MODELS.out.collect(),

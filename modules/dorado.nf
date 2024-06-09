@@ -24,7 +24,7 @@ process BASECALL {
 
     input:
     each path(models)
-    path pod5
+    path pod5_dir, stageAs: "pod5s/???.pod5"
 
     output:
     path "basecalled.bam"

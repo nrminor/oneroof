@@ -30,7 +30,7 @@ workflow NANOPORE {
         // )
 
         PRIMER_HANDLING (
-            GATHER_DATA.out,
+            GATHER_NANOPORE.out,
             ch_primer_bed,
             ch_refseq
         )
