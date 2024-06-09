@@ -1,15 +1,14 @@
-# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial
-Roof
+# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
 
 
 - [Overview](#overview)
-- [Is it any good?](#is-it-any-good)
 - [Quick Start](#quick-start)
 - [Detailed Setup Instructions](#detailed-setup-instructions)
 - [Configuration](#configuration)
 - [Developer Setup](#developer-setup)
 - [Pipeline Steps](#pipeline-steps)
 - [Contributing](#contributing)
+- [Is it any good?](#is-it-any-good)
 - [Citation](#citation)
 
 ## Overview
@@ -19,16 +18,17 @@ bioinformatic tasks (see below) and put them under “one roof”. We mean
 this quite literally: the pipeline will perform at its best when run on
 networked devices in the same building.
 
-`oneroof` was originally developed at the very early stages of the
-United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak
-of 2024, when we wanted one, configurable, easy-to-run pipeline that
-would do all of the following:
+`oneroof` was originally developed in the early stages of the United
+States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024,
+when we wanted one, configurable, easy-to-run pipeline that would do all
+of the following:
 
 1.  Handle super-accuracy basecalling with GPU acceleration on
-    pod5-formatted Nanopore signal files.
+    pod5-formatted Nanopore signal files, working on GCP or AWS if need
+    be.
 2.  Demultiplex BAM-formatted reads that come out of basecalling.
 3.  Perform the above two steps as signal files become available, either
-    locally or remotely.
+    locally or remotely via a TCP stream.
 4.  Accept raw read BAMs or FASTQs if basecalling and demultiplexing
     have already been performed elsewhere.
 5.  Accept paired Illumina reads in addition to Nanopore reads.
@@ -51,10 +51,10 @@ above. `oneroof` seeks to handle these requirements while remaining
 highly configurable for users, highly modular for developers, and easy
 to control in the command line for both.
 
-Overall, `oneroof` can be summarized as a pipeline written in and
-managed by Nextflow. Its software dependencies are provided through
-containers or through an environment assembled by `pixi`. To run it on
-your own Nanopore pod5s, simply run something like:
+Overall, `oneroof` can be summarized as a variant-calling pipeline
+written in and managed by Nextflow. Its software dependencies are
+provided through containers or through an environment assembled by
+`pixi`. To run it on your own Nanopore pod5s, simply run something like:
 
     nextflow run nrminor/oneroof \
     --pod5_dir my_pod5_dir \
@@ -72,10 +72,6 @@ And for Illumina paired-end reads, it’s even simpler:
 
     nextflow run nrminor/oneroof \
     --illumina_fastq_dir my_illumina_reads/
-
-## Is it any good?
-
-[Yes.](https://news.ycombinator.com/item?id=3067434)
 
 ## Quick Start
 
@@ -148,6 +144,10 @@ directly within the local project environment.
 ## Pipeline Steps
 
 ## Contributing
+
+## Is it any good?
+
+[Yes.](https://news.ycombinator.com/item?id=3067434)
 
 ## Citation
 

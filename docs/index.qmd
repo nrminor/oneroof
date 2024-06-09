@@ -15,11 +15,11 @@ engine: knitr
 
 `oneroof` is a pipeline designed to take a common series of bioinformatic tasks (see below) and put them under "one roof". We mean this quite literally: the pipeline will perform at its best when run on networked devices in the same building.
 
-`oneroof` was originally developed at the very early stages of the United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024, when we wanted one, configurable, easy-to-run pipeline that would do all of the following:
+`oneroof` was originally developed in the early stages of the United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024, when we wanted one, configurable, easy-to-run pipeline that would do all of the following:
 
-1. Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files.
+1. Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files, working on GCP or AWS if need be.
 2. Demultiplex BAM-formatted reads that come out of basecalling.
-3. Perform the above two steps as signal files become available, either locally or remotely.
+3. Perform the above two steps as signal files become available, either locally or remotely via a TCP stream.
 4. Accept raw read BAMs or FASTQs if basecalling and demultiplexing have already been performed elsewhere.
 5. Accept paired Illumina reads in addition to Nanopore reads.
 6. Use forward and reverse primer sequences to select only those reads that represent complete amplicons.
@@ -30,7 +30,7 @@ engine: knitr
 
 Though many excellent pipelines currently exist, e.g. `nf-core/viralrecon`, `epi2me-labs/wf-amplicon`, and `nf-core/nanoseq`, none of these pipelines quite handled all of the above. `oneroof` seeks to handle these requirements while remaining highly configurable for users, highly modular for developers, and easy to control in the command line for both.
 
-Overall, `oneroof` can be summarized as a pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by `pixi`. To run it on your own Nanopore pod5s, simply run something like:
+Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by `pixi`. To run it on your own Nanopore pod5s, simply run something like:
 
 ```
 nextflow run nrminor/oneroof \
@@ -49,10 +49,6 @@ And for Illumina paired-end reads, it's even simpler:
 nextflow run nrminor/oneroof \
 --illumina_fastq_dir my_illumina_reads/
 ```
-
-## Is it any good?
-
-[Yes.](https://news.ycombinator.com/item?id=3067434)
 
 ## Quick Start
 
@@ -114,6 +110,10 @@ Especially on Macs, this will reduce the overhead of using the Docker Virtual Ma
 ## Contributing
 
 
+
+## Is it any good?
+
+[Yes.](https://news.ycombinator.com/item?id=3067434)
 
 ## Citation
 
