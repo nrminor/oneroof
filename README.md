@@ -3,6 +3,7 @@ Roof
 
 
 - [Overview](#overview)
+- [Is it any good?](#is-it-any-good)
 - [Quick Start](#quick-start)
 - [Detailed Setup Instructions](#detailed-setup-instructions)
 - [Configuration](#configuration)
@@ -72,7 +73,30 @@ And for Illumina paired-end reads, it’s even simpler:
     nextflow run nrminor/oneroof \
     --illumina_fastq_dir my_illumina_reads/
 
+## Is it any good?
+
+[Yes.](https://news.ycombinator.com/item?id=3067434)
+
 ## Quick Start
+
+For most users, `oneroof` will have two core requirements: The Docker
+container engine, [available
+here](https://docs.docker.com/engine/install/), and Nextflow, [available
+here](https://docs.docker.com/engine/install/). For users interested in
+super-accuracy basecalling Nanopore signal files, an on-board GPU
+[supported by the Dorado
+basecaller](https://github.com/nanoporetech/dorado?tab=readme-ov-file#platforms)
+is also required.
+
+All remaining software dependencies will be supplied through the
+pipeline’s Docker image, which will be pulled and used to launch
+containers automatically.
+
+From there, the pipeline’s three data dependencies are sequence data in
+BAM, FASTQ, or POD5 format, a BED file of primer coordinates, and a
+reference sequence in FASTA and Genbank format. For Nanopore data, a
+barcoding kit identifier is also required. Simply plug in these files to
+a command like the above and hit enter!
 
 ## Detailed Setup Instructions
 
@@ -126,3 +150,5 @@ directly within the local project environment.
 ## Contributing
 
 ## Citation
+
+Coming soon!
