@@ -23,8 +23,8 @@ process BASECALL {
 	maxRetries 2
 
     input:
-    each path(models)
-    path pod5_dir, stageAs: "pod5s/???.pod5"
+    path models
+    path "pod5s/???.pod5"
 
     output:
     path "basecalled.bam"
@@ -32,7 +32,7 @@ process BASECALL {
     script:
     """
     dorado basecaller \
-    ${params.model} ${pod5_dir} \
+    ${params.model} pod5s/ \
     --kit-name ${params.kit} \
     > basecalled.bam
     """

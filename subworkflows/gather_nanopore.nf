@@ -33,6 +33,7 @@ workflow GATHER_NANOPORE {
 
                 ch_staged_pod5s = Channel
                     .watchPath ( "${params.pod5_staging}/*.pod5", 'create' )
+                    .buffer ( size: params.pod5_batch_size )
                     // .until( ??? ) TODO
 
                 BASECALL (
@@ -45,13 +46,18 @@ workflow GATHER_NANOPORE {
                 assert file(params.pod5_dir).isDirectory() :
                 "Please double check that the provided POD5 directory exists: ${params.pod5_dir}"
 
+                pod5_count = file( "${params.pod5_dir}/*.pod5" ).size()
+
+                assert pod5_count > 0 :
+                "Provided pod5 directory '${params.pod5_dir}' contains no files with the .pod5 extension."
+
                 ch_local_pod5s = Channel
                     .fromPath ( "${params.pod5_dir}/*.pod5" )
-                    .take ( params.pod5_batch_size )
+                    .buffer ( size: params.pod5_batch_size ? params.pod5_batch_size : pod5_count )
 
                 BASECALL (
                     DOWNLOAD_MODELS.out.collect(),
-                    ch_pod5_dir
+                    ch_local_pod5s
                 )
 
             }
@@ -69,6 +75,7 @@ workflow GATHER_NANOPORE {
                                 file(demux_bam)
                             )
                     }
+                    .filter { !it[0].toString().contains("unclassified") }
                     .groupTuple( by: 0 )
             )
 
