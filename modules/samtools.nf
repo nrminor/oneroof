@@ -1,3 +1,24 @@
+process MERGE_BARCODES {
+
+    /* */
+
+    tag "${barcode}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path("to_merge/???.bam")
+
+    output:
+    tuple val(barcode), path("${barcode}.bam")
+
+    script:
+    """
+    samtools merge -o ${barcode}.bam to_merge/*.bam
+    """
+}
+
 process CONVERT_AND_SORT {
 
     tag "${barcode}"
@@ -92,6 +113,7 @@ process FASTQ_CONVERSION {
     publishDir params.basecall_fastqs
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+
 	maxRetries 2
 
     input:
@@ -106,4 +128,3 @@ process FASTQ_CONVERSION {
     """
 
 }
-

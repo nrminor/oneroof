@@ -2,6 +2,7 @@
 
 include { WATCH_FOR_POD5S } from "../modules/pod5_watcher"
 include { DOWNLOAD_MODELS; BASECALL; DEMULTIPLEX } from "../modules/dorado"
+include { MERGE_BARCODES } from "../modules/samtools"
 include { VALIDATE_NANOPORE } from "../modules/validate"
 
 workflow GATHER_NANOPORE {
@@ -35,17 +36,17 @@ workflow GATHER_NANOPORE {
                     // .until( ??? ) TODO
 
                 BASECALL (
-                    DOWNLOAD_MODELS.out,
+                    DOWNLOAD_MODELS.out.collect(),
                     ch_staged_pod5s
                 )
 
             } else {
 
-                assert file(params.pod5_dir).isDirectory() : 
+                assert file(params.pod5_dir).isDirectory() :
                 "Please double check that the provided POD5 directory exists: ${params.pod5_dir}"
 
                 ch_pod5_dir = Channel
-                    .fromPath ( params.pod5_dir )
+                    .fromPath ( "${params.pod5_dir}/*.pod5" )
                     // .take ( params.pod5_batch_size )
 
                 BASECALL (
@@ -56,18 +57,23 @@ workflow GATHER_NANOPORE {
             }
 
             DEMULTIPLEX (
-                BASECALL.out.collect()
+                BASECALL.out
+            )
+
+            MERGE_BARCODES (
+                DEMULTIPLEX.out
+                    .flatten()
+                    .map { demux_bam ->
+                            tuple(
+                                file(demux_bam).getSimpleName().replace("${params.kit}_", ""),
+                                file(demux_bam)
+                            )
+                    }
+                    .groupTuple( by: 0 )
             )
 
             VALIDATE_NANOPORE (
-                DEMULTIPLEX.out
-                    .flatten()
-                    .map { demux_bam -> 
-                            tuple( 
-                                file(demux_bam).getSimpleName().replace("${params.kit}_", ""),
-                                file(demux_bam)
-                            ) 
-                    }
+                MERGE_BARCODES.output
             )
 
         // ------------------------------------------------------------------ //
@@ -87,7 +93,7 @@ workflow GATHER_NANOPORE {
             ch_prepped = Channel
                 .fromPath( "${params.prepped_data}/*.fastq.gz" )
                 .map { fastq -> tuple( file(fastq).getSimpleName(), file(fastq) ) }
-            
+
             VALIDATE_NANOPORE (
                 ch_prepped
             )
@@ -95,7 +101,7 @@ workflow GATHER_NANOPORE {
         }
 
         // ------------------------------------------------------------------ //
-    
+
     emit:
         VALIDATE_NANOPORE.out
             .map { label, seq_file, status -> tuple( label, file(seq_file) ) }

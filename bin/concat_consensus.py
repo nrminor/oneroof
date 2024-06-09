@@ -10,6 +10,10 @@ from Bio.SeqRecord import SeqRecord
 def main() -> None:
     consensus_files = glob.glob("*.consensus.fasta")
 
+    assert (
+        len(consensus_files) > 0
+    ), "Please double check that the working directory provided contains some files with the extension '.consensus.fasta'."
+
     consensus_records = []
     for consensus_file in consensus_files:
         sample_name = consensus_file.split("/")[-1].replace(".consensus.fasta", "")

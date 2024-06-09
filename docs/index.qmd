@@ -41,7 +41,7 @@ nextflow run nrminor/oneroof \
 --kit "SQK-NBD114-24"
 ```
 
-These are the core elements required to run on Nanopore data: a directory of pod5 files, a BED file of primer coordinates, a reference sequence in FASTA and Genbank format, and the Nanopore barcoding kit used. 
+These are the core elements required to run on Nanopore data: a directory of pod5 files, a BED file of primer coordinates, a reference sequence in FASTA and Genbank format, and the Nanopore barcoding kit used.
 
 And for Illumina paired-end reads, it's even simpler:
 
