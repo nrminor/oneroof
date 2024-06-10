@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
+include { ILLUMINA_CORRECTION } from "../subworkflows/illumina_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
 include { QUALITY_CONTROL } from "../subworkflows/quality_control"
@@ -23,8 +24,12 @@ workflow ILLUMINA {
 
         GATHER_ILLUMINA ( )
 
+        ILLUMINA_CORRECTION (
+            GATHER_ILLUMINA.out
+        )
+
         PRIMER_HANDLING (
-            GATHER_ILLUMINA.out,
+            ILLUMINA_CORRECTION.out,
             ch_primer_bed,
             ch_refseq
         )

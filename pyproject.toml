@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [{name = "Nicholas Minor", email = "nrminor@wisc.edu"}]
 requires-python = ">= 3.10"
-dependencies = ["ruff", "uv", "ipykernel", "pyright", "quarto", "polars", "pandas", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo", "numpy", "scipy"]
+dependencies = ["ruff", "uv", "quarto", "polars", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo", "numpy", "scipy"]
 
 [build-system]
 requires = ["setuptools"]
@@ -27,7 +27,6 @@ fastqc = ">=0.12.1,<0.13"
 multiqc = ">=1.19,<2"
 bcftools = ">=1.16,<2"
 chopper = ">=0.8.0,<0.9"
-pilon = ">=1.24,<2"
 racon = ">=1.5.0,<1.6"
 seqkit = ">=2.8.2,<2.9"
 snpeff = ">=5.2,<6"
