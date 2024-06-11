@@ -162,8 +162,8 @@ def main() -> None:
                 print("Time limit reached. Stopping the file transfer process.")
                 break
 
-            _stdin, _stdout, _stderr = client.exec_command(f"ls {creds.watch_path}")
-            all_files = _stdout.read().decode(encoding="utf8").splitlines()
+            _, stdout, _ = client.exec_command(f"ls {creds.watch_path}")
+            all_files = stdout.read().decode(encoding="utf8").splitlines()
             pod5_queue = [file for file in all_files if file.endswith(".pod5")]
             for pod5 in pod5_queue:
                 runner = TransferRunner(
