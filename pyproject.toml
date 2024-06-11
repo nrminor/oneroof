@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [{name = "Nicholas Minor", email = "nrminor@wisc.edu"}]
 requires-python = ">= 3.10"
-dependencies = ["ruff", "uv", "quarto", "polars", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo", "numpy", "scipy"]
+dependencies = ["ruff", "uv", "quarto", "polars", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo", "numpy", "scipy", "paramiko", "watchdog"]
 
 [build-system]
 requires = ["setuptools"]
@@ -35,3 +35,4 @@ nextclade = ">=3.7.1,<3.8"
 cutadapt = ">=4.8,<5"
 ivar = ">=1.4.2,<1.5"
 seqfu = ">=1.20.3,<1.21"
+pyyaml = ">=5.4.1,<5.5"
