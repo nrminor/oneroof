@@ -58,7 +58,9 @@ All remaining software dependencies will be supplied through the pipeline's Dock
 
 From there, the pipeline's three data dependencies are sequence data in BAM, FASTQ, or POD5 format, a BED file of primer coordinates, and a reference sequence in FASTA and Genbank format. For Nanopore data, a barcoding kit identifier is also required. Simply plug in these files to a command like the above and hit enter!
 
-## Configuration
+## Detailed Setup Instructions
+
+### Configuration
 
 Most users should configure `oneroof` through the command line via the following parameters:
 
@@ -82,7 +84,7 @@ Command line argument     | Default value | Explanation
 `--cleanup`               | false         | Whether to cleanup work directory after a successful run.
 
 
-## Developer Setup
+### Developer Setup
 
 `oneroof` depends on software packages supplied through various `conda` registries as well as through `PyPI`, the Python Package Index. To unify these various channels, we used the relatively new `pixi` package and environment manager, which stores all dependencies from both locations in the file [`pyproject.toml`](pyproject.toml).
 
