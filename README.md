@@ -162,10 +162,10 @@ Note also that more information on the repo’s files is available in our
 
 ## Contributing
 
-Contributions, feature requests, improvement suggests, and bug reports
-via GitHub issues are all welcome! For more information on how to work
-with the project and what all the repo files are, see our [developer
-guide](docs/developer.md).
+Contributions, feature requests, improvement suggestions, and bug
+reports via GitHub issues are all welcome! For more information on how
+to work with the project and what all the repo files are, see our
+[developer guide](docs/developer.md).
 
 ## Is it any good?
 
