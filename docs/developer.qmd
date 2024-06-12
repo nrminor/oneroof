@@ -1,7 +1,5 @@
 ---
 title: ""
-author: "Nick Minor"
-date: ""
 toc: true
 format:
     html:
