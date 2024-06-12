@@ -1,5 +1,4 @@
-# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial
-Roof
+# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
 
 
 - [Overview](#overview)
