@@ -8,7 +8,7 @@ from pathlib import Path
 
 import paramiko
 import yaml
-from paramiko import SSHClient
+from paramiko.client import SSHClient
 
 
 @dataclass
@@ -90,9 +90,6 @@ class TransferRunner:
 
 
 def parse_command_line_args() -> argparse.Namespace:
-    """
-    TODO
-    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--watchpath",
@@ -145,7 +142,7 @@ def main() -> None:
     creds = parse_credential_config(args)
 
     # set up ssh client and connection
-    client = paramiko.client.SSHClient()
+    client = SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(creds.host, username=creds.username, password=creds.password)
 
