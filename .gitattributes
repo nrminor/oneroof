@@ -1,4 +1,2 @@
 # GitHub syntax highlighting
 pixi.lock linguist-language=YAML
-docs/*.qmd linguist-language=md
-pixi.lock linguist-language=YAML
