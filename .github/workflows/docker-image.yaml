@@ -5,13 +5,15 @@ on:
         branches: [ "main", "dev" ]
         paths:
         - 'Dockerfile'
+        - 'pyproject.toml'
     pull_request:
         branches: [ "main" ]
         paths:
         - 'Dockerfile'
+        - 'pyproject.toml'
 
 jobs:
-    
+
     build:
 
         runs-on: ubuntu-latest
