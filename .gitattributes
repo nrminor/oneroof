@@ -1,7 +1,6 @@
 # GitHub syntax highlighting
 pixi.lock linguist-language=YAML
-notebooks/*.qmd linguist-language=Markdown
+notebooks/*.qmd linguist-language=md
 
 # GitHub syntax highlighting
 pixi.lock linguist-language=YAML
-
