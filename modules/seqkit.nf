@@ -81,33 +81,3 @@ process MERGE_BY_SAMPLE {
 	| gzip -c > ${barcode}.amplicons.fastq.gz
 	"""
 }
-
-process DOWNSAMPLE_READS {
-
-	/* */
-
-	tag "${barcode}"
-	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
-
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-	cpus 3
-
-	input:
-	tuple val(barcode), path(amplicons)
-
-	output:
-	tuple val(barcode), path("${barcode}.downsampled_to_${params.downsample_to}.fastq.gz")
-
-	script:
-	"""
-	seqkit sample \
-	--rand-seed 11 \
-	--two-pass \
-	--proportion ${params.downsample_to} \
-	-o ${barcode}.downsampled_to_${params.downsample_to}.fastq.gz \
-	${amplicons}
-	"""
-
-}

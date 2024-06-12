@@ -5,14 +5,14 @@ include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
 include { TRIM_ENDS_TO_PRIMERS } from "../modules/cutadapt"
-include { FASTQ_CONVERSION } from "../modules/samtools"
+include { FASTQ_CONVERSION; FAIDX } from "../modules/samtools"
 include { ORIENT_READS } from "../modules/vsearch"
 include {
     FIND_COMPLETE_AMPLICONS;
     MERGE_BY_SAMPLE;
-    AMPLICON_STATS;
-    DOWNSAMPLE_READS
+    AMPLICON_STATS
 } from "../modules/seqkit"
+include { RASUSA_READS } from "../modules/rasusa"
 
 workflow PRIMER_HANDLING {
 
@@ -68,10 +68,14 @@ workflow PRIMER_HANDLING {
             TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0 )
         )
 
-        DOWNSAMPLE_READS (
+        FAIDX (
             MERGE_BY_SAMPLE.out
         )
 
+        RASUSA_READS (
+            FAIDX.out
+        )
+
     emit:
-        DOWNSAMPLE_READS.out
+        RASUSA_READS.out
 }

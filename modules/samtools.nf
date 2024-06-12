@@ -128,3 +128,26 @@ process FASTQ_CONVERSION {
     """
 
 }
+
+process FAIDX {
+
+    tag "${barcode}"
+    publishDir params.basecall_fastqs
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path(fastq)
+
+    output:
+    tuple val(barcode), path(fastq), path("${index_name}.fai")
+
+    script:
+    index_name = file(fastq).getName()
+    """
+    samtools faidx --fastq ${fastq}
+    """
+
+}

@@ -18,19 +18,19 @@ workflow {
     "Please provide a primer bed file with the parameter `primer_bed`."
     assert file(params.primer_bed).isFile() :
     "Please double check that the primer bed file provided with the parameter `primer_bed` exists."
-    
+
     // make sure provided refseq is provided and exists
     assert params.refseq != "" :
     "Please provide a reference FASTA file with the parameter `refseq`."
     assert file(params.refseq).isFile() :
     "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
-    
+
     // make sure required reference genbank is provided and exists
     assert params.ref_gbk != "" :
     "Please provide a reference Genbank file with the parameter `ref_gbk`."
     assert file(params.ref_gbk).isFile() :
     "Please double check that the reference Genbank file provided with the parameter `ref_gbk` exists."
-    
+
     // make sure required snpeff config is provided and exists
     assert params.snpEff_config != "" :
     "Please provide a snpEff config file with the parameter `snpEff_config`."
@@ -45,10 +45,10 @@ workflow {
 
     ch_refseq = Channel
         .fromPath( params.refseq )
-    
+
     ch_ref_gbk = Channel
         .fromPath( params.ref_gbk )
-    
+
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
 
@@ -64,8 +64,6 @@ workflow {
         )
 
     }  else if ( params.platform == "illumina" ) {
-
-        error "Execution with Illumina reads is not yet supported."
 
         ILLUMINA (
             ch_primer_bed,

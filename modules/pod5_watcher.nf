@@ -1,16 +1,19 @@
 process WATCH_FOR_POD5S {
 
-    cache "$launchDir/pod5_cache"
+    cache params.pod5_staging
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
     input:
-    val remote_dir
+    path config
+
+    output:
+    path "*.pod5"
 
     script:
     """
-    pod5_watcher.py
+    pod5_watcher.py --host_config ${config}
     """
 
 }

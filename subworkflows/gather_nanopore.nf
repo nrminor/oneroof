@@ -20,10 +20,6 @@ workflow GATHER_NANOPORE {
 
             if ( params.remote_pod5_location != "" ) {
 
-                error(
-                    message = "Watching a remote directory for pod5's is not yet supported. Please transfer the directory of pod5's yourself and supply it with the `--pod5_dir` command line argument."
-                )
-
                 ch_remote_pod5s = Channel
                     .from ( params.remote_pod5_location )
 

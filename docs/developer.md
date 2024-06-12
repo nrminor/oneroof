@@ -1,3 +1,2 @@
-Nick Minor
 
 Coming soon!
