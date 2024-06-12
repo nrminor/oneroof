@@ -40,7 +40,7 @@ Of these tools, Pixi is the only one that is essential, as it handles
 installing the pipeline’s dependencies from various `conda` registries
 as well as the Python Package Index. That said, you could even get away
 with not using `pixi` by manually installing the packages in
-[`/pyproject.toml`](./pyproject.toml) in a `conda` environment, using
+[`pyproject.toml`](../pyproject.toml) in a `conda` environment, using
 pip when needed.
 
 If you are sticking with Pixi, run `pixi shell` in the project root
@@ -51,7 +51,7 @@ everything you need to work on and run `oneroof`.
 
 While Just isn’t as important Pixi, I would still recommend installing
 it because of the conveniences it offers. With Just, the repo
-[`justfile`](./justfile) provides a switchboard of command shorthands,
+[`justfile`](../justfile) provides a switchboard of command shorthands,
 including:
 
 - `just docs`, which runs a series of Quarto commands to render and
@@ -63,17 +63,17 @@ including:
 - `just env`, which instantiates the Pixi environment.
 - `just all`, which does everything.
 
-Run `just` in the same directory as the repo [`justfile`](./justfile) to
-list all available recipes, and check out the [Just Programmer’s
+Run `just` in the same directory as the repo [`justfile`](../justfile)
+to list all available recipes, and check out the [Just Programmer’s
 Manual](https://just.systems/man/en/chapter_1.html) for more about Just.
 
 #### Pre-commit
 
 If you run `pre-commit install` in the repo root directory, it will
 install the pre-commit hooks in our
-[`.pre-commit-config.yaml`](./.pre-commit-config.yaml). These hooks make
-sure that formatting throughout the repo files are consistent before
-they can be committed. Again, not essential, but nice!
+[`.pre-commit-config.yaml`](../.pre-commit-config.yaml). These hooks
+make sure that formatting throughout the repo files are consistent
+before they can be committed. Again, not essential, but nice!
 
 #### Docker
 
@@ -92,11 +92,10 @@ in supercharged Markdown. It can run code blocks, render to HTML, PDF,
 As such, I use Quarto documents as the sort of “ur-format,” and render
 it out to other formats as desired. To render the project readme or
 other documents, you will need Quarto installed. The Quarto config file,
-[`_quarto.yml`](./_quarto.yml), controls project level settings,
+[`_quarto.yml`](../_quarto.yml), controls project level settings,
 including a post-render section telling it to regenerate the
-Github-markdown-formatted readme from
-[`assets/index.qmd`](./docs/index.qmd) (via the project’s `just readme`
-recipe).
+Github-markdown-formatted readme from [`assets/index.qmd`](index.qmd)
+(via the project’s `just readme` recipe).
 
 ## Dorado
 
