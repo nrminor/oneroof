@@ -124,7 +124,7 @@ process FASTQ_CONVERSION {
 
     script:
     """
-    samtools fastq ${bam} | gzip -c > ${barcode}.fastq.gz
+    samtools fastq ${bam} | bgzip -o ${barcode}.fastq.gz
     """
 
 }
