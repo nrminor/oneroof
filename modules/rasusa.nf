@@ -22,7 +22,7 @@ process RASUSA_READS {
     --coverage ${params.downsample_to} \
     --genome-size ${faidx} \
     --seed 14 \
-    --output-type b \
+    --output-type g \
     --output ${barcode}.${params.downsample_to}x.fastq.gz \
 	${amplicons}
     """
