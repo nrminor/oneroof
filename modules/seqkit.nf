@@ -78,6 +78,6 @@ process MERGE_BY_SAMPLE {
 	--find-only \
 	--threads ${task.cpus} \
 	fastqs/ \
-	| gzip -c > ${barcode}.amplicons.fastq.gz
+	| bgzip -o ${barcode}.amplicons.fastq.gz
 	"""
 }
