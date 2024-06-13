@@ -23,7 +23,8 @@ process RASUSA_READS {
     --genome-size ${faidx} \
     --seed 14 \
     --output-type b \
-    --output ${barcode}.${params.downsample_to}x.fastq.gz
+    --output ${barcode}.${params.downsample_to}x.fastq.gz \
+	${amplicons}
     """
 
 }
@@ -50,7 +51,8 @@ process RASUSA_ALN {
     rasusa aln \
     --coverage ${params.downsample_to} \
     --seed 14 \
-    --output ${barcode}.${params.downsample_to}x.bam
+    --output ${barcode}.${params.downsample_to}x.bam \
+	${bam}
     """
 
 }
