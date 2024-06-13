@@ -47,9 +47,9 @@ workflow PRIMER_HANDLING {
 
         ORIENT_READS (
             FASTQ_CONVERSION.out
-            .map { fastq -> tuple( file(fastq), file(fastq).countFastq() )}
-            .filter { it[1] > 100 }
-            .map { fastq, read_count -> file(fastq) },
+            .map { barcode, fastq -> tuple( barcode, file(fastq), file(fastq).countFastq() ) }
+            .filter { it[2] > 100 }
+            .map { barcode, fastq, read_count -> tuple( barcode, file(fastq) ) },
             ch_refseq
         )
 
