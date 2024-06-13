@@ -16,6 +16,8 @@ workflow GATHER_NANOPORE {
 
         if ( params.remote_pod5_location != "" || params.pod5_dir != "" ) {
 
+            assert params.kit : "Please provide the Nanopore barcoding kit used."
+
             DOWNLOAD_MODELS ( )
 
             if ( params.remote_pod5_location != "" ) {

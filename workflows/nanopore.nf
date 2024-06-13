@@ -21,7 +21,6 @@ workflow NANOPORE {
 
     main:
         assert params.platform == "ont"
-        assert params.kit : "Please provide the Nanopore barcoding kit used."
 
         GATHER_NANOPORE ( )
 
