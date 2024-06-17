@@ -14,17 +14,17 @@ process BUILD_DB {
     path "config"
 
     script:
-    config_dir = "config/genome/ref_genome/"
+    config_dir = "config/genome/ref_genome"
     """
     # 
-    mkdir -p ${config_dir}
+    mkdir -p ${config_dir}/
 
     # 
     cp ${genbank} ${config_dir}/genes.gbk
 
     # 
     snpEff build \
-    -c ${snpeff_config} \
+    -c config/ \
     -dataDir genome/ \
     -genbank \
     -v ref_genome
