@@ -5,9 +5,6 @@ process DOWNLOAD_DATASET {
     output:
     path "dataset_label/"
 
-    when:
-    params.dev == false
-
     script:
     dataset_label = params.nextclade_dataset.split("/")[-1]
     """
@@ -28,9 +25,6 @@ process RUN_NEXTCLADE {
 
     output:
     path "${label}/"
-
-    when:
-    params.dev == false
 
     script:
     label = file(sequences.toString()).getSimpleName()

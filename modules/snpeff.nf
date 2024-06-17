@@ -13,9 +13,6 @@ process BUILD_DB {
     output:
     path "config"
 
-    when:
-    params.dev == false
-
     script:
     config_dir = "config/genome/ref_genome/"
     """
