@@ -25,8 +25,7 @@ process BUILD_DB {
     #
     cp ${snpeff_config} local.config
 
-    # ls
-
+    #
     snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
     """
 
@@ -47,8 +46,9 @@ process ANNOTATE_VCF {
 
     script:
     """
+    cp ${snpeff_config} local.config && \
     snpEff \
-    -c ${snpeff_config} \
+    -c local.config \
     -dataDir genome/ \
     -v ref_genome \
     ${vcf} \
