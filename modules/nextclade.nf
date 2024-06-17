@@ -6,7 +6,7 @@ process DOWNLOAD_DATASET {
     path "dataset_label/"
 
     when:
-    nextclade_dataset.toString().toLowercase().contains("sars-cov-2")
+    params.nextclade_dataset && params.nextclade_dataset.toString().toLowercase().contains("sars-cov-2")
 
     script:
     dataset_label = params.nextclade_dataset.split("/")[-1]
