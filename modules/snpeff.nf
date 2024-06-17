@@ -1,35 +1,5 @@
 process BUILD_DB {
 
-    scratch "${cache_dir}"
-
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-    input:
-    path refseq
-    path genbank
-    path snpeff_config
-
-    output:
-    path "config"
-
-    script:
-    config_dir = "config/genome/ref_genome"
-    """
-    # 
-    mkdir -p ${config_dir}/
-
-    # 
-    cp ${genbank} ${config_dir}/genes.gbk
-
-    # 
-    snpEff build -c `basename ${snpeff_config}` -dataDir genome/ -genbank -v ref_genome
-    """
-
-}
-
-process BUILD_DB {
-
     storeDir params.snpeff_cache
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
