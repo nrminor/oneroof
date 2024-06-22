@@ -14,6 +14,7 @@ from paramiko.client import SSHClient
 @dataclass
 class Credentials:
     watch_path: str
+    pattern: str
     host: str
     username: str
     password: str
@@ -92,11 +93,20 @@ class TransferRunner:
 def parse_command_line_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--watchpath",
+        "--watch_path",
         "-w",
         type=Path,
         required=False,
+        default=None,
         help="Directory to watch on remote host.",
+    )
+    parser.add_argument(
+        "--watch_pattern",
+        "-p",
+        type=str,
+        required=False,
+        default=None,
+        help="Pattern to use when watching for files on the remote host.",
     )
     parser.add_argument(
         "--watch_duration",
@@ -104,14 +114,14 @@ def parse_command_line_args() -> argparse.Namespace:
         type=int,
         required=False,
         default=72,
-        help="The number of hours to watch for new pod5 files.",
+        help="The number of hours to watch for new files.",
     )
     parser.add_argument(
         "--host_config",
         "-c",
         type=Path,
         required=True,
-        default="pod5_watcher.yml",
+        default="file_watcher.yml",
         help="The configuration YAML file to use for connecting to the remote host with credentials.",
     )
 
@@ -119,12 +129,46 @@ def parse_command_line_args() -> argparse.Namespace:
     return args
 
 
+def runtime_config_check(config_dict: dict) -> None:
+    entries = config_dict.keys()
+    assert "watch_path" in entries, """
+    A remote absolute file path, not including the IP address itself, must be
+    provided in a `watch_path` field in the configuration YAML file.
+    """
+    assert "pattern" in entries, """
+    A valid glob pattern to use for matching files, e.g., "*.pod5", must be
+    provided in the `pattern` field of the configuration YAML file.
+    """
+    assert "host" in entries, """
+    A valid host IP address must be provided in the `host` field of the file
+    watcher configuration YAML file.
+    """
+    assert "username" in entries, """
+    A valid username at the remote host must be provided in the `username` field
+    of the file watch configuration YAML file.
+    """
+    assert "password" in entries, """
+    A valid password at the remote host must be provided in the `password` field
+    of the file watch configuration YAML file.
+    """
+
+
 def parse_credential_config(args: argparse.Namespace) -> Credentials:
     with open(args.config_path, "r", encoding="utf8") as config_handle:
         config_dict = yaml.safe_load(config_handle)
 
+    runtime_config_check(config_dict)
+
+    config_dict["watch_path"] = (
+        args.watch_path if args.watch_path else config_dict["watch_path"]
+    )
+    config_dict["pattern"] = (
+        args.watch_pattern if args.watch_path else config_dict["pattern"]
+    )
+
     return Credentials(
         watch_path=args.watch_path if args.watch_path else config_dict["watch_path"],
+        pattern=config_dict["pattern"],
         host=config_dict["host"],
         username=config_dict["username"],
         password=config_dict["password"],
@@ -150,7 +194,7 @@ def main() -> None:
     start_time = time.time()
     duration = creds.watch_duration * 60 * 60
 
-    # run the watcher until the watch duration, checking fo pod5 files every 30
+    # run the watcher until the watch duration, checking for files every 30
     # seconds
     try:
         while True:
@@ -161,11 +205,11 @@ def main() -> None:
 
             _, stdout, _ = client.exec_command(f"ls {creds.watch_path}")
             all_files = stdout.read().decode(encoding="utf8").splitlines()
-            pod5_queue = [file for file in all_files if file.endswith(".pod5")]
-            for pod5 in pod5_queue:
+            file_queue = [file for file in all_files if file.endswith(creds.pattern)]
+            for file in file_queue:
                 runner = TransferRunner(
                     client=client,
-                    filename=pod5,
+                    filename=file,
                     remote_path=creds.watch_path,
                     address=creds.host,
                     username=creds.username,

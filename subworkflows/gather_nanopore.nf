@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { WATCH_FOR_POD5S } from "../modules/pod5_watcher"
+include { WATCH_FOR_POD5S } from "../modules/file_watcher"
 include { DOWNLOAD_MODELS; BASECALL; DEMULTIPLEX } from "../modules/dorado"
 include { MERGE_BARCODES } from "../modules/samtools"
 include { VALIDATE_NANOPORE } from "../modules/validate"
