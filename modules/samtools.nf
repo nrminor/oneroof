@@ -110,7 +110,6 @@ process GENERATE_MPILEUP {
 process FASTQ_CONVERSION {
 
     tag "${barcode}"
-    publishDir params.basecall_fastqs
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 
@@ -132,7 +131,7 @@ process FASTQ_CONVERSION {
 process FAIDX {
 
     tag "${barcode}"
-    publishDir params.basecall_fastqs
+    publishDir params.basecall_fastqs, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 

@@ -11,26 +11,22 @@ process BUILD_DB {
     path snpeff_config
 
     output:
-    path "config"
-
-    when:
-    params.dev == false
+    path "genome"
 
     script:
-    config_dir = "config/genome/ref_genome/"
+    config_dir = "genome/ref_genome"
     """
     # 
-    mkdir -p ${config_dir}
+    mkdir -p ${config_dir}/
 
     # 
     cp ${genbank} ${config_dir}/genes.gbk
 
-    # 
-    snpEff build \
-    -c ${snpeff_config} \
-    -dataDir genome/ \
-    -genbank \
-    -v ref_genome
+    #
+    cp ${snpeff_config} local.config
+
+    #
+    snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
     """
 
 }
@@ -50,8 +46,9 @@ process ANNOTATE_VCF {
 
     script:
     """
+    cp ${snpeff_config} local.config && \
     snpEff \
-    -c ${snpeff_config} \
+    -c local.config \
     -dataDir genome/ \
     -v ref_genome \
     ${vcf} \

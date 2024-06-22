@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { DOWNLOAD_DATASET; RUN_NEXTCLADE } from "../modules/nextclade"
+include { CHECK_DATASET; DOWNLOAD_DATASET; RUN_NEXTCLADE } from "../modules/nextclade"
 
 workflow PHYLO {
 
@@ -8,7 +8,11 @@ workflow PHYLO {
         ch_consensus
     
     main:
-        DOWNLOAD_DATASET ( )
+        CHECK_DATASET ( )
+
+        DOWNLOAD_DATASET (
+            CHECK_DATASET.out
+        )
 
         RUN_NEXTCLADE (
             ch_consensus,
