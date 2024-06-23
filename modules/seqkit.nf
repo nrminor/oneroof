@@ -8,8 +8,7 @@ process FIND_COMPLETE_AMPLICONS {
 	cpus 3
 
     input:
-	each path(reads)
-    each path(patterns)
+	tuple path(reads), path(patterns)
 
     output:
     tuple val(barcode), path(patterns), path("${barcode}_amplicons.fastq.gz")

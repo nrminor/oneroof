@@ -47,16 +47,16 @@ workflow PRIMER_HANDLING {
 
         ORIENT_READS (
             FASTQ_CONVERSION.out
-            .map { barcode, fastq -> tuple( barcode, file(fastq), file(fastq).countFastq() ) }
-            .filter { it[2] > 100 }
-            .map { barcode, fastq, read_count -> tuple( barcode, file(fastq) ) },
+                .map { barcode, fastq -> tuple( barcode, file(fastq), file(fastq).countFastq() ) }
+                .filter { it[2] > 100 }
+                .map { barcode, fastq, read_count -> tuple( barcode, file(fastq) ) },
             ch_refseq
         )
 
         FIND_COMPLETE_AMPLICONS (
             ORIENT_READS.out
-                .map { barcode, fastq -> fastq },
-            GET_PRIMER_PATTERNS.out
+                .map { barcode, fastq -> fastq }
+                .combine ( GET_PRIMER_PATTERNS.out )
         )
 
         TRIM_ENDS_TO_PRIMERS (

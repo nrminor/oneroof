@@ -20,10 +20,11 @@ process VALIDATE_NANOPORE {
         """
         seqkit seq -validate-seq ${seq_file} &
         samtools import -0 ${seq_file} -o ${label}.validated.bam
+        wait
         """
     else if ( file(seq_file).getName().endsWith(".bam") )
         """
-        samtools quickcheck -v -u ${seq_file}
+        samtools quickcheck -v -u ${seq_file} && \
         cp `realpath ${seq_file}` ${label}.validated.bam
         """
     else
