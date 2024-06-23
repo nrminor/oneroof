@@ -106,9 +106,11 @@ workflow GATHER_NANOPORE {
 
             ch_fastq_staging = Channel
                 .watchPath ( "${params.precalled_staging}/*.fastq.gz", 'create' )
+                .map { fastq -> tuple( file(fastq).getSimpleName(), file(fastq) ) }
 
             ch_bam_staging = Channel
                 .watchPath ( "${params.precalled_staging}/*.bam", 'create' )
+                .map { bam -> tuple( file(bam).getSimpleName(), file(bam) ) }
 
             VALIDATE_NANOPORE (
                 ch_fastq_staging
