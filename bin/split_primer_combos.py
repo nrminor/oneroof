@@ -88,6 +88,7 @@ def main() -> None:
         )
         .with_columns(
             pl.col("NAME")
+            .str.replace_all("-", "_")
             .str.replace(fwd_suff, "")
             .str.replace(rev_suff, "")
             .str.replace_all("_", "-")

@@ -9,6 +9,7 @@ python3 make_primer_patterns.py -f <FASTA> -o <OUTPUT_PREFIX>
 
 import argparse
 import os
+import warnings
 from pathlib import Path
 from typing import List
 
@@ -110,9 +111,10 @@ def generate_regex_patterns(
     start_coords = [
         int(line.split(":")[-1].split("-")[0]) for line in lines if line.startswith(">")
     ]
-    assert (
-        start_coords[0] < start_coords[1]
-    ), "Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'"
+    if start_coords[0] < start_coords[1]:
+        warnings.warn(
+            "Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'"
+        )
 
     # unpack the sequences
     forward_primer, reverse_primer = seqs
