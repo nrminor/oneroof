@@ -37,12 +37,12 @@ log.info    """
             User-provided settings:
             -------------------------------------------------------------------------
             Sequencing Platform         : ${params.platform}
-            Basecalling model           : ${params.modelg ?: ""}
-            Nanopore barcoding kit      : ${params.kitg ?: ""}
+            Basecalling model           : ${params.model ?: ""}
+            Nanopore barcoding kit      : ${params.kit ?: ""}
             Permitted primer mismatches : ${params.max_mismatch}
             Desired coverage            : ${params.downsample_to}X
             Minimum coverage            : ${params.min_depth_coverage}X
-            NextClade Dataset           : ${params.nextclade_datasetg ?: ""}
+            NextClade Dataset           : ${params.nextclade_dataset ?: ""}
 
             User-provided inputs and outputs:
             -------------------------------------------------------------------------
@@ -51,8 +51,8 @@ log.info    """
             Reference sequence GBK      : ${params.ref_gbk}
             File watcher config         : ${params.file_watcher_config ?: ""}
             Remote POD5 directory       : ${params.remote_pod5_locationg ?: ""}
-            Local POD5 directory        : ${params.pod5_dirg ?: ""}
-            Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data : ""}
+            Local POD5 directory        : ${params.pod5_dir ?: ""}
+            Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data}
             Results directory           : ${params.results}
 
             """
