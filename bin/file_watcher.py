@@ -139,6 +139,11 @@ def runtime_config_check(config_dict: dict) -> None:
     A valid glob pattern to use for matching files, e.g., "*.pod5", must be
     provided in the `pattern` field of the configuration YAML file.
     """
+    supported_patterns = ["*.fastq.gz", "*.bam", "*.pod5"]
+    assert config_dict["pattern"] in supported_patterns, f"""
+    The file watcher currently only supports searching for the following patterns:
+    {supported_patterns}
+    """
     assert "host" in entries, """
     A valid host IP address must be provided in the `host` field of the file
     watcher configuration YAML file.
@@ -167,7 +172,7 @@ def parse_credential_config(args: argparse.Namespace) -> Credentials:
     )
 
     return Credentials(
-        watch_path=args.watch_path if args.watch_path else config_dict["watch_path"],
+        watch_path=config_dict["watch_path"],
         pattern=config_dict["pattern"],
         host=config_dict["host"],
         username=config_dict["username"],
