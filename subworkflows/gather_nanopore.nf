@@ -39,7 +39,7 @@ workflow GATHER_NANOPORE {
 
                 ch_staged_pod5s = Channel
                     .watchPath ( "${params.pod5_staging}/*.pod5", 'create' )
-                    .until { x -> file(x).getBaseName() == "DONE" }
+                    .until { x -> file(x).getSimpleName() == "DONE" }
                     .buffer ( size: params.pod5_batch_size ? params.pod5_batch_size : 100 )
 
                 BASECALL (
@@ -106,12 +106,12 @@ workflow GATHER_NANOPORE {
 
             ch_fastq_staging = Channel
                 .watchPath ( "${params.precalled_staging}/*.fastq.gz", 'create' )
-                .until { x -> file(x).getBaseName() == "DONE" }
+                .until { x -> file(x).getSimpleName() == "DONE" }
                 .map { fastq -> tuple( file(fastq).getSimpleName(), file(fastq) ) }
 
             ch_bam_staging = Channel
                 .watchPath ( "${params.precalled_staging}/*.bam", 'create' )
-                .until { x -> file(x).getBaseName() == "DONE" }
+                .until { x -> file(x).getSimpleName() == "DONE" }
                 .map { bam -> tuple( file(bam).getSimpleName(), file(bam) ) }
 
             VALIDATE_NANOPORE (
