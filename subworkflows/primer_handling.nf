@@ -14,6 +14,8 @@ include {
 } from "../modules/seqkit"
 include { RASUSA_READS } from "../modules/rasusa"
 
+int ampliconCount = AmpliconCounter.countFromBed(params.bed_file)
+
 workflow PRIMER_HANDLING {
 
     /* */
@@ -64,11 +66,11 @@ workflow PRIMER_HANDLING {
         )
 
         AMPLICON_STATS (
-            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0 )
+            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0, size: ampliconCount )
         )
 
         MERGE_BY_SAMPLE (
-            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0 )
+            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0, size: ampliconCount )
         )
 
         FAIDX (
