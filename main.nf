@@ -105,9 +105,6 @@ workflow {
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
 
-    int ampliconCount = AmpliconCounter.countFromBed(params.bed_file)
-    println ampliconCount
-
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
