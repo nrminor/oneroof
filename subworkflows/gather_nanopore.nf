@@ -40,7 +40,7 @@ workflow GATHER_NANOPORE {
                 ch_staged_pod5s = Channel
                     .watchPath ( "${params.pod5_staging}/*.pod5", 'create' )
                     .until { x -> file(x).getSimpleName() == "DONE" }
-                    .buffer ( size: params.pod5_batch_size ? params.pod5_batch_size : 100 )
+                    .buffer ( size: params.pod5_batch_size ?: 100 )
 
                 BASECALL (
                     DOWNLOAD_MODELS.out.collect(),
@@ -59,7 +59,7 @@ workflow GATHER_NANOPORE {
 
                 ch_local_pod5s = Channel
                     .fromPath ( "${params.pod5_dir}/*.pod5" )
-                    .buffer ( size: params.pod5_batch_size ? params.pod5_batch_size : pod5_count )
+                    .buffer ( size: params.pod5_batch_size ?: pod5_count )
 
                 BASECALL (
                     DOWNLOAD_MODELS.out.collect(),

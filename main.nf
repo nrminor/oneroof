@@ -32,7 +32,7 @@ log.info    """
             Run command                 : ${workflow.commandLine}
             Profile                     : ${workflow.profile}
             Nextflow version            : ${nextflow.version}
-            Cleanup mode                : ${params.cleanup :? ""}
+            Cleanup mode                : ${params.cleanup ?: ""}
 
             User-provided settings:
             -------------------------------------------------------------------------
