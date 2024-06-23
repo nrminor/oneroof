@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
+// include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
@@ -14,6 +14,36 @@ include {
 } from "../modules/seqkit"
 include { RASUSA_READS } from "../modules/rasusa"
 
+// use some Groovy to count the number of amplicons
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.stream.Collectors
+
+def countAmplicons(String filePath) {
+    // Read all lines from the file
+    def lines = Files.readAllLines(Paths.get(filePath))
+
+    // Extract the fourth column, replace hyphens, and remove _LEFT and _RIGHT
+    def processedItems = lines.collect { line ->
+        def columns = line.split('\t')
+        if (columns.size() >= 4) {
+            def item = columns[3]
+            item = item.replace('-', '_')
+            item = item.replace('_LEFT', '').replace('_RIGHT', '')
+            return item
+        }
+        return null
+    }.findAll { it != null }
+
+    // Convert to a set to find unique items
+    def uniqueItems = processedItems.toSet()
+
+    // Return the number of unique items
+    return uniqueItems.size()
+}
+int ampliconCount = countAmplicons(params.primer_bed)
+
+
 workflow PRIMER_HANDLING {
 
     /* */
@@ -24,12 +54,12 @@ workflow PRIMER_HANDLING {
         ch_refseq
 
     main:
-        RESPLICE_PRIMERS (
-            ch_primer_bed
-        )
+        // RESPLICE_PRIMERS (
+        //     ch_primer_bed
+        // )
 
         SPLIT_PRIMER_COMBOS (
-            RESPLICE_PRIMERS.out
+            ch_primer_bed
         )
 
         GET_PRIMER_SEQS (
