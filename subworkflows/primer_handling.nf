@@ -14,8 +14,6 @@ include {
 } from "../modules/seqkit"
 include { RASUSA_READS } from "../modules/rasusa"
 
-int ampliconCount = AmpliconCounter.countFromBed(params.bed_file)
-
 workflow PRIMER_HANDLING {
 
     /* */

@@ -50,7 +50,7 @@ log.info    """
             Reference sequence FASTA    : ${params.refseq}
             Reference sequence GBK      : ${params.ref_gbk}
             File watcher config         : ${params.file_watcher_config ?: ""}
-            Remote POD5 directory       : ${params.remote_pod5_locationg ?: ""}
+            Remote POD5 directory       : ${params.remote_pod5_location ?: ""}
             Local POD5 directory        : ${params.pod5_dir ?: ""}
             Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data}
             Results directory           : ${params.results}
@@ -105,6 +105,8 @@ workflow {
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
 
+    int ampliconCount = AmpliconCounter.countFromBed(params.bed_file)
+    println ampliconCount
 
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
