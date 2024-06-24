@@ -40,7 +40,7 @@ log.info    """
             Basecalling model           : ${params.model ?: ""}
             Nanopore barcoding kit      : ${params.kit ?: ""}
             Permitted primer mismatches : ${params.max_mismatch}
-            Desired coverage            : ${params.downsample_to}X
+            Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to : "No downsampling-"}X
             Minimum coverage            : ${params.min_depth_coverage}X
             NextClade Dataset           : ${params.nextclade_dataset ?: ""}
 
