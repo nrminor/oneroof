@@ -3,7 +3,7 @@ process PLOT_COVERAGE {
     /* */
 
     tag "${sample_id}"
-    publishDir params.cramino, mode: 'copy', overwrite: true
+    publishDir params.cov_plots, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
@@ -16,7 +16,7 @@ process PLOT_COVERAGE {
 
     script:
     """
-    gunzip ${sample_id}.per-base.bed.gz && \
+    cat ${sample_id}.per-base.bed.gz | gzip -d -c > ${sample_id}.per-base.bed.gz && \
     plot_coverage.py \
     --label ${sample_id} \
     --input ${sample_id}.per-base.bed
