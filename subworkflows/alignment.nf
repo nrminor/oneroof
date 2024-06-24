@@ -2,6 +2,8 @@
 
 include { ALIGN_WITH_PRESET } from "../modules/minimap2"
 include { CONVERT_AND_SORT; INDEX } from "../modules/samtools"
+include { MOSDEPTH } from "../modules/mosdepth"
+include { PLOT_COVERAGE } from "../modules/plot_coverage"
 
 workflow ALIGNMENT {
 
@@ -23,6 +25,14 @@ workflow ALIGNMENT {
 
         INDEX (
             CONVERT_AND_SORT.out
+        )
+
+        MOSDEPTH (
+            INDEX.out
+        )
+
+        PLOT_COVERAGE (
+            MOSDEPTH.OUT
         )
 
     emit:

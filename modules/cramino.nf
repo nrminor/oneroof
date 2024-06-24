@@ -30,5 +30,4 @@ process CRAMINO {
     ${bam}
     """
 
-
 }
