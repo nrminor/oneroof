@@ -32,7 +32,7 @@ workflow ALIGNMENT {
         )
 
         PLOT_COVERAGE (
-            MOSDEPTH.OUT
+            MOSDEPTH.out
         )
 
     emit:
