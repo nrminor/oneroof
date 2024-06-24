@@ -16,7 +16,6 @@ process PLOT_COVERAGE {
 
     script:
     """
-    cat ${sample_id}.per-base.bed.gz | gzip -d -c > ${sample_id}.per-base.bed.gz && \
     plot_coverage.py \
     --label ${sample_id} \
     --input ${sample_id}.per-base.bed

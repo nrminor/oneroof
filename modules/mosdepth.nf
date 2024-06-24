@@ -21,7 +21,8 @@ process MOSDEPTH {
     mosdepth \
     --threads ${task.cpus} \
     ${sample_id} \
-    ${bam}
+    ${bam} && \
+    gunzip ${sample_id}.per-base.bed.gz
     """
 
 }
