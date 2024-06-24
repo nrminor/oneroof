@@ -14,7 +14,7 @@ options:
     --output_prefix OUTPUT_PREFIX, -o OUTPUT_PREFIX
                         Output prefix for final respliced amplicon BED file.
     --config CONFIG, -c CONFIG
-                        YAML file used to configure module such that it avoids harcoding
+                        YAML file used to configure module such that it avoids hardcoding
 ```
 """
 
@@ -61,7 +61,7 @@ def parse_command_line_args() -> Tuple[Path, str]:
         type=str,
         required=False,
         default="config.yaml",
-        help="YAML file used to configure module such that it avoids harcoding",
+        help="YAML file used to configure module such that it avoids hardcoding",
     )
     args = parser.parse_args()
 
