@@ -14,18 +14,23 @@ process RASUSA_READS {
 	tuple val(barcode), path(amplicons), path(faidx)
 
 	output:
-	tuple val(barcode), path("${barcode}.${params.downsample_to}x.fastq.gz")
+	tuple val(barcode), path("${barcode}.*.fastq.gz")
 
     script:
-    """
-    rasusa reads \
-    --coverage ${params.downsample_to} \
-    --genome-size ${faidx} \
-    --seed 14 \
-    --output-type g \
-    --output ${barcode}.${params.downsample_to}x.fastq.gz \
-	${amplicons}
-    """
+    if ( params.downsample_to == 0 )
+        """
+        cp ${amplicons} ${amplicons}.no_downsampling.fastq.gz
+        """
+    else
+        """
+        rasusa reads \
+        --coverage ${params.downsample_to} \
+        --genome-size ${faidx} \
+        --seed 14 \
+        --output-type g \
+        --output ${barcode}.${params.downsample_to}x.fastq.gz \
+    	${amplicons}
+        """
 
 }
 
@@ -44,15 +49,20 @@ process RASUSA_ALN {
 	tuple val(barcode), path(bam)
 
 	output:
-	tuple val(barcode), path("${barcode}.${params.downsample_to}x.bam")
+	tuple val(barcode), path("${barcode}.*.bam")
 
     script:
-    """
-    rasusa aln \
-    --coverage ${params.downsample_to} \
-    --seed 14 \
-    --output ${barcode}.${params.downsample_to}x.bam \
-	${bam}
-    """
+    if ( params.downsample_to == 0 )
+        """
+        cp ${bam} ${barcode}.no_downsampling.bam
+        """
+    else
+        """
+        rasusa aln \
+        --coverage ${params.downsample_to} \
+        --seed 14 \
+        --output ${barcode}.${params.downsample_to}x.bam \
+    	${bam}
+        """
 
 }

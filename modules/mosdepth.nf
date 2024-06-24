@@ -3,7 +3,7 @@ process MOSDEPTH {
     /* */
 
     tag "${sample_id}"
-    publishDir params.cramino, mode: 'copy', overwrite: true
+    publishDir params.mosdepth, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2

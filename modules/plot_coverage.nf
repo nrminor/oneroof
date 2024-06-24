@@ -12,11 +12,14 @@ process PLOT_COVERAGE {
     tuple val(sample_id), path(mosdepth_files)
 
     output:
-    path "*"
+    path "${sample_id}.coverage.pdf"
 
     script:
     """
-    plot_coverage.py --label ${sample_id}
+    gunzip ${sample_id}.per-base.bed.gz && \
+    plot_coverage.py \
+    --label ${sample_id} \
+    --input ${sample_id}.per-base.bed
     """
 
 }
