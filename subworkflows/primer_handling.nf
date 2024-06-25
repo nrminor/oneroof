@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 // include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
+// include { AMPLICON_TK_TRIM } from "../modules/amplicon-tk"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
@@ -92,6 +93,18 @@ workflow PRIMER_HANDLING {
         TRIM_ENDS_TO_PRIMERS (
             FIND_COMPLETE_AMPLICONS.out
         )
+
+        // AMPLICON_TK_TRIM (
+        //     RESPLICE_PRIMERS.out
+        // )
+
+        // AMPLICON_STATS (
+        //     AMPLICON_TK_TRIM.out.groupTuple( by: 0, size: ampliconCount )
+        // )
+
+        // MERGE_BY_SAMPLE (
+        //     AMPLICON_TK_TRIM.out.groupTuple( by: 0, size: ampliconCount )
+        // )
 
         AMPLICON_STATS (
             TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0, size: ampliconCount )
