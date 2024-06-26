@@ -44,7 +44,7 @@ process AMPLICON_STATS {
 	tuple val(barcode), path("amplicons/*")
 
     output:
-    path "${barcode}.stats.tsv"
+    path "${barcode}.per_amplicon_stats.tsv"
 
     script:
     """
