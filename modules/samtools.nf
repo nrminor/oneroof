@@ -51,7 +51,7 @@ process SORT_BAM {
     tuple val(barcode), path(bam)
 
     output:
-    tuple val(barcode), path("${barcode}.bam")
+    tuple val(barcode), path("${barcode}.sorted.bam")
 
     script:
     """
