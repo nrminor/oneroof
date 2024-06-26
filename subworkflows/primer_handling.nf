@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-// include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
+include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 // include { AMPLICON_TK_TRIM } from "../modules/amplicon-tk"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
@@ -55,9 +55,9 @@ workflow PRIMER_HANDLING {
         ch_refseq
 
     main:
-        // RESPLICE_PRIMERS (
-        //     ch_primer_bed
-        // )
+        RESPLICE_PRIMERS (
+            ch_primer_bed
+        )
 
         SPLIT_PRIMER_COMBOS (
             RESPLICE_PRIMERS.out
