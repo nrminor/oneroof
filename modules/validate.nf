@@ -18,9 +18,8 @@ process VALIDATE_NANOPORE {
     script:
     if ( file(seq_file).getName().endsWith(".fastq.gz") )
         """
-        seqkit seq -validate-seq ${seq_file} &
+        seqkit seq --validate-seq ${seq_file} > /dev/null && \
         samtools import -0 ${seq_file} -o ${label}.validated.bam
-        wait
         """
     else if ( file(seq_file).getName().endsWith(".bam") )
         """
