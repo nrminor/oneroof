@@ -41,14 +41,14 @@ process AMPLICON_STATS {
 	cpus 3
 
 	input:
-	tuple val(barcode), path("amplicons/???.fastq.gz")
+	tuple val(barcode), path("amplicons/*")
 
     output:
     path "${barcode}.stats.tsv"
 
     script:
     """
-    seqkit stats --threads ${task.cpus} --all --tabular amplicons/*.fastq.gz > ${barcode}.stats.tsv
+    seqkit stats --threads ${task.cpus} --all --basename --tabular amplicons/*.fastq.gz > ${barcode}.stats.tsv
     """
 
 }

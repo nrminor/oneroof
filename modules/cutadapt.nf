@@ -11,7 +11,7 @@ process TRIM_ENDS_TO_PRIMERS {
     tuple val(barcode), path(patterns_file), path(untrimmed)
 
     output:
-    tuple val(barcode), path("${barcode}*.trimmed.amplicons.fastq.gz")
+    tuple val(barcode), path("${barcode}*.trimmed.fastq.gz")
 
     script:
     amplicon = file(patterns_file).getSimpleName()
