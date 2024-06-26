@@ -73,7 +73,21 @@ def render_plot(coverage_lf: pl.LazyFrame, label: str) -> ggplot:
     Returns:
         ggplot: A ggplot object representing the coverage plot.
     """
+    chroms = coverage_lf.select("chromosome").unique().collect()
     coverage_pd = coverage_lf.collect().to_pandas()
+
+    if chroms.shape[0] > 1:
+        return (
+            ggplot(coverage_pd, aes(xmin="start", xmax="stop", ymin=0, ymax="coverage"))
+            + geom_rect(fill="black", color="black")
+            + labs(
+                title=f"Coverage for Sample ID {label}",
+                x="Position on Chromosome/Segment",
+                y="Depth of Coverage (read count)",
+            )
+            + theme_minimal()
+            + facet_wrap("~chromosome", scales="free_x")
+        )
 
     return (
         ggplot(coverage_pd, aes(xmin="start", xmax="stop", ymin=0, ymax="coverage"))
@@ -84,7 +98,6 @@ def render_plot(coverage_lf: pl.LazyFrame, label: str) -> ggplot:
             y="Depth of Coverage (read count)",
         )
         + theme_minimal()
-        + facet_wrap("~chromosome", scales="free_x")
     )
 
 
