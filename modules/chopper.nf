@@ -14,7 +14,7 @@ process FILTER_WITH_CHOPPER {
     tuple val(label), path("${new_id}.filtered.fastq.gz")
 
     script:
-    new_id = file(fastq).getName().replace("*.fastq.gz", "")
+    new_id = file(fastq).getName().replace(".fastq.gz", "")
     """
     gunzip -c ${fastq} \
     | chopper \
