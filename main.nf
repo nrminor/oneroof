@@ -39,6 +39,9 @@ log.info    """
             Sequencing Platform         : ${params.platform}
             Basecalling model           : ${params.model ?: ""}
             Nanopore barcoding kit      : ${params.kit ?: ""}
+            Minimum read length         : ${params.min_len}
+            Maximum read length         : ${params.max_len}
+            Minimum avg. read quality   : ${params.min_qual}
             Permitted primer mismatches : ${params.max_mismatch}
             Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to + "X" : "No downsampling"}
             Minimum coverage            : ${params.min_depth_coverage}X

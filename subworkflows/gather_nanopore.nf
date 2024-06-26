@@ -4,6 +4,7 @@ include { WATCH_FOR_POD5S } from "../modules/file_watcher"
 include { DOWNLOAD_MODELS; BASECALL; DEMULTIPLEX } from "../modules/dorado"
 include { MERGE_BARCODES } from "../modules/samtools"
 include { VALIDATE_NANOPORE } from "../modules/validate"
+include { FILTER_WITH_CHOPPER } from "../modules/chopper"
 
 workflow GATHER_NANOPORE {
 
@@ -154,9 +155,13 @@ workflow GATHER_NANOPORE {
 
         // ------------------------------------------------------------------ //
 
+        FILTER_WITH_CHOPPER (
+            VALIDATE_NANOPORE.out
+                .map { label, seq_file, status -> tuple( label, file(seq_file) ) }
+        )
+
 
     emit:
-        VALIDATE_NANOPORE.out
-            .map { label, seq_file, status -> tuple( label, file(seq_file) ) }
+        FILTER_WITH_CHOPPER.out
 
 }
