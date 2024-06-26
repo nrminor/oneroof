@@ -13,18 +13,17 @@ process VALIDATE_NANOPORE {
     tuple val(label), path(seq_file)
 
     output:
-    tuple val(label), path("${label}.validated.bam"), val("success!")
+    tuple val(label), path("${label}.validated.fastq.gz"), val("success!")
 
     script:
     if ( file(seq_file).getName().endsWith(".fastq.gz") )
         """
-        seqkit seq --validate-seq ${seq_file} > /dev/null && \
-        samtools import -0 ${seq_file} -o ${label}.validated.bam
+        seqkit seq --validate-seq ${seq_file} -o ${label}.validated.fastq.gz
         """
     else if ( file(seq_file).getName().endsWith(".bam") )
         """
         samtools quickcheck -v -u ${seq_file} && \
-        cp `realpath ${seq_file}` ${label}.validated.bam
+        samtools fastq ${seq_file} | bgzip -o ${label}.validated.fastq.gz
         """
     else
         error "Unrecognized file format provided."

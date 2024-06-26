@@ -6,7 +6,7 @@ include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
 include { TRIM_ENDS_TO_PRIMERS } from "../modules/cutadapt"
-include { FASTQ_CONVERSION; FAIDX } from "../modules/samtools"
+include { FAIDX } from "../modules/samtools"
 include { ORIENT_READS } from "../modules/vsearch"
 include {
     FIND_COMPLETE_AMPLICONS;
@@ -60,7 +60,7 @@ workflow PRIMER_HANDLING {
         // )
 
         SPLIT_PRIMER_COMBOS (
-            ch_primer_bed
+            RESPLICE_PRIMERS.out
         )
 
         GET_PRIMER_SEQS (
@@ -72,12 +72,8 @@ workflow PRIMER_HANDLING {
             GET_PRIMER_SEQS.out
         )
 
-        FASTQ_CONVERSION (
-            ch_basecalls
-        )
-
         ORIENT_READS (
-            FASTQ_CONVERSION.out
+            ch_basecalls
                 .map { barcode, fastq -> tuple( barcode, file(fastq), file(fastq).countFastq() ) }
                 .filter { it[2] > 100 }
                 .map { barcode, fastq, read_count -> tuple( barcode, file(fastq) ) },
