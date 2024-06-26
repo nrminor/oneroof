@@ -46,7 +46,7 @@ process RASUSA_ALN {
 	cpus 3
 
 	input:
-	tuple val(barcode), path(bam)
+	tuple val(barcode), path(bam), path(bai)
 
 	output:
 	tuple val(barcode), path("${barcode}.*.bam")

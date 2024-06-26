@@ -24,16 +24,16 @@ workflow ALIGNMENT {
             ALIGN_WITH_PRESET.out
         )
 
-        RASUSA_ALN (
+        INDEX (
             CONVERT_AND_SORT.out
         )
 
-        INDEX (
-            RASUSA_ALN.out
+        RASUSA_ALN (
+            INDEX.out
         )
 
         MOSDEPTH (
-            INDEX.out
+            RASUSA_ALN.out
         )
 
         PLOT_COVERAGE (
@@ -41,6 +41,6 @@ workflow ALIGNMENT {
         )
 
     emit:
-        INDEX.out
+        RASUSA_ALN.out
 
 }
