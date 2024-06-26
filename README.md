@@ -26,9 +26,9 @@ networked devices in the same building.
 > That said, the pipeline at its current state is relatively stable and
 > working well for us in container-based and container-less use cases.
 > The most active area of change at this stage is feature-additions,
-> though at some point at this stage, some of the more convolated parts
-> of the pipeline’s primer-handling will be replaced with a Rust-based
-> toolkit under active development by our team, so stay tuned!
+> though in the near future, some of the more convolated parts of the
+> pipeline’s primer-handling will be replaced with a Rust-based toolkit
+> under active development by our team, so stay tuned!
 
 `oneroof` was originally developed in the early stages of the United
 States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024,
