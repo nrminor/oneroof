@@ -6,7 +6,7 @@ process ALIGN_WITH_PRESET {
 	maxRetries 2
 
     input:
-    tuple val(barcode), path(fastq)
+    tuple val(barcode), path(reads)
     each path(refseq)
 
     output:
@@ -15,8 +15,7 @@ process ALIGN_WITH_PRESET {
     script:
     preset = params.platform == "ont" ? "map-ont" : "sr"
     """
-    minimap2 -ax ${preset} ${refseq} <(zcat ${fastq}) > ${barcode}.sam
+    minimap2 -ax ${preset} ${refseq} ${reads} > ${barcode}.sam
     """
 
 }
-
