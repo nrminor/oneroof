@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { ALIGN_WITH_PRESET } from "../modules/minimap2"
-include { CONVERT_AND_SORT; INDEX } from "../modules/samtools"
+include { CONVERT_AND_SORT; SORT_BAM; INDEX } from "../modules/samtools"
 include { RASUSA_ALN } from "../modules/rasusa"
 include { MOSDEPTH } from "../modules/mosdepth"
 include { PLOT_COVERAGE } from "../modules/plot_coverage"
@@ -24,16 +24,20 @@ workflow ALIGNMENT {
             ALIGN_WITH_PRESET.out
         )
 
-        INDEX (
+        RASUSA_ALN (
             CONVERT_AND_SORT.out
         )
 
-        RASUSA_ALN (
-            INDEX.out
+        SORT_BAM (
+            RASUSA_ALN.out
+        )
+
+        INDEX (
+            SORT_BAM.out
         )
 
         MOSDEPTH (
-            RASUSA_ALN.out
+            INDEX.out
         )
 
         PLOT_COVERAGE (
@@ -41,6 +45,6 @@ workflow ALIGNMENT {
         )
 
     emit:
-        RASUSA_ALN.out
+        INDEX.out
 
 }

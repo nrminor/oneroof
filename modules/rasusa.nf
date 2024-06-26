@@ -46,11 +46,10 @@ process RASUSA_ALN {
 	cpus 3
 
 	input:
-	tuple val(barcode), path(bam), path(bai)
+	tuple val(barcode), path(bam)
 
 	output:
-	tuple val(barcode), path("${barcode}.*.bam"), path("${barcode}.*.bam.bai")
-
+	tuple val(barcode), path("${barcode}.*.bam")
     script:
     if ( params.downsample_to == 0 )
         """
@@ -58,12 +57,12 @@ process RASUSA_ALN {
         """
     else
         """
+        samtools index ${bam} && \
         rasusa aln \
         --coverage ${params.downsample_to} \
         --seed 14 \
         --output ${barcode}.${params.downsample_to}x.bam \
-        ${bam} && \
-        samtools index ${barcode}.${params.downsample_to}x.bam
+        ${bam}
         """
 
 }

@@ -40,6 +40,27 @@ process CONVERT_AND_SORT {
 
 }
 
+process SORT_BAM {
+
+    tag "${barcode}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path(bam)
+
+    output:
+    tuple val(barcode), path("${barcode}.bam")
+
+    script:
+    """
+    cat ${bam} \
+    | samtools sort -o ${barcode}.sorted.bam
+    """
+
+}
+
 process INDEX {
 
     tag "${barcode}"
