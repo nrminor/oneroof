@@ -29,7 +29,7 @@ process RASUSA_READS {
         --seed 14 \
         --output-type g \
         --output ${barcode}.${params.downsample_to}x.fastq.gz \
-    	${amplicons}
+        ${amplicons}
         """
 
 }
@@ -62,7 +62,7 @@ process RASUSA_ALN {
         --coverage ${params.downsample_to} \
         --seed 14 \
         --output ${barcode}.${params.downsample_to}x.bam \
-    	${bam}
+        ${bam}
         """
 
 }
