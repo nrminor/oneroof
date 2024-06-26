@@ -46,7 +46,7 @@ log.info    """
 
             User-provided inputs and outputs:
             -------------------------------------------------------------------------
-            Primer BED file             : ${params.primer_bed :? ""}
+            Primer BED file             : ${params.primer_bed ?: ""}
             Reference sequence FASTA    : ${params.refseq}
             Reference sequence GBK      : ${params.ref_gbk}
             File watcher config         : ${params.file_watcher_config ?: ""}
