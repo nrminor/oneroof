@@ -11,9 +11,10 @@ process FILTER_WITH_CHOPPER {
     tuple val(label), path(fastq)
 
     output:
-    tuple val(label), path("${label}.filtered.fastq.gz")
+    tuple val(label), path("${new_id}.filtered.fastq.gz")
 
     script:
+    new_id = file(fastq).getName().replace("*.fastq.gz", "")
     """
     gunzip -c ${fastq} \
     | chopper \
@@ -21,6 +22,6 @@ process FILTER_WITH_CHOPPER {
     --minlength ${params.min_len} \
     --quality ${params.min_qual} \
     --threads ${task.cpus} \
-    | gzip -c > ${label}.filtered.fastq.gz
+    | gzip -c > ${new_id}.filtered.fastq.gz
     """
 }
