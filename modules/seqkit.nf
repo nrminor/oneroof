@@ -48,7 +48,10 @@ process AMPLICON_STATS {
 
     script:
     """
-    seqkit stats --threads ${task.cpus} --all --basename --tabular amplicons/*.fastq.gz > ${barcode}.stats.tsv
+    seqkit stats \
+	--threads ${task.cpus} \
+	--all --basename --tabular \
+	amplicons/*.fastq.gz > ${barcode}.per_amplicon_stats.tsv
     """
 
 }
