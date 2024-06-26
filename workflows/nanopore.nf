@@ -28,21 +28,37 @@ workflow NANOPORE {
         //     GATHER_NANOPORE.out
         // )
 
-        PRIMER_HANDLING (
-            GATHER_NANOPORE.out,
-            ch_primer_bed,
-            ch_refseq
-        )
+        if ( params.primer_bed ) {
 
-        ALIGNMENT (
-            PRIMER_HANDLING.out,
-            ch_refseq
-        )
+            PRIMER_HANDLING (
+                GATHER_NANOPORE.out,
+                ch_primer_bed,
+                ch_refseq
+            )
 
-        QUALITY_CONTROL (
-            PRIMER_HANDLING.out,
-            ALIGNMENT.out
-        )
+            ALIGNMENT (
+                PRIMER_HANDLING.out,
+                ch_refseq
+            )
+
+            QUALITY_CONTROL (
+                PRIMER_HANDLING.out,
+                ALIGNMENT.out
+            )
+
+        } else {
+
+            ALIGNMENT (
+                GATHER_NANOPORE.out,
+                ch_refseq
+            )
+
+            QUALITY_CONTROL (
+                GATHER_NANOPORE.out,
+                ALIGNMENT.out
+            )
+
+        }
 
         CONSENSUS (
             ALIGNMENT.out

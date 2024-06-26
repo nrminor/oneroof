@@ -28,21 +28,37 @@ workflow ILLUMINA {
             GATHER_ILLUMINA.out
         )
 
-        PRIMER_HANDLING (
-            ILLUMINA_CORRECTION.out,
-            ch_primer_bed,
-            ch_refseq
-        )
+        if ( params.primer_bed ) {
 
-        ALIGNMENT (
-            PRIMER_HANDLING.out,
-            ch_refseq
-        )
+            PRIMER_HANDLING (
+                ILLUMINA_CORRECTION.out,
+                ch_primer_bed,
+                ch_refseq
+            )
 
-        QUALITY_CONTROL (
-            PRIMER_HANDLING.out,
-            ALIGNMENT.out
-        )
+            ALIGNMENT (
+                PRIMER_HANDLING.out,
+                ch_refseq
+            )
+
+            QUALITY_CONTROL (
+                PRIMER_HANDLING.out,
+                ALIGNMENT.out
+            )
+
+        } else {
+
+            ALIGNMENT (
+                ILLUMINA_CORRECTION.out,
+                ch_refseq
+            )
+
+            QUALITY_CONTROL (
+                ILLUMINA_CORRECTION.out,
+                ALIGNMENT.out
+            )
+
+        }
 
         CONSENSUS (
             ALIGNMENT.out

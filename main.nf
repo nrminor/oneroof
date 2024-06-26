@@ -46,7 +46,7 @@ log.info    """
 
             User-provided inputs and outputs:
             -------------------------------------------------------------------------
-            Primer BED file             : ${params.primer_bed}
+            Primer BED file             : ${params.primer_bed :? ""}
             Reference sequence FASTA    : ${params.refseq}
             Reference sequence GBK      : ${params.ref_gbk}
             File watcher config         : ${params.file_watcher_config ?: ""}
@@ -65,12 +65,6 @@ workflow {
 
     // Checking for required files
     // ---------------------------------------------------------------------- //
-
-    // make sure required primer bed is provided and exists
-    assert params.primer_bed != "" :
-    "Please provide a primer bed file with the parameter `primer_bed`."
-    assert file(params.primer_bed).isFile() :
-    "Please double check that the primer bed file provided with the parameter `primer_bed` exists."
 
     // make sure provided refseq is provided and exists
     assert params.refseq != "" :
@@ -93,8 +87,10 @@ workflow {
     // ---------------------------------------------------------------------- //
 
     // initialize input channels
-    ch_primer_bed = Channel
-        .fromPath( params.primer_bed )
+    ch_primer_bed = params.primer_bed ?
+        Channel
+        .fromPath( params.primer_bed ) :
+        Channel.empty()
 
     ch_refseq = Channel
         .fromPath( params.refseq )

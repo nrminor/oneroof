@@ -7,12 +7,12 @@ include { MULTIQC } from "../modules/multiqc"
 workflow QUALITY_CONTROL {
 
     take:
-        ch_amplicon_reads
+        ch_reads
         ch_alignments
-    
+
     main:
         FASTQC (
-            ch_amplicon_reads
+            ch_reads
         )
 
         // CRAMINO (
