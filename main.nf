@@ -48,7 +48,7 @@ log.info    """
             -------------------------------------------------------------------------
             Primer BED file             : ${params.primer_bed ?: ""}
             Reference sequence FASTA    : ${params.refseq}
-            Reference sequence GBK      : ${params.ref_gbk}
+            Reference sequence GBK      : ${params.ref_gbk ?: ""}
             File watcher config         : ${params.file_watcher_config ?: ""}
             Remote POD5 directory       : ${params.remote_pod5_location ?: ""}
             Local POD5 directory        : ${params.pod5_dir ?: ""}
@@ -72,12 +72,6 @@ workflow {
     assert file(params.refseq).isFile() :
     "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
 
-    // make sure required reference genbank is provided and exists
-    assert params.ref_gbk != "" :
-    "Please provide a reference Genbank file with the parameter `ref_gbk`."
-    assert file(params.ref_gbk).isFile() :
-    "Please double check that the reference Genbank file provided with the parameter `ref_gbk` exists."
-
     // make sure required snpeff config is provided and exists
     assert params.snpEff_config != "" :
     "Please provide a snpEff config file with the parameter `snpEff_config`."
@@ -88,15 +82,15 @@ workflow {
 
     // initialize input channels
     ch_primer_bed = params.primer_bed ?
-        Channel
-        .fromPath( params.primer_bed ) :
+        Channel.fromPath( params.primer_bed ) :
         Channel.empty()
 
     ch_refseq = Channel
         .fromPath( params.refseq )
 
-    ch_ref_gbk = Channel
-        .fromPath( params.ref_gbk )
+    ch_ref_gbk = params.ref_gbk ?
+        Channel.fromPath( params.ref_gbk ) :
+        Channel.empty()
 
     ch_snpeff_config = Channel
         .fromPath( params.snpEff_config )
