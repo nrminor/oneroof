@@ -11,7 +11,7 @@ process FILTER_WITH_CHOPPER {
     tuple val(label), path(fastq)
 
     output:
-    tuple val(label), path(${label}.filtered.fastq.gz)
+    tuple val(label), path("${label}.filtered.fastq.gz")
 
     script:
     """
