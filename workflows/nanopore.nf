@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
 include { GATHER_NANOPORE } from "../subworkflows/gather_nanopore"
-// include { NANOPORE_CORRECTION } from "../subworkflows/nanopore_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
 include { QUALITY_CONTROL } from "../subworkflows/quality_control"
@@ -23,10 +22,6 @@ workflow NANOPORE {
         assert params.platform == "ont"
 
         GATHER_NANOPORE ( )
-
-        // NANOPORE_CORRECTION (
-        //     GATHER_NANOPORE.out
-        // )
 
         if ( params.primer_bed ) {
 

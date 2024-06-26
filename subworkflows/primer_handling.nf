@@ -42,7 +42,7 @@ def countAmplicons(String filePath) {
     // Return the number of unique items
     return uniqueItems.size()
 }
-int ampliconCount = countAmplicons(params.primer_bed)
+int ampliconCount = params.primer_bed ? countAmplicons(params.primer_bed) : 0
 
 
 workflow PRIMER_HANDLING {
