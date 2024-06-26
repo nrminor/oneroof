@@ -1,4 +1,4 @@
-process RASUSA_READS {
+process RASUSA_READ_DOWNSAMPLING {
 
 	/* */
 
@@ -34,7 +34,7 @@ process RASUSA_READS {
 
 }
 
-process RASUSA_ALN {
+process RASUSA_ALN_DOWNSAMPLING {
 
 	/* */
 

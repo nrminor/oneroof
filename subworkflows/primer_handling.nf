@@ -14,7 +14,7 @@ include {
     AMPLICON_STATS
 } from "../modules/seqkit"
 include { FILTER_WITH_CHOPPER } from "../modules/chopper"
-include { RASUSA_READS } from "../modules/rasusa"
+include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 
 // use some Groovy to count the number of amplicons
 import java.nio.file.Files
@@ -108,21 +108,21 @@ workflow PRIMER_HANDLING {
         // )
 
         AMPLICON_STATS (
-            FILTER_WITH_CHOPPER.out.groupTuple( by: 0, size: ampliconCount )
+            FILTER_WITH_CHOPPER.out.groupTuple( by: 0 )
         )
 
         MERGE_BY_SAMPLE (
-            FILTER_WITH_CHOPPER.out.groupTuple( by: 0, size: ampliconCount )
+            FILTER_WITH_CHOPPER.out.groupTuple( by: 0 )
         )
 
         FAIDX (
             MERGE_BY_SAMPLE.out
         )
 
-        RASUSA_READS (
+        RASUSA_READ_DOWNSAMPLING (
             FAIDX.out
         )
 
     emit:
-        RASUSA_READS.out
+        RASUSA_READ_DOWNSAMPLING.out
 }
