@@ -15,12 +15,12 @@ process FILTER_WITH_CHOPPER {
 
     script:
     """
-    gunzip -c reads.fastq.gz \
+    gunzip -c ${fastq} \
     | chopper \
     --maxlength ${params.max_len} \
     --minlength ${params.min_len} \
     --quality ${params.min_qual} \
-    --threads ${task.cpus}
+    --threads ${task.cpus} \
     | gzip -c > ${label}.filtered.fastq.gz
     """
 }

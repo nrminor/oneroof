@@ -13,6 +13,7 @@ include {
     MERGE_BY_SAMPLE;
     AMPLICON_STATS
 } from "../modules/seqkit"
+include { FILTER_WITH_CHOPPER } from "../modules/chopper"
 include { RASUSA_READS } from "../modules/rasusa"
 
 // use some Groovy to count the number of amplicons
@@ -90,6 +91,10 @@ workflow PRIMER_HANDLING {
             FIND_COMPLETE_AMPLICONS.out
         )
 
+        FILTER_WITH_CHOPPER (
+            TRIM_ENDS_TO_PRIMERS.out
+        )
+
         // AMPLICON_TK_TRIM (
         //     RESPLICE_PRIMERS.out
         // )
@@ -103,11 +108,11 @@ workflow PRIMER_HANDLING {
         // )
 
         AMPLICON_STATS (
-            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0, size: ampliconCount )
+            FILTER_WITH_CHOPPER.out.groupTuple( by: 0, size: ampliconCount )
         )
 
         MERGE_BY_SAMPLE (
-            TRIM_ENDS_TO_PRIMERS.out.groupTuple( by: 0, size: ampliconCount )
+            FILTER_WITH_CHOPPER.out.groupTuple( by: 0, size: ampliconCount )
         )
 
         FAIDX (
