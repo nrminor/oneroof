@@ -66,7 +66,7 @@ process MERGE_BY_SAMPLE {
 	cpus 3
 
 	input:
-	tuple val(barcode), path("fastqs/???.fastq.gz")
+	tuple val(barcode), path("fastqs/*")
 
 	output:
 	tuple val(barcode), path("${barcode}.amplicons.fastq.gz")

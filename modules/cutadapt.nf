@@ -14,6 +14,7 @@ process TRIM_ENDS_TO_PRIMERS {
     tuple val(barcode), path("${barcode}.trimmed.amplicons.fastq.gz")
 
     script:
+    amplicon = file(patterns_file).getSimpleName()
     """
     FORWARD_PATTERN=\$(head -n 1 ${patterns_file})
     REVERSE_PATTERN=\$(tail -n 1 ${patterns_file})
@@ -26,7 +27,7 @@ process TRIM_ENDS_TO_PRIMERS {
     -j ${task.cpus} \
     -g \$REVERSE_PATTERN \
     tmp.fq \
-    -o ${barcode}.trimmed.amplicons.fastq.gz && \
+    -o ${barcode}.${amplicon}.trimmed.fastq.gz && \
     rm tmp.fq
     """
 
