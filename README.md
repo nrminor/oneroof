@@ -1,8 +1,9 @@
-# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
+# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial
+Roof
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
 
-- [OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof](#oneroof-base--variant--and-consensus-calling-under-one-proverbial-roof)
+- [OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial](#oneroof-base--variant--and-consensus-calling-under-one-proverbial)
   - [Overview](#overview)
   - [Quick Start](#quick-start)
   - [Detailed Setup Instructions](#detailed-setup-instructions)
@@ -26,9 +27,10 @@ networked devices in the same building.
 > That said, the pipeline at its current state is relatively stable and
 > working well for us in container-based and container-less use cases.
 > The most active area of change at this stage is feature-additions,
-> though in the near future, some of the more convolated parts of the
+> though in the near future, some of [the more convolated parts of the
 > pipeline’s primer-handling will be replaced with a Rust-based toolkit
-> under active development by our team, so stay tuned!
+> under active development by our
+> team](https://github.com/nrminor/amplicon-tk), so stay tuned!
 
 `oneroof` was originally developed in the early stages of the United
 States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024,
