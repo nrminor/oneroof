@@ -129,6 +129,9 @@ following parameters:
 | `--kit` | None | The Nanopore barcoding kit used to prepare sequencing libraries. |
 | `--pod5_batch_size` | all pod5s | How many pod5 files to basecall at once. With a single available GPU, all pod5 files should be basecalled together, so this parameter defaults to telling Nextflow to take all pod5 files at once. |
 | `--basecall_max` | 1 | If basecalling pod5 files is to be parallelized across multiple available GPUs, this parameter tells Nextflow how many parallel instances of the basecaller to run at once (defaults to 1). |
+| `--max_len` | 12345678910 | The maximum acceptable length for a given read. |
+| `--min_len` | 1 | The minimum acceptable length for a given read. |
+| `--min_qual` | 0 | The minimum acceptable average quality for a given read. |
 | `--max_mismatch` | 0 | The maximum number of mismatches to allow when finding primers |
 | `--downsample_to` | 0 | Desired coverage to downsample to, with a special value of 0 to indicate 0 downsampling |
 | `--min_depth_coverage` | 20 | Minimum required depth of coverage to call a variant. |
