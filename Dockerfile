@@ -28,7 +28,7 @@ RUN apt-get update && \
 
 # pull the latest dorado executable
 RUN cd $HOME && \
-    wget https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.7.1-linux-x64.tar.gz && \
+    wget --quiet https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.7.1-linux-x64.tar.gz && \
     tar -xvf dorado-0.7.1-linux-x64.tar.gz && \
     rm -rf dorado-0.7.1-linux-x64.tar.gz
 

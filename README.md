@@ -1,9 +1,8 @@
-# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial
-Roof
+# OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
 
-- [OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial](#oneroof-base--variant--and-consensus-calling-under-one-proverbial)
+- [OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof](#oneroof-base--variant--and-consensus-calling-under-one-proverbial-roof)
   - [Overview](#overview)
   - [Quick Start](#quick-start)
   - [Detailed Setup Instructions](#detailed-setup-instructions)
@@ -130,6 +129,9 @@ following parameters:
 | `--kit` | None | The Nanopore barcoding kit used to prepare sequencing libraries. |
 | `--pod5_batch_size` | all pod5s | How many pod5 files to basecall at once. With a single available GPU, all pod5 files should be basecalled together, so this parameter defaults to telling Nextflow to take all pod5 files at once. |
 | `--basecall_max` | 1 | If basecalling pod5 files is to be parallelized across multiple available GPUs, this parameter tells Nextflow how many parallel instances of the basecaller to run at once (defaults to 1). |
+| `--max_len` | 12345678910 | The maximum acceptable length for a given read. |
+| `--min_len` | 1 | The minimum acceptable length for a given read. |
+| `--min_qual` | 0 | The minimum acceptable average quality for a given read. |
 | `--max_mismatch` | 0 | The maximum number of mismatches to allow when finding primers |
 | `--downsample_to` | 0 | Desired coverage to downsample to, with a special value of 0 to indicate 0 downsampling |
 | `--min_depth_coverage` | 20 | Minimum required depth of coverage to call a variant. |
