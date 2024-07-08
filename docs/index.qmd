@@ -6,7 +6,8 @@ format:
         embed-resources: true
         keep-ipynb: false
     typst: default
-    gfm: default
+    gfm:
+        wrap: none
 editor: source
 engine: knitr
 execute:
