@@ -12,13 +12,15 @@ process PLOT_COVERAGE {
     tuple val(sample_id), path(mosdepth_files)
 
     output:
-    path "${sample_id}.coverage.pdf"
+    path "${sample_id}.*.pdf", emit: plots
+    path "${sample_id}*.tsv", emit: passing_cov
 
     script:
     """
     plot_coverage.py \
     --label ${sample_id} \
-    --input ${sample_id}.per-base.bed
+    --input ${sample_id}.per-base.bed \
+    --depth ${params.min_depth_coverage}
     """
 
 }
