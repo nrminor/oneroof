@@ -182,24 +182,44 @@ def compute_perc_cov(
             pl.col("start").min().over("chromosome").name.suffix("_min"),
             (pl.col("stop") - pl.col("start")).alias("block_length"),
         )
-        .filter(pl.col("coverage") > depth)
-        .drop("start", "stop")
+        .with_columns(
+            (pl.col("stop_max") - pl.col("start_min")).alias("reference length")
+        )
+        .drop("stop_max", "start_min")
+        .filter(pl.col("coverage") >= depth)
+        .drop("coverage")
         .unique()
         .with_columns(pl.col("block_length").sum().over("chromosome").alias("sum"))
         .drop("start", "stop", "block_length")
         .with_columns(
-            (pl.col("sum") / pl.col("stop_max"))
+            (pl.col("sum") / pl.col("reference length"))
             .over("chromosome")
-            .alias("proportion_above_cutoff")
+            .alias(f"proportion ≥ {depth}X coverage")
         )
         .drop("sum", "stop_max")
+        .select("sample id", "chromosome", "reference length")
         .unique()
     )
-    assert (
-        percent_passing_lf.collect().shape[0] == contig_count
-    ), f"Computation of percent coverage above {depth} failed:\n\n{percent_passing_lf.collect()}"
 
-    return percent_passing_lf
+    if percent_passing_lf.collect().shape[0] != 0:
+        assert (
+            percent_passing_lf.collect().shape[0] == contig_count
+        ), f"Computation of percent coverage above {depth} failed:\n\n{percent_passing_lf.collect()}"
+        return percent_passing_lf
+
+    return (
+        coverage_lf.with_columns(
+            pl.col("stop").max().over("chromosome").name.suffix("_max"),
+            pl.col("start").min().over("chromosome").name.suffix("_min"),
+            (pl.col("stop") - pl.col("start")).alias("block_length"),
+        )
+        .with_columns(
+            (pl.col("stop_max") - pl.col("start_min")).alias("reference length")
+        )
+        .select("sample id", "chromosome", "reference length")
+        .unique()
+        .with_columns(pl.lit(0).alias(f"proportion ≥ {depth}X coverage"))
+    )
 
 
 def main() -> None:
@@ -210,23 +230,22 @@ def main() -> None:
     """
     # collect parsed command line arguments and make sure the input exists
     args = parse_command_line_args()
-    assert args.input and os.isfile(
+    assert args.input and os.path.isfile(
         args.input
-    ), f"The provided input file {args.input} does not exist."
-    input_basename = os.path.basename(args.input)
+    ), f"The provided input file {args.input} does not (exist."
 
     # open a Polars query to lazily read the file with explicit column names
     coverage_lf = pl.scan_csv(
         args.input,
         separator="\t",
         new_columns=["chromosome", "start", "stop", "coverage"],
-    )
+    ).with_columns(pl.lit(args.label).alias("sample id"))
 
     # determine how many contigs are present
     contig_count = coverage_lf.select("chromosome").unique().collect().shape[0]
 
     # construct the core plot
-    core_plot = construct_plot(coverage_lf, args.label, args.int)
+    core_plot = construct_plot(coverage_lf, args.label, args.depth)
 
     # finish plot by handling faceting differently depending on whether there are multiple contigs
     # in the reference
@@ -256,9 +275,9 @@ def main() -> None:
 
     # write out a table of the percentage of positions that are greater than the cutoff
     (
-        compute_perc_cov(coverage_lf, contig_count, args.depth).sink_csv(
-            f"{input_basename}.passing_cov.tsv", separator="\t"
-        )
+        compute_perc_cov(coverage_lf, contig_count, args.depth)
+        .collect()
+        .write_csv(f"{args.label}.passing_cov.tsv", separator="\t")
     )
 
 

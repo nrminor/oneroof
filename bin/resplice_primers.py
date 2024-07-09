@@ -18,7 +18,6 @@ options:
 ```
 """
 
-
 import argparse
 import shutil
 from itertools import product
@@ -145,21 +144,20 @@ def resolve_primer_names(
 
     new_primer_pairs = []
     for i, (fwd_primer, rev_primer) in enumerate(primer_pairs):
-        fwd_suffix = fwd_primer.split('_')[-1]
-        rev_suffix = rev_primer.split('_')[-1]
-        primer_label = fwd_primer.replace(f'_{fwd_suffix}', '').split('-')[-1]
+        fwd_suffix = fwd_primer.split("_")[-1]
+        rev_suffix = rev_primer.split("_")[-1]
+        primer_label = fwd_primer.replace(f"_{fwd_suffix}", "").split("-")[-1]
         try:
             int(primer_label)
-        except:
-            primer_label = '1'
-        amplicon = '_'.join(
-            fwd_primer
-            .replace(f'_{fwd_suffix}', '')
-            .replace(f'-{primer_label}', '')
+        except TypeError:
+            primer_label = "1"
+        amplicon = "_".join(
+            fwd_primer.replace(f"_{fwd_suffix}", "")
+            .replace(f"-{primer_label}", "")
             .split("_")[0:2]
-            )
-        new_fwd_primer = f'{amplicon}_splice{primer_label}_{fwd_suffix}'
-        new_rev_primer = f'{amplicon}_splice{primer_label}_{rev_suffix}'
+        )
+        new_fwd_primer = f"{amplicon}_splice{primer_label}_{fwd_suffix}"
+        new_rev_primer = f"{amplicon}_splice{primer_label}_{rev_suffix}"
         new_primer_pairs.append([new_fwd_primer, new_rev_primer])
 
     primers_to_join = [item[0] for item in primer_pairs] + [
@@ -218,7 +216,8 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
 
             df = df.with_columns(pl.col("NAME").cast(pl.Utf8))
             new_df = (
-                pl.DataFrame({"NAME": primers_to_join}).cast(pl.Utf8)
+                pl.DataFrame({"NAME": primers_to_join})
+                .cast(pl.Utf8)
                 .join(df, how="left", on="NAME", validate="m:1", coalesce=False)
                 .with_columns(pl.Series(new_primer_names).alias("NAME"))
                 .select(
@@ -301,7 +300,7 @@ def main() -> None:
             pl.col("NAME")
             .str.replace_all("_LEFT", "")
             .str.replace_all("_RIGHT", "")
-            .str.replace_all(r'-\d+', "")
+            .str.replace_all(r"-\d+", "")
             .alias("Amplicon")
         )
         .select(
@@ -325,12 +324,14 @@ def main() -> None:
     if len(mutated_frames) == 0:
         shutil.copy(bed_file, f"{output_prefix}.bed")
         return
-    
+
     # print(mutated_frames)
 
     final_df = finalize_primer_pairings(mutated_frames)
 
-    final_df.drop("Amplicon").drop("NAME").sort("Start Position", "Stop Position").write_csv(
+    final_df.drop("Amplicon").drop("NAME").sort(
+        "Start Position", "Stop Position"
+    ).write_csv(
         f"{output_prefix}.bed",
         separator="\t",
         include_header=False,
