@@ -3,7 +3,7 @@ process PLOT_COVERAGE {
     /* */
 
     tag "${sample_id}"
-    publishDir params.cov_plots, mode: 'copy', overwrite: true
+    publishDir "${params.cov_plots}/${sample_id}", mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
