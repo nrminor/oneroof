@@ -147,7 +147,7 @@ def finish_plot(core_plot: ggplot, contig_count: int) -> Tuple[ggplot]:
 
 
 def compute_perc_cov(
-    coverage_lf: pl.LazyFrame, contig_count: int, depth: int
+    coverage_lf: pl.LazyFrame, label: str, contig_count: int, depth: int
 ) -> pl.LazyFrame:
     """
     Compute the percentage of coverage above a specified depth for each chromosome/contig.
@@ -178,6 +178,7 @@ def compute_perc_cov(
 
     percent_passing_lf = (
         coverage_lf.with_columns(
+            pl.lit(label).alias("sample id"),
             pl.col("stop").max().over("chromosome").name.suffix("_max"),
             pl.col("start").min().over("chromosome").name.suffix("_min"),
             (pl.col("stop") - pl.col("start")).alias("block_length"),
@@ -197,18 +198,21 @@ def compute_perc_cov(
             .alias(f"proportion ≥ {depth}X coverage")
         )
         .drop("sum", "stop_max")
-        .select("sample id", "chromosome", "reference length")
+        .select(
+            "sample id",
+            "chromosome",
+            "reference length",
+            f"proportion ≥ {depth}X coverage",
+        )
         .unique()
     )
 
-    if percent_passing_lf.collect().shape[0] != 0:
-        assert (
-            percent_passing_lf.collect().shape[0] == contig_count
-        ), f"Computation of percent coverage above {depth} failed:\n\n{percent_passing_lf.collect()}"
+    if percent_passing_lf.collect().shape[0] == contig_count:
         return percent_passing_lf
 
     return (
         coverage_lf.with_columns(
+            pl.lit(label).alias("sample id"),
             pl.col("stop").max().over("chromosome").name.suffix("_max"),
             pl.col("start").min().over("chromosome").name.suffix("_min"),
             (pl.col("stop") - pl.col("start")).alias("block_length"),
@@ -216,9 +220,24 @@ def compute_perc_cov(
         .with_columns(
             (pl.col("stop_max") - pl.col("start_min")).alias("reference length")
         )
-        .select("sample id", "chromosome", "reference length")
+        .select("chromosome", "reference length")
         .unique()
-        .with_columns(pl.lit(0).alias(f"proportion ≥ {depth}X coverage"))
+        .join(
+            percent_passing_lf,
+            on=["chromosome", "reference length"],
+            how="left",
+            coalesce=True,
+        )
+        .with_columns(
+            pl.when(pl.col(f"proportion ≥ {depth}X coverage").is_null())
+            .then(0)
+            .otherwise(pl.col(f"proportion ≥ {depth}X coverage"))
+            .alias(f"proportion ≥ {depth}X coverage"),
+            pl.when(pl.col("sample id").is_null())
+            .then(pl.lit(label))
+            .otherwise(pl.col("sample id"))
+            .alias("sample id"),
+        )
     )
 
 
@@ -239,7 +258,7 @@ def main() -> None:
         args.input,
         separator="\t",
         new_columns=["chromosome", "start", "stop", "coverage"],
-    ).with_columns(pl.lit(args.label).alias("sample id"))
+    )
 
     # determine how many contigs are present
     contig_count = coverage_lf.select("chromosome").unique().collect().shape[0]
@@ -275,7 +294,7 @@ def main() -> None:
 
     # write out a table of the percentage of positions that are greater than the cutoff
     (
-        compute_perc_cov(coverage_lf, contig_count, args.depth)
+        compute_perc_cov(coverage_lf, args.label, contig_count, args.depth)
         .collect()
         .write_csv(f"{args.label}.passing_cov.tsv", separator="\t")
     )
