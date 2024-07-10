@@ -43,8 +43,8 @@ RUN cd $HOME && dorado download
 # 1) copy the required dependency and configuration file into the image
 COPY pyproject.toml /$HOME/pyproject.toml
 
-# 2) install pixi 
-RUN cd $HOME && curl -fsSL https://pixi.sh/install.sh | bash
+# 2) install pixi
+RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 
 # 3) make sure pixi and pixi installs are on the $PATH
 ENV PATH $PATH:$HOME/.pixi/bin
