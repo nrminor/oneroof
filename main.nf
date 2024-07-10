@@ -16,8 +16,8 @@ log.info    """
 
             oneroof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
             =========================================================================
-            `oneroof` is a bespoke bioinformatic pipeline that can handle basecalling
-            Oxford Nanopore POD5 basecalling, Illumina paired-end read-merging, read
+            `oneroof` is a bespoke bioinformatic pipeline that can handle Oxford
+            Nanopore POD5 basecalling, Illumina paired-end read-merging, read
             alignment and variant-calling, variant-effect annotation, consensus
             sequence calling, quality reporting, and phylogenetic tree-building, all
             under "one roof."
