@@ -85,18 +85,13 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     Returns:
         ggplot: A ggplot object representing the coverage plot.
     """
-    return (
+    low_cov_df = coverage_lf.filter(pl.col("coverage") < 0).collect().to_pandas()
+    base_plot = (
         ggplot(
             coverage_lf.collect().to_pandas(),
             aes(xmin="start", xmax="stop", ymin=0, ymax="coverage"),
         )
         + geom_rect(fill="black", color="black")
-        + geom_rect(
-            data=lambda x: x[x["coverage"] < depth],
-            mapping=aes(ymin=0, ymax=float("inf")),
-            fill="gray",
-            alpha=0.3,
-        )
         + geom_hline(yintercept=depth, linetype="dashed")
         + labs(
             title=f"Coverage for Sample ID {label}",
@@ -104,6 +99,15 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
             y="Depth of Coverage (read count)",
         )
         + theme_minimal()
+    )
+    if low_cov_df.shape[0] == 0:
+        return base_plot
+
+    return base_plot + geom_rect(
+        data=low_cov_df,
+        mapping=aes(ymin=0, ymax=float("inf")),
+        fill="gray",
+        alpha=0.3,
     )
 
 
@@ -197,7 +201,7 @@ def compute_perc_cov(
             .over("chromosome")
             .alias(f"proportion ≥ {depth}X coverage")
         )
-        .drop("sum", "stop_max")
+        .drop("sum")
         .select(
             "sample id",
             "chromosome",
@@ -251,7 +255,7 @@ def main() -> None:
     args = parse_command_line_args()
     assert args.input and os.path.isfile(
         args.input
-    ), f"The provided input file {args.input} does not (exist."
+    ), f"The provided input file {args.input} does not exist."
 
     # open a Polars query to lazily read the file with explicit column names
     coverage_lf = pl.scan_csv(
