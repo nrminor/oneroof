@@ -35,7 +35,7 @@ process CONVERT_AND_SORT {
     script:
     """
     samtools view -bS ${sam} \
-    | samtools sort -o ${barcode}.bam
+    | samtools sort -M -o ${barcode}.bam
     """
 
 }
@@ -56,7 +56,7 @@ process SORT_BAM {
     script:
     """
     cat ${bam} \
-    | samtools sort -o ${barcode}.sorted.bam
+    | samtools sort -M -o ${barcode}.sorted.bam
     """
 
 }

@@ -14,8 +14,12 @@ process ALIGN_WITH_PRESET {
 
     script:
     preset = params.platform == "ont" ? "map-ont" : "sr"
+    secondary = params.secondary ? "no" : "ues"
     """
-    minimap2 -ax ${preset} ${refseq} ${reads} > ${barcode}.sam
+    minimap2 \
+    --secondary=${secondary} \
+    -ax ${preset} \
+    ${refseq} ${reads} > ${barcode}.sam
     """
 
 }
