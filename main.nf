@@ -44,7 +44,7 @@ log.info    """
             Minimum avg. read quality   : ${params.min_qual}
             Permitted primer mismatches : ${params.max_mismatch}
             Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to + "X" : "No downsampling"}
-            Secondary alignment setting : ${params.secondary ? "off" : "on"}
+            Secondary alignments        : ${params.secondary ? "on" : "off"}
             Minimum coverage            : ${params.min_depth_coverage}X
             NextClade Dataset           : ${params.nextclade_dataset ?: ""}
 
