@@ -71,13 +71,13 @@ workflow {
     // ---------------------------------------------------------------------- //
 
     // make sure provided refseq is provided and exists
-    assert params.refseq != "" :
+    assert params.refseq :
     "Please provide a reference FASTA file with the parameter `refseq`."
     assert file(params.refseq).isFile() :
     "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
 
     // make sure required snpeff config is provided and exists
-    assert params.snpEff_config != "" :
+    assert params.snpEff_config :
     "Please provide a snpEff config file with the parameter `snpEff_config`."
     assert file(params.snpEff_config).isFile() :
     "Please double check that the snpEff config file provided with the parameter `snpEff_config` exists."

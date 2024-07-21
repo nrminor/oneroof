@@ -23,7 +23,7 @@ workflow NANOPORE {
 
         GATHER_NANOPORE ( )
 
-        if ( params.primer_bed ) {
+        if ( params.primer_bed && params.primer_bed != "" ) {
 
             PRIMER_HANDLING (
                 GATHER_NANOPORE.out,

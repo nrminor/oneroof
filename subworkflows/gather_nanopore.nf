@@ -15,7 +15,7 @@ workflow GATHER_NANOPORE {
         // Invoke Dorado basecaller and demultiplexer if pod5's are provided
         // ------------------------------------------------------------------ //
 
-        if ( params.remote_pod5_location || params.pod5_dir ) {
+        if ( params.remote_pod5_location != "" || params.pod5_dir != "" ) {
 
             assert params.kit : "Please provide the Nanopore barcoding kit used."
 
@@ -97,7 +97,7 @@ workflow GATHER_NANOPORE {
         // through the pipeline as they become available via a transfer
         // ------------------------------------------------------------------ //
 
-        } else if ( params.precalled_staging ) {
+        } else if ( params.precalled_staging != "" ) {
 
             assert params.precalled_staging && file(params.precalled_staging).isDirectory() :
             """
@@ -126,9 +126,9 @@ workflow GATHER_NANOPORE {
         // Otherwise, work with pre-basecalled FASTQ or BAM files
         // ------------------------------------------------------------------ //
 
-        } else if ( params.prepped_data ) {
+        } else if ( params.prepped_data && params.prepped_data != "" ) {
 
-            assert params.prepped_data != "" && file(params.prepped_data).isDirectory() :
+            assert file(params.prepped_data).isDirectory() :
             """
             No local or remote pod5 directories were supplied. Please supply a directory of
             pre-called and pre-demultiplexed BAM or FASTQ files to run the Nanopore pipeline.
