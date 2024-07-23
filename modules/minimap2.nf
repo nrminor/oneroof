@@ -19,7 +19,9 @@ process ALIGN_WITH_PRESET {
     minimap2 \
     --secondary=${secondary} \
     -ax ${preset} \
-    ${refseq} ${reads} > ${barcode}.sam
+    ${refseq} ${reads} \
+    | samtools view -h -e '(rlen)>=${params.min_len}' \
+    | samtools view -h -e '(rlen)<=${params.max_len}' > ${barcode}.sam
     """
 
 }
