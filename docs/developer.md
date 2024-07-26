@@ -15,7 +15,7 @@ Most `oneroof` development happens in the `dev` branch of this repo. To get star
     cd oneroof && \
     git checkout dev
 
-From there, you’ll have a few tools to considering installing if you haven’t already:
+From there, you’ll have a few tools to consider installing if you haven’t already:
 
 1.  The Pixi package manager, available here: <https://pixi.sh/latest/>
 2.  The command runner Just, available here: <https://just.systems/man/en/chapter_4.html>
@@ -34,13 +34,13 @@ If you are sticking with Pixi, run `pixi shell` in the project root before you g
 
 #### Just
 
-While Just isn’t as important Pixi, I would still recommend installing it because of the conveniences it offers. With Just, the repo [`justfile`](../justfile) provides a switchboard of command shorthands, including:
+While Just isn’t as important as Pixi, I would still recommend installing it because of the conveniences it offers. With Just, the repo [`justfile`](../justfile) provides a switchboard of command shorthands, including:
 
 - `just docs`, which runs a series of Quarto commands to render and bundle the repo docs (including this file) as well as construct an updated readme
 - `just py`, which lints and formats all the repo’s Python files.
 - `just docker`, which builds and pushes a new version of the repo Docker Image.
 - `just env`, which instantiates the Pixi environment.
-- `just all`, which does everything.
+- `just all`, which does everything (`just doit` will do the same thing😎).
 
 Run `just` in the same directory as the repo [`justfile`](../justfile) to list all available recipes, and check out the [Just Programmer’s Manual](https://just.systems/man/en/chapter_1.html) for more about Just.
 
