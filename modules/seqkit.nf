@@ -21,7 +21,6 @@ process FIND_COMPLETE_AMPLICONS {
 	--threads ${task.cpus} \
 	--max-mismatch ${params.max_mismatch} \
 	--by-seq \
-	--use-regexp \
 	--pattern-file ${patterns} \
 	-o ${barcode}_amplicons.fastq.gz
     """
