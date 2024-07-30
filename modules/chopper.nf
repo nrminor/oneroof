@@ -2,6 +2,7 @@ process FILTER_WITH_CHOPPER {
 
     /* */
 
+    tag "${label}"
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
