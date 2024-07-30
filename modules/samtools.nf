@@ -100,7 +100,7 @@ process CALL_CONSENSUS {
     """
     samtools consensus \
     -A \
-    -c ${params.min_variant_frequency} \
+    -c ${params.min_consensus_freq} \
     -d ${params.min_depth_coverage} \
     ${bam} \
     > ${barcode}.consensus.fasta
