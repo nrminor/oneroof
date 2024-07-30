@@ -46,6 +46,7 @@ log.info    """
             Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to + "X" : "No downsampling"}
             Secondary alignments        : ${params.secondary ? "on" : "off"}
             Minimum coverage            : ${params.min_depth_coverage}X
+            Minimum consensus frequency : ${params.min_consensus_freq}
             NextClade Dataset           : ${params.nextclade_dataset ?: ""}
 
             User-provided inputs and outputs:
