@@ -85,7 +85,7 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     Returns:
         ggplot: A ggplot object representing the coverage plot.
     """
-    low_cov_df = coverage_lf.filter(pl.col("coverage") < 0).collect().to_pandas()
+    low_cov_df = coverage_lf.filter(pl.col("coverage") < depth).collect().to_pandas()
     base_plot = (
         ggplot(
             coverage_lf.collect().to_pandas(),
