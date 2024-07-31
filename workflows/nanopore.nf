@@ -3,7 +3,7 @@
 include { GATHER_NANOPORE } from "../subworkflows/gather_nanopore"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
-include { HAPLOTYPING } from "../subworkflows/haplotying"
+include { HAPLOTYPING } from "../subworkflows/haplotyping"
 include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
@@ -40,8 +40,7 @@ workflow NANOPORE {
             if ( Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
 
                 HAPLOTYPING (
-                    ALIGNMENT.out,
-                    ch_refseq
+                    ALIGNMENT.out
                 )
 
             }
