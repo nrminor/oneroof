@@ -1,7 +1,6 @@
 #!/usr/bin/env nextflow
 
 include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
-// include { AMPLICON_TK_TRIM } from "../modules/amplicon-tk"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS } from "../modules/bedtools"
@@ -15,35 +14,6 @@ include {
 } from "../modules/seqkit"
 include { FILTER_WITH_CHOPPER } from "../modules/chopper"
 include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
-
-// use some Groovy to count the number of amplicons
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.stream.Collectors
-
-def countAmplicons(String filePath) {
-    // Read all lines from the file
-    def lines = Files.readAllLines(Paths.get(filePath))
-
-    // Extract the fourth column, replace hyphens, and remove _LEFT and _RIGHT
-    def processedItems = lines.collect { line ->
-        def columns = line.split('\t')
-        if (columns.size() >= 4) {
-            def item = columns[3]
-            item = item.replace('-', '_')
-            item = item.replace('_LEFT', '').replace('_RIGHT', '')
-            return item
-        }
-        return null
-    }.findAll { it != null }
-
-    // Convert to a set to find unique items
-    def uniqueItems = processedItems.toSet()
-
-    // Return the number of unique items
-    return uniqueItems.size()
-}
-int ampliconCount = params.primer_bed ? countAmplicons(params.primer_bed) : 0
 
 
 workflow PRIMER_HANDLING {
@@ -95,18 +65,6 @@ workflow PRIMER_HANDLING {
             TRIM_ENDS_TO_PRIMERS.out
         )
 
-        // AMPLICON_TK_TRIM (
-        //     RESPLICE_PRIMERS.out
-        // )
-
-        // AMPLICON_STATS (
-        //     AMPLICON_TK_TRIM.out.groupTuple( by: 0, size: ampliconCount )
-        // )
-
-        // MERGE_BY_SAMPLE (
-        //     AMPLICON_TK_TRIM.out.groupTuple( by: 0, size: ampliconCount )
-        // )
-
         AMPLICON_STATS (
             FILTER_WITH_CHOPPER.out.groupTuple( by: 0 )
         )
@@ -126,3 +84,7 @@ workflow PRIMER_HANDLING {
     emit:
         RASUSA_READ_DOWNSAMPLING.out
 }
+
+
+// use some Groovy to count the number of amplicons
+int ampliconCount = params.primer_bed ? countAmplicons(params.primer_bed) : 0

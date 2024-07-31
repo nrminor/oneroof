@@ -133,7 +133,6 @@ process FASTQ_CONVERSION {
     tag "${barcode}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-
 	maxRetries 2
 
     input:
@@ -155,7 +154,6 @@ process FAIDX {
     publishDir params.basecall_fastqs, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-
 	maxRetries 2
 
     input:
@@ -169,5 +167,43 @@ process FAIDX {
     """
     samtools faidx --fastq ${fastq}
     """
+
+}
+
+process SPLIT_SEGMENTS {
+
+    tag "${sample_id}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    cpus 4
+
+    input:
+    tuple val(sample_id), path(bam), path(index)
+
+    output:
+    path "${sample_id}_*.bam"
+
+    shell:
+    '''
+    # Get list of contigs
+    contigs=$(samtools idxstats "!{bam}" | cut -f 1 | grep -v '*')
+
+    # Iterate through contigs and create separate BAM files
+    for contig in $contigs
+    do
+        output_bam="!{sample_id}_${contig}.bam"
+        (
+            samtools view -b "!{bam}" "$contig" > "$output_bam"
+            echo "Created $output_bam"
+        ) &
+    done
+
+    # Wait for all remaining background jobs to finish
+    wait
+
+    echo "Splitting the !{sample_id} BAM is complete."
+    '''
 
 }
