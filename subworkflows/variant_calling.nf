@@ -2,7 +2,9 @@
 
 include { GENERATE_MPILEUP } from "../modules/samtools"
 include { CALL_VARIANTS; CONVERT_TO_VCF } from "../modules/ivar"
-include { BUILD_DB; ANNOTATE_VCF } from "../modules/snpeff"
+include { 
+    BUILD_DB; ANNOTATE_VCF; EXTRACT_FIELDS
+} from "../modules/snpeff"
 include { MERGE_VCF_FILES } from "../modules/bcftools"
 
 workflow VARIANTS {
@@ -39,6 +41,10 @@ workflow VARIANTS {
             BUILD_DB.out,
             ch_snpeff_config,
             CONVERT_TO_VCF.out
+        )
+
+        EXTRACT_FIELDS (
+            ANNOTATE_VCF.out
         )
 
         MERGE_VCF_FILES (

@@ -17,7 +17,7 @@ workflow HAPLOTYPING {
             SPLIT_SEGMENTS.out
                 .flatten()
                 .map { bam -> 
-                    tuple( file(bam).getSimpleName().split("_")[0],  bam ) 
+                    tuple( file(bam).getSimpleName().split("_")[0..-2].join('_'), bam ) 
                 }
         )
 

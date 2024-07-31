@@ -56,3 +56,26 @@ process ANNOTATE_VCF {
     """
 
 }
+
+process EXTRACT_FIELDS {
+
+    tag "${barcode}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(sample_id), path(vcf)
+
+    output:
+    tuple val(sample_id), path(vcf), path("${sample_id}_variant_effects.tsv")
+
+    script:
+    """
+    snpsift extractFields \
+    ${vcf} \
+    CHROM REF POS ALT AF AC DP MQ ANN[*].GENE ANN[*].GENEID ANN[*].EFFECT \
+    ANN[*].HGVS_P ANN[*].CDNA_POS ANN[*].CDNA_LEN ANN[*].CDS_POS ANN[*].AA_POS \
+    > ${sample_id}_variant_effects.tsv
+    """
+}

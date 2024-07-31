@@ -14,7 +14,8 @@ process ORIENT_READS {
 
     script:
     """
-    vsearch --orient ${reads} \
+    vsearch \
+	--orient ${reads} \
     --db ${refseq} \
     --fastqout ${barcode}.oriented.fastq
     """
@@ -38,14 +39,14 @@ process IDENTIFY_HAPLOTYPES {
 	tuple val(sample_id), path(reads)
 
 	output:
-	tuple val(sample_id), path("${sample_id}_deduped.fasta"), emit: deduped_fasta
+	tuple val(sample_id), path("${sample_id}_haplotypes.fasta"), emit: deduped_fasta
 	path "${sample_id}_haplotype_metadata.tsv", emit: metadata
 
 	script:
 	"""
 	vsearch \
 	--fastx_uniques ${reads} \
-	--fastaout ${sample_id}_deduped.fasta \
+	--fastaout ${sample_id}_haplotypes.fasta \
 	--sizeout \
 	--minuniquesize ${params.min_haplo_reads} \
 	--tabbedout tmp.tsv \
