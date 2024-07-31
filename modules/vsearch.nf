@@ -47,14 +47,14 @@ process IDENTIFY_HAPLOTYPES {
 	--fastx_uniques ${reads} \
 	--fastaout ${sample_id}_deduped.fasta \
 	--sizeout \
-	--minuniquesize ${params.min_reads} \
+	--minuniquesize ${params.min_haplo_reads} \
 	--tabbedout tmp.tsv \
 	--strand both
 
 	csvtk add-header -t \
 	--names orig_label,clust_label,clust_index,seq_index_in_clust,clust_abundance,first_seq_label \
 	tmp.tsv \
-	| csvtk filter -t --filter "clust_abundance>=${params.min_reads}" \
+	| csvtk filter -t --filter "clust_abundance>=${params.min_haplo_reads}" \
 	> ${sample_id}_haplotype_metadata.tsv
 
 	rm tmp.tsv

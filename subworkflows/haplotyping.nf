@@ -7,15 +7,10 @@ workflow HAPLOTYPING {
 
     take:
         ch_bams
-        ch_refseq
 
     main:
-        COUNT_SEGMENTS (
-            ch_bams
-        )
-
         SPLIT_SEGMENTS (
-            COUNT_SEGMENTS.out
+            ch_bams
         )
 
         FASTQ_CONVERSION (
