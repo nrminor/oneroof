@@ -16,10 +16,10 @@ process BUILD_DB {
     script:
     config_dir = "genome/ref_genome"
     """
-    # 
+    #
     mkdir -p ${config_dir}/
 
-    # 
+    #
     cp ${genbank} ${config_dir}/genes.gbk
 
     #
@@ -74,8 +74,7 @@ process EXTRACT_FIELDS {
     """
     SnpSift extractFields \
     ${vcf} \
-    CHROM REF POS ALT AF AC DP MQ ANN[*].GENE ANN[*].GENEID ANN[*].EFFECT \
-    ANN[*].HGVS_P ANN[*].CDNA_POS ANN[*].CDNA_LEN ANN[*].CDS_POS ANN[*].AA_POS \
+    CHROM REF POS ALT AF AC DP MQ ANN[*].GENE ANN[*].EFFECT ANN[*].HGVS_P ANN[*].CDS_POS ANN[*].AA_POS \
     > ${sample_id}_variant_effects.tsv
     """
 }
