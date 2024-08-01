@@ -165,7 +165,7 @@ process FAIDX {
     script:
     index_name = file(fastq).getName()
     """
-    samtools faidx --fastq {fastq}
+    samtools faidx --fastq ${fastq}
     """
 
 }
