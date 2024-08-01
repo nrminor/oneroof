@@ -37,14 +37,6 @@ workflow NANOPORE {
                 ch_refseq
             )
 
-            if ( Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
-
-                HAPLOTYPING (
-                    ALIGNMENT.out
-                )
-
-            }
-
             QUALITY_CONTROL (
                 PRIMER_HANDLING.out,
                 ALIGNMENT.out
@@ -74,6 +66,14 @@ workflow NANOPORE {
             ch_refgbk,
             ch_snpeff_config
         )
+
+        if ( Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
+
+            HAPLOTYPING (
+                ALIGNMENT.out
+            )
+
+        }
 
         PHYLO (
             CONSENSUS.out

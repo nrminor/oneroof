@@ -59,7 +59,7 @@ process ANNOTATE_VCF {
 
 process EXTRACT_FIELDS {
 
-    tag "${barcode}"
+    tag "${sample_id}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
@@ -72,7 +72,7 @@ process EXTRACT_FIELDS {
 
     script:
     """
-    snpsift extractFields \
+    SnpSift extractFields \
     ${vcf} \
     CHROM REF POS ALT AF AC DP MQ ANN[*].GENE ANN[*].GENEID ANN[*].EFFECT \
     ANN[*].HGVS_P ANN[*].CDNA_POS ANN[*].CDNA_LEN ANN[*].CDS_POS ANN[*].AA_POS \

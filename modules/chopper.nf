@@ -23,6 +23,6 @@ process FILTER_WITH_CHOPPER {
     --minlength ${params.min_len} \
     --quality ${params.min_qual} \
     --threads ${task.cpus} \
-    | gzip -c > ${new_id}.filtered.fastq.gz
+    | bgzip -c > ${new_id}.filtered.fastq.gz
     """
 }
