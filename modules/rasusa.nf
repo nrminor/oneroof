@@ -17,7 +17,7 @@ process RASUSA_READ_DOWNSAMPLING {
 	tuple val(barcode), path("${barcode}*.fastq.gz")
 
     script:
-    basename = file(amplicons).getSimpleName()
+    basename = file(bam).getName().replace(".fastq.gz", "")
     if ( params.downsample_to == 0 )
         """
         cp ${amplicons} ${basename}.no_downsampling.fastq.gz
@@ -53,10 +53,10 @@ process RASUSA_ALN_DOWNSAMPLING {
 	tuple val(barcode), path("${barcode}*.bam")
 
     script:
-    basename = file(bam).getSimpleName()
+    basename = file(bam).getName().replace(".fastq.gz", "")
     if ( params.downsample_to == 0 )
         """
-        cp ${bam} ${barcode}.no_downsampling.bam
+        cp ${bam} ${basename}.no_downsampling.bam
         """
     else
         """
