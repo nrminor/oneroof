@@ -69,22 +69,22 @@ workflow PRIMER_HANDLING {
             TRIM_ENDS_TO_PRIMERS.out
         )
 
-        AMPLICON_STATS (
-            FILTER_WITH_CHOPPER.out.groupTuple( by: 0 )
-        )
-
-        MERGE_BY_SAMPLE (
-            FILTER_WITH_CHOPPER.out.groupTuple( by: 0 )
-        )
-
         FAIDX (
-            MERGE_BY_SAMPLE.out
+            FILTER_WITH_CHOPPER.out
         )
 
         RASUSA_READ_DOWNSAMPLING (
             FAIDX.out
         )
 
+        AMPLICON_STATS (
+            RASUSA_READ_DOWNSAMPLING.out.groupTuple( by: 0 )
+        )
+
+        MERGE_BY_SAMPLE (
+            RASUSA_READ_DOWNSAMPLING.out.groupTuple( by: 0 )
+        )
+
     emit:
-        RASUSA_READ_DOWNSAMPLING.out
+        MERGE_BY_SAMPLE.out
 }
