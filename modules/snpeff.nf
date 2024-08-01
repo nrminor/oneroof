@@ -73,6 +73,7 @@ process EXTRACT_FIELDS {
     script:
     """
     SnpSift extractFields \
+    -s "," \
     ${vcf} \
     CHROM REF POS ALT AF AC DP MQ ANN[0].GENE ANN[0].EFFECT ANN[0].HGVS_P ANN[0].CDS_POS ANN[0].AA_POS \
     > ${sample_id}_variant_effects.tsv
