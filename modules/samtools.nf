@@ -160,12 +160,12 @@ process FAIDX {
     tuple val(barcode), path(fastq)
 
     output:
-    tuple val(barcode), path(fastq), path("${index_name}.fai")
+    tuple val(barcode), path(fastq), path("*.fai")
 
     script:
     index_name = file(fastq).getName()
     """
-    samtools faidx --fastq ${fastq}
+    samtools faidx --fastq {fastq}
     """
 
 }

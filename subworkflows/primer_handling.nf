@@ -67,6 +67,9 @@ workflow PRIMER_HANDLING {
 
         FILTER_WITH_CHOPPER (
             TRIM_ENDS_TO_PRIMERS.out
+                .map { id, patterns, fastq -> tuple( id, patterns, fastq, file(fastq).countFastq() ) }
+                .filter { it[3] > 0 }
+                .map { id, patterns, fastq, read_count -> tuple( id, patterns, file(fastq) ) }
         )
 
         FAIDX (
