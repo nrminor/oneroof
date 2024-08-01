@@ -71,6 +71,9 @@ workflow PRIMER_HANDLING {
 
         FAIDX (
             FILTER_WITH_CHOPPER.out
+                .map { id, fastq -> tuple( id, fastq, file(fastq).countFastq() ) }
+                .filter { id, fastq, read_count -> read_count > 0 }
+                .map { id, fastq, read_count -> tuple( id, file(fastq) ) }
         )
 
         RASUSA_READ_DOWNSAMPLING (
