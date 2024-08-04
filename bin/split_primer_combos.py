@@ -92,7 +92,7 @@ def main() -> None:
             .str.replace(fwd_suff, "")
             .str.replace(rev_suff, "")
             .str.replace_all("_", "-")
-            .alias("NAME")
+            .alias("NAME"),
         )
         .partition_by("NAME")
     )
@@ -100,7 +100,9 @@ def main() -> None:
     for df in bed_dfs:
         splicing = df.select("NAME").unique().item()
         df.drop("NAME").write_csv(
-            file=f"{splicing}.bed", separator="\t", include_header=False
+            file=f"{splicing}.bed",
+            separator="\t",
+            include_header=False,
         )
 
 

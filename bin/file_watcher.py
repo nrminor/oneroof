@@ -57,7 +57,7 @@ class TransferRunner:
         try:
             sftp.get(remote_file_path, local_file_path)
             print(
-                f"File {self.filename} successfully transferred to '{self.local_path}'."
+                f"File {self.filename} successfully transferred to '{self.local_path}'.",
             )
         except Exception as e:
             print(f"Error transferring file {self.filename}: {e}")
@@ -76,14 +76,14 @@ class TransferRunner:
         while checks < max_checks:
             try:
                 current_size = sftp.stat(
-                    os.path.join(self.remote_path, self.filename)
+                    os.path.join(self.remote_path, self.filename),
                 ).st_size
                 if current_size == previous_size:
                     return True
                 previous_size = current_size
                 checks += 1
                 time.sleep(wait_time)
-            except IOError as e:
+            except OSError as e:
                 # Handle file not found or other I/O errors
                 print(f"Error checking file size: {e}")
                 return False
@@ -159,7 +159,7 @@ def runtime_config_check(config_dict: dict) -> None:
 
 
 def parse_credential_config(args: argparse.Namespace) -> Credentials:
-    with open(args.config_path, "r", encoding="utf8") as config_handle:
+    with open(args.config_path, encoding="utf8") as config_handle:
         config_dict = yaml.safe_load(config_handle)
 
     runtime_config_check(config_dict)

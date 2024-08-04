@@ -63,7 +63,7 @@ def make_dir(path):
     Returns:
         None
     """
-    if not len(path) == 0:
+    if len(path) != 0:
         try:
             os.makedirs(path)
         except OSError as exception:
@@ -176,7 +176,7 @@ def strand_bias_filter(format):
     ##  REF_FW  REF_RV
     ##  ALT_FW  ALT_RV
     table = np.array(
-        [[format[0] - format[1], format[1]], [format[3] - format[4], format[4]]]
+        [[format[0] - format[1], format[1]], [format[3] - format[4], format[4]]],
     )
     oddsr, pvalue = fisher_exact(table, alternative="greater")
 
@@ -206,7 +206,7 @@ def write_vcf_header(ref, ignore_strand_bias, file_out, filename):
         header_contig = []
         for record in SeqIO.parse(ref, "fasta"):
             header_contig += [
-                "##contig=<ID=" + record.id + ",length=" + str(len(record.seq)) + ">"
+                "##contig=<ID=" + record.id + ",length=" + str(len(record.seq)) + ">",
             ]
 
         header_source += header_contig
@@ -229,7 +229,7 @@ def write_vcf_header(ref, ignore_strand_bias, file_out, filename):
     header_cols = [f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{filename}"]
     if not ignore_strand_bias:
         header_filter += [
-            '##FILTER=<ID=sb,Description="Strand-bias fisher-test p-value < 0.05">'
+            '##FILTER=<ID=sb,Description="Strand-bias fisher-test p-value < 0.05">',
         ]
 
     header = header_source + header_info + header_filter + header_format + header_cols
@@ -385,9 +385,9 @@ def process_variants(variants, num_collapse):
     """
     # Collapsed variant parameters equal to first variant
     key_list = ["chrom", "pos", "id", "qual", "filter", "info", "format"]
-    chrom, pos, id, qual, filter, info, format = [
+    chrom, pos, id, qual, filter, info, format = (
         variants[next(iter(variants))][key] for key in key_list
-    ]
+    )
 
     # If no consecutive, process one variant line
     # If two consecutive, process two variant lines into one
@@ -427,7 +427,7 @@ def main(args=None):
     #################################
     ## Read and process input file ##
     #################################
-    with open(args.file_in, "r") as fin:
+    with open(args.file_in) as fin:
         for line in fin:
             if "REGION" not in line:
                 ################
@@ -516,7 +516,9 @@ def main(args=None):
                         fe_codon_ref = variants[next(iter(variants))]["ref_codon"]
                         fe_codon_alt = variants[next(iter(variants))]["alt_codon"]
                         num_collapse = check_merge_codons(
-                            q_pos, fe_codon_ref, fe_codon_alt
+                            q_pos,
+                            fe_codon_ref,
+                            fe_codon_alt,
                         )
                         (
                             chrom,
@@ -581,7 +583,16 @@ def main(args=None):
 
                 var_count_dict[q_pos[0][1]] += 1
                 write_vcf_line(
-                    chrom, pos, id, ref, alt, filter, qual, info, format, args.file_out
+                    chrom,
+                    pos,
+                    id,
+                    ref,
+                    alt,
+                    filter,
+                    qual,
+                    info,
+                    format,
+                    args.file_out,
                 )
                 ## Empty variants dict and queue accordingly
                 for _ in range(num_collapse):

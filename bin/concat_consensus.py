@@ -18,13 +18,15 @@ def main() -> None:
     for consensus_file in consensus_files:
         sample_name = consensus_file.split("/")[-1].replace(".consensus.fasta", "")
         concatenated_sequence = ""
-        with open(consensus_file, "r", encoding="utf8") as handle:
+        with open(consensus_file, encoding="utf8") as handle:
             for record in SeqIO.parse(handle, "fasta"):
                 concatenated_sequence += str(record.seq)
 
         # Create a SeqRecord with the concatenated sequence
         concatenated_record = SeqRecord(
-            Seq(concatenated_sequence), id=sample_name, description=""
+            Seq(concatenated_sequence),
+            id=sample_name,
+            description="",
         )
         consensus_records.append(concatenated_record)
 

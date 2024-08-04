@@ -56,7 +56,10 @@ def parse_command_line_args() -> argparse.Namespace:
 
 
 def generate_regex_patterns(
-    primer_fasta: str, label: str, forward_pattern: str, reverse_pattern: str
+    primer_fasta: str,
+    label: str,
+    forward_pattern: str,
+    reverse_pattern: str,
 ) -> None:
     """
     Generates regular expression patterns based on primer sequences from a FASTA file.
@@ -93,7 +96,7 @@ def generate_regex_patterns(
     # initialize a list of strings and parse the lines from the primer FASTA\
     # into it
     lines: List[str]
-    with open(primer_fasta, "r", encoding="utf8") as primer_handle:
+    with open(primer_fasta, encoding="utf8") as primer_handle:
         lines = [line.strip() for line in primer_handle]
 
     # pull out the sequences
@@ -113,7 +116,7 @@ def generate_regex_patterns(
     ]
     if start_coords[0] < start_coords[1]:
         warnings.warn(
-            "Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'"
+            "Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'",
         )
 
     # unpack the sequences
@@ -150,12 +153,15 @@ def main() -> None:
 
     # make sure the file provided by the user exists
     assert os.path.isfile(
-        args.input_fasta
+        args.input_fasta,
     ), f"The provided primer FASTA, {args.input_fasta}, does not exist"
 
     # generate the new regex patterns
     generate_regex_patterns(
-        args.input_fasta, args.output_prefix, args.forward_pattern, args.reverse_pattern
+        args.input_fasta,
+        args.output_prefix,
+        args.forward_pattern,
+        args.reverse_pattern,
     )
 
 

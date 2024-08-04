@@ -85,7 +85,7 @@ def dedup_primers(partitioned_bed: List[pl.DataFrame]) -> List[pl.DataFrame]:
     for i, df in enumerate(partitioned_bed):
         if True in df.select("NAME").is_duplicated().to_list():
             new_dfs = df.with_columns(
-                df.select("NAME").is_duplicated().alias("duped")
+                df.select("NAME").is_duplicated().alias("duped"),
             ).partition_by("duped")
 
             for i, dup_frame in enumerate(new_dfs):
@@ -97,7 +97,7 @@ def dedup_primers(partitioned_bed: List[pl.DataFrame]) -> List[pl.DataFrame]:
                             pl.concat_str(
                                 [pl.col("NAME"), pl.col("row_nr")],
                                 separator="-",
-                            ).alias("NAME")
+                            ).alias("NAME"),
                         )
                         .select(
                             "Ref",
@@ -123,7 +123,8 @@ def dedup_primers(partitioned_bed: List[pl.DataFrame]) -> List[pl.DataFrame]:
 
 
 def resolve_primer_names(
-    to_combine: List[str], combine_to: List[str]
+    to_combine: List[str],
+    combine_to: List[str],
 ) -> Tuple[List[str], List[str]]:
     """
         `resolve_primer_names()` names each possible pairing of primers in
@@ -154,7 +155,7 @@ def resolve_primer_names(
         amplicon = "_".join(
             fwd_primer.replace(f"_{fwd_suffix}", "")
             .replace(f"-{primer_label}", "")
-            .split("_")[0:2]
+            .split("_")[0:2],
         )
         new_fwd_primer = f"{amplicon}_splice{primer_label}_{fwd_suffix}"
         new_rev_primer = f"{amplicon}_splice{primer_label}_{rev_suffix}"
@@ -207,11 +208,12 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
                 break
 
             primers_to_join, new_primer_names = resolve_primer_names(
-                to_combine, combine_to
+                to_combine,
+                combine_to,
             )
 
             assert len(primers_to_join) == len(
-                new_primer_names
+                new_primer_names,
             ), f"Insufficient number of replacement names generated for partition {i}"
 
             df = df.with_columns(pl.col("NAME").cast(pl.Utf8))
@@ -301,7 +303,7 @@ def main() -> None:
             .str.replace_all("_LEFT", "")
             .str.replace_all("_RIGHT", "")
             .str.replace_all(r"-\d+", "")
-            .alias("Amplicon")
+            .alias("Amplicon"),
         )
         .select(
             "Ref",
@@ -330,7 +332,8 @@ def main() -> None:
     final_df = finalize_primer_pairings(mutated_frames)
 
     final_df.drop("Amplicon").drop("NAME").sort(
-        "Start Position", "Stop Position"
+        "Start Position",
+        "Stop Position",
     ).write_csv(
         f"{output_prefix}.bed",
         separator="\t",

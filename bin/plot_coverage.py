@@ -12,7 +12,6 @@ options:
 """
 
 import argparse
-import os
 from pathlib import Path
 from typing import Tuple
 
@@ -151,7 +150,10 @@ def finish_plot(core_plot: ggplot, contig_count: int) -> Tuple[ggplot]:
 
 
 def compute_perc_cov(
-    coverage_lf: pl.LazyFrame, label: str, contig_count: int, depth: int
+    coverage_lf: pl.LazyFrame,
+    label: str,
+    contig_count: int,
+    depth: int,
 ) -> pl.LazyFrame:
     """
     Compute the percentage of coverage above a specified depth for each chromosome/contig.
@@ -188,7 +190,7 @@ def compute_perc_cov(
             (pl.col("stop") - pl.col("start")).alias("block_length"),
         )
         .with_columns(
-            (pl.col("stop_max") - pl.col("start_min")).alias("reference length")
+            (pl.col("stop_max") - pl.col("start_min")).alias("reference length"),
         )
         .drop("stop_max", "start_min")
         .filter(pl.col("coverage") >= depth)
@@ -199,7 +201,7 @@ def compute_perc_cov(
         .with_columns(
             (pl.col("sum") / pl.col("reference length"))
             .over("chromosome")
-            .alias(f"proportion ≥ {depth}X coverage")
+            .alias(f"proportion ≥ {depth}X coverage"),
         )
         .drop("sum")
         .select(
@@ -222,7 +224,7 @@ def compute_perc_cov(
             (pl.col("stop") - pl.col("start")).alias("block_length"),
         )
         .with_columns(
-            (pl.col("stop_max") - pl.col("start_min")).alias("reference length")
+            (pl.col("stop_max") - pl.col("start_min")).alias("reference length"),
         )
         .select("chromosome", "reference length")
         .unique()
@@ -253,9 +255,10 @@ def main() -> None:
     """
     # collect parsed command line arguments and make sure the input exists
     args = parse_command_line_args()
-    assert args.input and os.path.isfile(
-        args.input
-    ), f"The provided input file {args.input} does not exist."
+    assert args.input, f"The provided input file {args.input} does not exist."
+    assert Path(
+        args.input,
+    ).is_file(), f"The provided input file {args.input} does not exist."
 
     # open a Polars query to lazily read the file with explicit column names
     coverage_lf = pl.scan_csv(
@@ -270,17 +273,14 @@ def main() -> None:
     # construct the core plot
     core_plot = construct_plot(coverage_lf, args.label, args.depth)
 
-    # finish plot by handling faceting differently depending on whether there are multiple contigs
-    # in the reference
+    # finish plot by handling faceting differently depending on whether there are
+    # multiple contigs in the reference
     rendered = finish_plot(core_plot, contig_count)
 
     # if the rendered can be unpacked into two plots, write both separately. Otherwise,
     # just output the one plot with a fixed Y-axis
-    try:
+    if len(rendered) == 2:
         fixed_plot, free_plot = rendered
-    except TypeError:
-        ggsave(rendered, f"{args.label}.coverage.pdf", format="pdf", height=6, width=11)
-    else:
         ggsave(
             fixed_plot,
             f"{args.label}.fixed_y.coverage.pdf",
@@ -295,6 +295,16 @@ def main() -> None:
             height=6,
             width=11,
         )
+    elif len(rendered) == 1:
+        ggsave(
+            *rendered,
+            f"{args.label}.coverage.pdf",
+            format="pdf",
+            height=6,
+            width=11,
+        )
+    else:
+        assert len(rendered) >= 1, f"Unexpected behavior for plot rendering: {rendered}"
 
     # write out a table of the percentage of positions that are greater than the cutoff
     (
