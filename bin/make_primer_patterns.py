@@ -8,10 +8,8 @@ python3 make_primer_patterns.py -f <FASTA> -o <OUTPUT_PREFIX>
 """
 
 import argparse
-import os
 import warnings
 from pathlib import Path
-from typing import List
 
 
 def parse_command_line_args() -> argparse.Namespace:
@@ -50,9 +48,7 @@ def parse_command_line_args() -> argparse.Namespace:
         default=r"^(.*?)",
         help="Pattern to append to reverse primer sequence.",
     )
-
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def generate_regex_patterns(
@@ -95,8 +91,8 @@ def generate_regex_patterns(
     """
     # initialize a list of strings and parse the lines from the primer FASTA\
     # into it
-    lines: List[str]
-    with open(primer_fasta, encoding="utf8") as primer_handle:
+    lines: list[str] = []
+    with Path(primer_fasta).open(encoding="utf8") as primer_handle:
         lines = [line.strip() for line in primer_handle]
 
     # pull out the sequences
@@ -104,8 +100,9 @@ def generate_regex_patterns(
 
     # make sure there are only two sequences present, and thus that we are only
     # considering a single amplicon
+    primer_pair_count = 2
     assert (
-        len(seqs) == 2
+        len(seqs) == primer_pair_count
     ), f"The provided FASTA does not contain exactly two sequences:\n{seqs}"
 
     # pull out the start coordinates, assuming `bedtools getfasta` formatting,
@@ -127,7 +124,7 @@ def generate_regex_patterns(
     reverse_pattern = reverse_primer + reverse_pattern
 
     # iterate through the patterns to write the lines of the pattern file
-    with open(f"{label}.txt", "w", encoding="utf8") as output_handle:
+    with Path(f"{label}.txt").open("w", encoding="utf8") as output_handle:
         output_handle.write(forward_pattern)
         output_handle.write("\n")
         output_handle.write(reverse_pattern)
@@ -152,9 +149,9 @@ def main() -> None:
     args = parse_command_line_args()
 
     # make sure the file provided by the user exists
-    assert os.path.isfile(
+    assert Path(
         args.input_fasta,
-    ), f"The provided primer FASTA, {args.input_fasta}, does not exist"
+    ).is_file(), f"The provided primer FASTA, {args.input_fasta}, does not exist"
 
     # generate the new regex patterns
     generate_regex_patterns(

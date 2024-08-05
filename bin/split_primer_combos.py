@@ -18,14 +18,15 @@ options:
 ```
 """
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import polars as pl
 
 
-def parse_command_line_args() -> Tuple[Path, str, str]:
+def parse_command_line_args() -> tuple[Path, str, str]:
     """
         Parse command line arguments while passing errors onto main.
 

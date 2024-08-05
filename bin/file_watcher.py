@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import argparse
 import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Self
 
-import paramiko
 import yaml
+from loguru import logger
 from paramiko.client import SSHClient
 
 
@@ -29,9 +31,9 @@ class TransferRunner:
     address: str
     username: str
     ready: bool = field(init=False)
-    local_path: str | Path = field(default=os.getcwd())
+    local_path: str | Path = field(default=Path.cwd())
 
-    def __post_init__(self):
+    def __post_init__(self) -> Self:
         if self.is_file_done_writing():
             object.__setattr__(self, "ready", True)
         else:
@@ -39,28 +41,28 @@ class TransferRunner:
 
         if self.ready and self.filename not in os.listdir(self.local_path):
             return self
-        else:
-            time.sleep(10)
-            return TransferRunner(
-                self.client,
-                self.filename,
-                self.remote_path,
-                self.address,
-                self.username,
-            )
 
-    def transfer_file(self):
+        time.sleep(10)
+        return TransferRunner(
+            self.client,
+            self.filename,
+            self.remote_path,
+            self.address,
+            self.username,
+        )
+
+    def transfer_file(self) -> None:
         sftp = self.client.open_sftp()
         remote_file_path = f"{self.remote_path}/{self.filename}"
-        local_file_path = os.path.join(self.local_path, self.filename)
+        local_file_path = Path(self.local_path) / Path(self.filename)
 
         try:
             sftp.get(remote_file_path, local_file_path)
-            print(
+            logger.info(
                 f"File {self.filename} successfully transferred to '{self.local_path}'.",
             )
         except Exception as e:
-            print(f"Error transferring file {self.filename}: {e}")
+            logger.warning(f"Error transferring file {self.filename}: {e}")
         finally:
             sftp.close()
 
@@ -68,7 +70,7 @@ class TransferRunner:
         self,
         wait_time: int = 3,
         max_checks: int = 10,
-    ):
+    ) -> bool:
         sftp = self.client.open_sftp()
         previous_size = -1
         checks = 0
@@ -85,7 +87,7 @@ class TransferRunner:
                 time.sleep(wait_time)
             except OSError as e:
                 # Handle file not found or other I/O errors
-                print(f"Error checking file size: {e}")
+                logger.warning(f"Error checking file size: {e}")
                 return False
         return False
 
@@ -124,9 +126,7 @@ def parse_command_line_args() -> argparse.Namespace:
         default="file_watcher.yml",
         help="The configuration YAML file to use for connecting to the remote host with credentials.",
     )
-
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def runtime_config_check(config_dict: dict) -> None:
@@ -159,7 +159,7 @@ def runtime_config_check(config_dict: dict) -> None:
 
 
 def parse_credential_config(args: argparse.Namespace) -> Credentials:
-    with open(args.config_path, encoding="utf8") as config_handle:
+    with Path(args.config_path).open(encoding="utf8") as config_handle:
         config_dict = yaml.safe_load(config_handle)
 
     runtime_config_check(config_dict)
@@ -192,7 +192,7 @@ def main() -> None:
 
     # set up ssh client and connection
     client = SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # This may or may not be necessary: client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # noqa: E501
     client.connect(creds.host, username=creds.username, password=creds.password)
 
     # Record the start time
@@ -205,7 +205,7 @@ def main() -> None:
         while True:
             # Check if the elapsed time exceeds 72 hours
             if time.time() - start_time > duration:
-                print("Time limit reached. Stopping the file transfer process.")
+                logger.info("Time limit reached. Stopping the file transfer process.")
                 break
 
             _, stdout, _ = client.exec_command(f"ls {creds.watch_path}")
@@ -222,11 +222,11 @@ def main() -> None:
                 runner.transfer_file()
             time.sleep(30)
     except KeyboardInterrupt:
-        print("Process interrupted. Exiting...")
+        logger.debug("Process interrupted. Exiting...")
     finally:
         # Close the SSH connection
         client.close()
-        print("SSH connection closed.")
+        logger.info("SSH connection closed.")
 
 
 if __name__ == "__main__":

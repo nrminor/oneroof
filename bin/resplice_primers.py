@@ -18,16 +18,19 @@ options:
 ```
 """
 
+from __future__ import annotations
+
 import argparse
 import shutil
 from itertools import product
 from pathlib import Path
-from typing import List, Tuple
+from typing import list, tuple
 
 import polars as pl
+from loguru import logger
 
 
-def parse_command_line_args() -> Tuple[Path, str]:
+def parse_command_line_args() -> tuple[Path, str]:
     """
         Parse command line arguments while passing errors onto main.
 
@@ -35,7 +38,7 @@ def parse_command_line_args() -> Tuple[Path, str]:
         `None`
 
     Returns:
-        `Tuple[Path, str]`: a tuple containing the path to the input BED
+        `tuple[Path, str]`: a tuple containing the path to the input BED
         file and a string representing the desired output name.
     """
     parser = argparse.ArgumentParser()
@@ -67,28 +70,28 @@ def parse_command_line_args() -> Tuple[Path, str]:
     return args.input_bed, args.output_prefix
 
 
-def dedup_primers(partitioned_bed: List[pl.DataFrame]) -> List[pl.DataFrame]:
+def dedup_primers(partitioned_bed: list[pl.DataFrame]) -> list[pl.DataFrame]:
     """
         `dedup_primers()` primers finds repeated instances of the same primer
         name and adds a unique identifier for each. This ensures that joins
         downstream are one-to-many as opposed to many-to-many.
 
     Args:
-        `partitioned_bed: List[pl.DataFrame]`: A List of Polars DataFrames that
+        `partitioned_bed: list[pl.DataFrame]`: A list of Polars DataFrames that
         have been partitioned by amplicon.
 
     Returns:
-        `List[pl.DataFrame]`: A partitioned list of Polars dataframes with no
+        `list[pl.DataFrame]`: A partitioned list of Polars dataframes with no
         repeat primer names.
     """
 
-    for i, df in enumerate(partitioned_bed):
-        if True in df.select("NAME").is_duplicated().to_list():
-            new_dfs = df.with_columns(
-                df.select("NAME").is_duplicated().alias("duped"),
+    for i, primer_df in enumerate(partitioned_bed):
+        if True in primer_df.select("NAME").is_duplicated().to_list():
+            new_dfs = primer_df.with_columns(
+                primer_df.select("NAME").is_duplicated().alias("duped"),
             ).partition_by("duped")
 
-            for i, dup_frame in enumerate(new_dfs):
+            for j, dup_frame in enumerate(new_dfs):
                 if True in dup_frame.select("duped").to_series().to_list():
                     renamed = (
                         dup_frame.with_row_count(offset=1)
@@ -111,32 +114,27 @@ def dedup_primers(partitioned_bed: List[pl.DataFrame]) -> List[pl.DataFrame]:
                             "duped",
                         )
                     )
-                    new_dfs[i] = renamed
-            df = pl.concat(new_dfs)
-            partitioned_bed[i] = df
+                    new_dfs[j] = renamed
+            partitioned_bed[i] = pl.concat(new_dfs)
 
-    dedup_partitioned = (
-        pl.concat(partitioned_bed).drop("duped").partition_by("Amplicon")
-    )
-
-    return dedup_partitioned
+    return pl.concat(partitioned_bed).drop("duped").partition_by("Amplicon")
 
 
 def resolve_primer_names(
-    to_combine: List[str],
-    combine_to: List[str],
-) -> Tuple[List[str], List[str]]:
+    to_combine: list[str],
+    combine_to: list[str],
+) -> tuple[list[str], list[str]]:
     """
         `resolve_primer_names()` names each possible pairing of primers in
         amplicons where singletons, forward or reverse, have been added to
         increase template coverage.
 
     Args:
-        `to_combine: List[str]`: A list of forward primers to resolve.
-        `combine_to: List[str]`: A list of reverse primers to resolve.
+        `to_combine: list[str]`: A list of forward primers to resolve.
+        `combine_to: list[str]`: A list of reverse primers to resolve.
 
     Returns:
-        `Tuple[List[str], List[str]]`: A tuple containing two lists, the first
+        `tuple[list[str], list[str]]`: A tuple containing two lists, the first
         being a list of primer names to use with joining, and the second being
         a list of new primer names to use once left-joining is complete.
     """
@@ -144,7 +142,7 @@ def resolve_primer_names(
     primer_pairs = list(product(to_combine, combine_to))
 
     new_primer_pairs = []
-    for i, (fwd_primer, rev_primer) in enumerate(primer_pairs):
+    for fwd_primer, rev_primer in primer_pairs:
         fwd_suffix = fwd_primer.split("_")[-1]
         rev_suffix = rev_primer.split("_")[-1]
         primer_label = fwd_primer.replace(f"_{fwd_suffix}", "").split("-")[-1]
@@ -172,25 +170,27 @@ def resolve_primer_names(
     return (primers_to_join, new_primer_names)
 
 
-def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame]:
+@logger.catch
+def resplice_primers(dedup_partitioned: list[pl.DataFrame]) -> list[pl.DataFrame]:
     """
         `resplice_primers()` determines whether spike-ins are forward or reverse
         primers (or both) and uses that information to handle resplicing
         possible combinations.
 
     Args:
-        `dedup_partitioned: List[pl.DataFrame]`: A Polars dataframe with no
+        `dedup_partitioned: list[pl.DataFrame]`: A Polars dataframe with no
         duplicate primer names.
 
     Returns:
-        `List[pl.DataFrame]`: A list of Polars DataFrames where each dataframe
+        `list[pl.DataFrame]`: A list of Polars DataFrames where each dataframe
         is represents all possible pairings of primers within a single amplicon.
     """
 
-    mutated_frames: List[pl.DataFrame] = []
-    for i, df in enumerate(dedup_partitioned):
-        if df.shape[0] != 2:
-            primers = df["NAME"]
+    mutated_frames: list[pl.DataFrame] = []
+    for i, dedup_df in enumerate(dedup_partitioned):
+        primer_pair_number = 2
+        if dedup_df.shape[0] != primer_pair_number:
+            primers = dedup_df["NAME"]
 
             fwd_primers = [primer for primer in primers if "LEFT" in primer]
             rev_primers = [primer for primer in primers if "RIGHT" in primer]
@@ -215,12 +215,16 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
             assert len(primers_to_join) == len(
                 new_primer_names,
             ), f"Insufficient number of replacement names generated for partition {i}"
-
-            df = df.with_columns(pl.col("NAME").cast(pl.Utf8))
             new_df = (
                 pl.DataFrame({"NAME": primers_to_join})
                 .cast(pl.Utf8)
-                .join(df, how="left", on="NAME", validate="m:1", coalesce=False)
+                .join(
+                    dedup_df.with_columns(pl.col("NAME").cast(pl.Utf8)),
+                    how="left",
+                    on="NAME",
+                    validate="m:1",
+                    coalesce=False,
+                )
                 .with_columns(pl.Series(new_primer_names).alias("NAME"))
                 .select(
                     "Ref",
@@ -234,21 +238,22 @@ def resplice_primers(dedup_partitioned: List[pl.DataFrame]) -> List[pl.DataFrame
                 )
             )
             mutated_frames.append(new_df)
-        elif df.shape[0] == 1:
-            raise "There is a single primer without an amplicon running around!"
+        elif dedup_df.shape[0] == 1:
+            logger.error("There is a single primer without an amplicon running around!")
+            raise ValueError
         else:
-            mutated_frames.append(df)
+            mutated_frames.append(dedup_df)
 
     return mutated_frames
 
 
-def finalize_primer_pairings(mutated_frames: List[pl.DataFrame]) -> pl.DataFrame:
+def finalize_primer_pairings(mutated_frames: list[pl.DataFrame]) -> pl.DataFrame:
     """
         `finalize_primer_pairings()` removes any spikeins with possible pairings
         that could not be determined.
 
     Args:
-        `mutated_frames: List[pl.DataFrame]`: A list of Polars DataFrames, each
+        `mutated_frames: list[pl.DataFrame]`: A list of Polars DataFrames, each
         representing a respliced amplicon.
 
     Returns:
@@ -256,7 +261,7 @@ def finalize_primer_pairings(mutated_frames: List[pl.DataFrame]) -> pl.DataFrame
         out to a new BED file.
     """
 
-    final_frames: List[pl.DataFrame] = []
+    final_frames: list[pl.DataFrame] = []
     for df in mutated_frames:
         fwd_keepers = [
             primer
@@ -271,9 +276,7 @@ def finalize_primer_pairings(mutated_frames: List[pl.DataFrame]) -> pl.DataFrame
         if len(fwd_keepers) > 0 and len(rev_keepers) > 0:
             final_frames.append(df)
 
-    final_df = pl.concat(final_frames)
-
-    return final_df
+    return pl.concat(final_frames)
 
 
 def main() -> None:
@@ -326,8 +329,6 @@ def main() -> None:
     if len(mutated_frames) == 0:
         shutil.copy(bed_file, f"{output_prefix}.bed")
         return
-
-    # print(mutated_frames)
 
     final_df = finalize_primer_pairings(mutated_frames)
 

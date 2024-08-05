@@ -63,9 +63,8 @@ def parse_command_line_args() -> argparse.Namespace:
         default=20,
         help="Minimum depth of coverage to visualize on the plots.",
     )
-    args = parser.parse_args()
 
-    return args
+    return parser.parse_args()
 
 
 def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
