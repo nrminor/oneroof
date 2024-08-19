@@ -24,7 +24,6 @@ import argparse
 import shutil
 from itertools import product
 from pathlib import Path
-from typing import list, tuple
 
 import polars as pl
 from loguru import logger
