@@ -54,7 +54,7 @@ RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 # 3) make sure pixi and pixi installs are on the $PATH
 ENV PATH $PATH:$HOME/.pixi/bin
 
-# 4) make the src directory required for PyPI dependencies and install everything
+# 4) install everything else with pixi
 RUN cd $HOME && pixi install
 
 # 5) modify the shell config so that each container launches within the pixi env
