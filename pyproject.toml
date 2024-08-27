@@ -10,6 +10,9 @@ dependencies = ["ruff", "uv", "quarto", "polars-lts-cpu", "xlsxwriter", "xlsx2cs
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+py-modules = []
+
 [tool.pixi.project]
 channels = ["conda-forge", "bioconda", "anaconda"]
 platforms = ["osx-64", "linux-64"]
