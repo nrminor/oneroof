@@ -2,13 +2,29 @@
 name = "30252"
 version = "0.1.0"
 description = ""
-authors = [{name = "Nicholas Minor", email = "nrminor@wisc.edu"}]
+authors = [{ name = "Nicholas Minor", email = "nrminor@wisc.edu" }]
 requires-python = ">= 3.10"
-dependencies = ["ruff", "uv", "quarto", "polars-lts-cpu", "xlsxwriter", "xlsx2csv", "pre-commit", "just", "biopython", "pysam", "marimo", "numpy", "scipy", "paramiko", "cffi"]
+dependencies = [
+    "ruff",
+    "uv",
+    "quarto",
+    "polars-lts-cpu",
+    "xlsxwriter",
+    "xlsx2csv",
+    "pre-commit",
+    "just",
+    "biopython",
+    "pysam",
+    "marimo",
+    "numpy",
+    "scipy",
+    "paramiko",
+    "cffi",
+]
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 40.8.0"]
+build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools]
 py-modules = []
