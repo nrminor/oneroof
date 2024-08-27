@@ -24,6 +24,7 @@ RUN apt-get update && \
     libxml2-dev \
     libxslt-dev \
     libffi-dev \
+    python3-dev \
     git && \
     apt install --fix-broken && \
     apt-get clean && \
