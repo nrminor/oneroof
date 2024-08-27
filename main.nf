@@ -92,8 +92,8 @@ workflow {
         Channel.fromPath( params.ref_gbk ) :
         Channel.empty()
 
-    ch_snpeff_config = Channel ?
-        .fromPath( params.snpEff_config ) :
+    ch_snpeff_config = params.snpEff_config ?
+        Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
 
     // decide whether to run the ont or the illumina workflow
