@@ -13,6 +13,7 @@ ENTRYPOINT ["bash"]
 
 # Install a few ubuntu dependencies
 RUN apt-get update && \
+    apt install --fix-broken && \
     apt-get install -y \
     build-essential \
     curl \
@@ -22,7 +23,9 @@ RUN apt-get update && \
     cmake \
     libxml2-dev \
     libxslt-dev \
+    libffi-dev \
     git && \
+    apt install --fix-broken && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir /dependencies && \
