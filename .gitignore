@@ -161,7 +161,6 @@ cython_debug/
 # concessions to pixi
 .pixi/
 src/
-pixi.lock
 
 # nextflow stuff
 .nextflow/

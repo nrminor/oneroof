@@ -4,9 +4,9 @@ FROM ubuntu:20.04
 WORKDIR /scratch
 
 # Set environment variables
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ America/New_York
-ENV HOME /home
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/New_York
+ENV HOME=/home
 
 # Set default command to be the bash shell
 ENTRYPOINT ["bash"]
@@ -24,7 +24,6 @@ RUN apt-get update && \
     libxml2-dev \
     libxslt-dev \
     libffi-dev \
-    python3-dev \
     git && \
     apt install --fix-broken && \
     apt-get clean && \
@@ -39,7 +38,7 @@ RUN cd $HOME && \
     rm -rf dorado-0.7.1-linux-x64.tar.gz
 
 # add the dorado files to $PATH
-ENV PATH $PATH:$HOME/dorado-0.7.1-linux-x64/bin:$HOME/dorado-0.7.1-linux-x64/lib:$HOME/dorado-0.7.1-linux-x64
+ENV PATH=$PATH:$HOME/dorado-0.7.1-linux-x64/bin:$HOME/dorado-0.7.1-linux-x64/lib:$HOME/dorado-0.7.1-linux-x64
 
 # predownload dorado models so that dorado can basecall offline
 RUN cd $HOME && dorado download
@@ -47,16 +46,17 @@ RUN cd $HOME && dorado download
 # Install everything else with Pixi:
 # --------------------------------
 # 1) copy the required dependency and configuration file into the image
-COPY pyproject.toml /$HOME/pyproject.toml
+COPY pyproject.toml $HOME/pyproject.toml
+COPY pixi.lock $HOME/pixi.lock
 
 # 2) install pixi
 RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 
 # 3) make sure pixi and pixi installs are on the $PATH
-ENV PATH $PATH:$HOME/.pixi/bin
+ENV PATH=$PATH:$HOME/.pixi/bin
 
 # 4) install everything else with pixi
-RUN cd $HOME && pixi install
+RUN cd $HOME && pixi clean cache --yes && pixi install --verbose --color=always --frozen && pixi clean cache --yes
 
 # 5) modify the shell config so that each container launches within the pixi env
 RUN echo "export PATH=$PATH:$HOME/.pixi/envs/default/bin" >> $HOME/.bashrc
