@@ -14,6 +14,8 @@ workflow ILLUMINA {
     take:
         ch_primer_bed
         ch_refseq
+        ch_ref_gbk
+        ch_snpeff_config
 
     main:
         assert params.platform == "illumina"
@@ -67,7 +69,7 @@ workflow ILLUMINA {
         VARIANTS (
             ALIGNMENT.out,
             ch_refseq,
-            ch_refgbk,
+            ch_ref_gbk,
             ch_snpeff_config
         )
 

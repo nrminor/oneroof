@@ -20,6 +20,8 @@ RUN apt-get update && \
     make \
     gcc \
     cmake \
+    libxml2-dev \
+    libxslt-dev \
     git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
@@ -50,7 +52,7 @@ RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 ENV PATH $PATH:$HOME/.pixi/bin
 
 # 4) make the src directory required for PyPI dependencies and install everything
-RUN cd $HOME && mkdir /src && pixi install
+RUN cd $HOME && pixi install
 
 # 5) modify the shell config so that each container launches within the pixi env
 RUN echo "export PATH=$PATH:$HOME/.pixi/envs/default/bin" >> $HOME/.bashrc
