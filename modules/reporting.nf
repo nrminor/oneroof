@@ -18,9 +18,9 @@ process REPORT_REFERENCES {
         mkdir -p !{params.results}/reference_assets
     fi
 
-    REF_LIST=$(find . -type f -name '*.fasta' -o -name '*.bed' -o -name '*.gbk' -o -name '*.gb' -o -name '*.fa')
+    find . -name '*.fa*' -o -name '*.bed' -o -name '*.gb*' > ref_files.txt
 
-    for file in "${REF_LIST}"; do
+    for file in "$(cat ref_files.txt)"; do
         cp `realpath ${file}` !{params.results}/reference_assets/
     done
     '''
