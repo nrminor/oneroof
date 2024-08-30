@@ -2,7 +2,6 @@
 
 nextflow.enable.dsl = 2
 
-include { REPORT_REFERENCES } from "$projectDir/modules/reporting"
 include { NANOPORE } from "$projectDir/workflows/nanopore"
 include { ILLUMINA } from "$projectDir/workflows/illumina"
 
@@ -100,8 +99,6 @@ workflow {
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
-        REPORT_REFERENCES ( )
-
         NANOPORE (
             ch_primer_bed,
             ch_refseq,
@@ -110,8 +107,6 @@ workflow {
         )
 
     }  else if ( params.platform == "illumina" ) {
-
-        REPORT_REFERENCES ( )
 
         ILLUMINA (
             ch_primer_bed,

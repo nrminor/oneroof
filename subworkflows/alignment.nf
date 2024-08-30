@@ -44,11 +44,7 @@ workflow ALIGNMENT {
             MOSDEPTH.out
         )
 
-        GENERATE_MPILEUP (
-            INDEX.out
-        )
-
     emit:
-        GENERATE_MPILEUP.out
+        INDEX.out
 
 }
