@@ -5,7 +5,6 @@ include { CONVERT_AND_SORT; SORT_BAM; INDEX } from "../modules/samtools"
 include { RASUSA_ALN_DOWNSAMPLING } from "../modules/rasusa"
 include { MOSDEPTH } from "../modules/mosdepth"
 include { PLOT_COVERAGE } from "../modules/plot_coverage"
-include { GENERATE_MPILEUP } from "../modules/samtools"
 
 workflow ALIGNMENT {
 
