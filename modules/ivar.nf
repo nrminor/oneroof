@@ -37,7 +37,7 @@ process CALL_CONSENSUS {
     tuple val(barcode), path(bam), path(bai)
 
     output:
-    tuple val(barcode), path("${barcode}.consensus.fasta")
+    tuple val(barcode), path("${barcode}.consensus.fa*")
 
     script:
     """
