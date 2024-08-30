@@ -1,6 +1,5 @@
 #!/usr/bin/env nextflow
 
-include { GENERATE_MPILEUP } from "../modules/samtools"
 include { CALL_VARIANTS; CONVERT_TO_VCF } from "../modules/ivar"
 include { 
     BUILD_DB; ANNOTATE_VCF; EXTRACT_FIELDS
