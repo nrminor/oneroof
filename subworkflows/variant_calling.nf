@@ -12,18 +12,14 @@ workflow VARIANTS {
     /* */
 
     take:
-        ch_amplicons
+        ch_mpileups
         ch_refseq
         ch_genbank
         ch_snpeff_config
 
     main:
-        GENERATE_MPILEUP (
-            ch_amplicons
-        )
-
         CALL_VARIANTS (
-            GENERATE_MPILEUP.out,
+            ch_mpileups
             ch_refseq
         )
 
@@ -52,8 +48,5 @@ workflow VARIANTS {
                 .map { label, vcf -> vcf }
                 .collect()
         )
-
-    // emit:
-    //     MERGE_VCF_FILES.out
 
 }

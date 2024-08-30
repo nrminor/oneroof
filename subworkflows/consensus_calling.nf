@@ -1,6 +1,6 @@
 #!/usr/bin/env nextflow
 
-include { CALL_CONSENSUS } from "../modules/samtools"
+include { CALL_CONSENSUS } from "../modules/ivar"
 include { CONCAT } from "../modules/concat_consensus"
 
 workflow CONSENSUS {
@@ -8,11 +8,11 @@ workflow CONSENSUS {
     /* */
 
     take:
-        ch_aligned_amplicons
+        ch_mpileups
 
     main:
         CALL_CONSENSUS (
-            ch_aligned_amplicons
+            ch_mpileups
         )
 
         CONCAT (

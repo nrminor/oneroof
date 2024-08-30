@@ -82,6 +82,26 @@ process INDEX {
 
 }
 
+process GENERATE_MPILEUP {
+
+    tag "${barcode}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path(bam), path(bai)
+
+    output:
+    tuple val(barcode), path("${barcode}.mpileup")
+
+    script:
+    """
+    samtools mpileup -aa -A -Q 0 -d 0 ${bam} > ${barcode}.mpileup
+    """
+
+}
+
 process CALL_CONSENSUS {
 
     tag "${barcode}"
@@ -104,26 +124,6 @@ process CALL_CONSENSUS {
     -d ${params.min_depth_coverage} \
     ${bam} \
     > ${barcode}.consensus.fasta
-    """
-
-}
-
-process GENERATE_MPILEUP {
-
-    tag "${barcode}"
-
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-    input:
-    tuple val(barcode), path(bam), path(bai)
-
-    output:
-    tuple val(barcode), path("${barcode}.mpileup")
-
-    script:
-    """
-    samtools mpileup -aa -A -Q 0 -d 0 ${bam} > ${barcode}.mpileup
     """
 
 }

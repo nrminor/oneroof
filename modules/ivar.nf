@@ -1,3 +1,32 @@
+process CALL_CONSENSUS {
+
+    /* */
+
+    tag "${barcode}"
+    publishDir params.consensus, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path(mpileup)
+
+    output:
+    tuple val(barcode), path("${barcode}.consensus.fasta")
+
+    script:
+    """
+    cat ${mpileup} \
+    | ivar consensus \
+    -p ${barcode}.consensus \
+    -t ${params.min_consensus_freq} \
+    -q 0 \
+    -m ${params.min_depth_coverage} \
+    -n N
+    """
+
+}
+
 process CALL_VARIANTS {
 
     tag "${barcode}"
