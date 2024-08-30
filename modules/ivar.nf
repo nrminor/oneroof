@@ -7,7 +7,7 @@ process CALL_VARIANTS {
 	maxRetries 2
 
     input:
-    tuple val(barcode), path(mpileup)
+    tuple val(barcode), path(bam), path(bai)
     each path(refseq)
 
     output:
@@ -15,7 +15,7 @@ process CALL_VARIANTS {
 
     script:
     """
-    cat ${mpileup} \
+    samtools mpileup -aa -A -Q 0 -d 0 ${bam} \
     | ivar variants \
     -t ${params.min_variant_frequency} \
     -m ${params.min_depth_coverage} \
@@ -23,6 +23,32 @@ process CALL_VARIANTS {
     -r ${refseq}
     """
 
+}
+
+process CALL_CONSENSUS {
+
+    tag "${barcode}"
+    publishDir params.consensus, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    tuple val(barcode), path(bam), path(bai)
+
+    output:
+    tuple val(barcode), path("${barcode}.consensus.fasta")
+
+    script:
+    """
+    samtools mpileup -aa -A -Q 0 -d 0 ${bam} \
+    | ivar consensus \
+    -p ${barcode}.consensus \
+    -t ${params.min_consensus_freq} \
+    -m ${params.min_depth_coverage} \
+    -q 0 \
+    -n N
+    """
 }
 
 process CONVERT_TO_VCF {
