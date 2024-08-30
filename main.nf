@@ -100,7 +100,13 @@ workflow {
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
-        REPORT_REFERENCES ( )
+        REPORT_REFERENCES (
+            ch_refseq
+            .mix( ch_primer_bed )
+            .mix( ch_ref_gbk )
+            .filter( ref_file -> file(ref_file).exists() )
+            .collect()
+        )
 
         NANOPORE (
             ch_primer_bed,
@@ -111,7 +117,13 @@ workflow {
 
     }  else if ( params.platform == "illumina" ) {
 
-        REPORT_REFERENCES ( )
+        REPORT_REFERENCES (
+            ch_refseq
+            .mix( ch_primer_bed )
+            .mix( ch_ref_gbk )
+            .filter { ref_file -> file(ref_file).exists() }
+            .collect()
+        )
 
         ILLUMINA (
             ch_primer_bed,

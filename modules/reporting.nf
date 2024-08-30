@@ -9,20 +9,20 @@ process REPORT_REFERENCES {
 
     cpus 3
 
+    input:
+    path files
+
     output:
     path "*"
 
     shell:
     '''
-    if [ -n !{params.refseq} ] && [ -e `realpath !{params.refseq}` ]; then
-        cp `realpath !{params.refseq}` . &
-    fi
-    if [ -n !{params.ref_gbk} ] && [ -e `realpath !{params.ref_gbk}` ]; then
-        cp `realpath !{params.ref_gbk}` . &
-    fi
-    if [ -n !{params.primer_bed} ] && [ -e `realpath !{params.primer_bed}` ]; then
-        cp `realpath !{params.primer_bed}` . &
-    fi
+    REF_LIST=$(find . -type f -name '*.fasta' -o -name '*.bed' -o -name '*.gbk' -o -name '*.gb' -o -name '*.fa')
+
+    for file in "${{REF_LIST}}"; do
+        cp ${file} ./ &
+    done
+    
     wait
     '''
 }

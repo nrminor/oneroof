@@ -9,7 +9,7 @@ from Bio.SeqRecord import SeqRecord
 
 
 def main() -> None:
-    consensus_files = [str(file) for file in Path(Path.cwd()).glob("*.consensus.fasta")]
+    consensus_files = [str(file) for file in Path(Path.cwd()).glob("*.consensus.fa*")]
 
     assert len(consensus_files) > 0, """
     Please double check that the working directory provided contains some files with the
