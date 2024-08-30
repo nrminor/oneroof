@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { REPORT_REFERENCES } from "../modules/reporting"
 include { ALIGN_WITH_PRESET } from "../modules/minimap2"
 include { CONVERT_AND_SORT; SORT_BAM; INDEX } from "../modules/samtools"
 include { RASUSA_ALN_DOWNSAMPLING } from "../modules/rasusa"
@@ -15,6 +16,10 @@ workflow ALIGNMENT {
         ch_refseq
 
     main:
+        REPORT_REFERENCES (
+            ch_refseq
+        )
+
         ALIGN_WITH_PRESET (
             ch_amplicons,
             ch_refseq

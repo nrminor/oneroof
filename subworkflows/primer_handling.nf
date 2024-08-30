@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { REPORT_REFERENCES } from "../modules/reporting"
 include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
 include { GET_PRIMER_PATTERNS } from "../modules/primer_patterns"
@@ -30,6 +31,10 @@ workflow PRIMER_HANDLING {
         ch_refseq
 
     main:
+        REPORT_REFERENCES (
+            ch_primer_bed
+        )
+
         RESPLICE_PRIMERS (
             ch_primer_bed
         )

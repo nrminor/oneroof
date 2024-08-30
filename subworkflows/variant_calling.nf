@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { REPORT_REFERENCES } from "../modules/reporting"
 include { GENERATE_MPILEUP } from "../modules/samtools"
 include { CALL_VARIANTS; CONVERT_TO_VCF } from "../modules/ivar"
 include { 
@@ -18,6 +19,10 @@ workflow VARIANTS {
         ch_snpeff_config
 
     main:
+        REPORT_REFERENCES (
+            ch_genbank
+        )
+
         CALL_VARIANTS (
             ch_amplicons,
             ch_refseq
