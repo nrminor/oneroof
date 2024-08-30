@@ -14,8 +14,8 @@ process REPORT_REFERENCES {
 
     shell:
     '''
-    if [ -n !{params.ref_fasta} ] && [ -e `realpath !{params.ref_fasta}` ]; then
-        cp `realpath !{ref_fasta}` . &
+    if [ -n !{params.refseq} ] && [ -e `realpath !{params.refseq}` ]; then
+        cp `realpath !{params.refseq}` . &
     fi
     if [ -n !{params.ref_gbk} ] && [ -e `realpath !{params.ref_gbk}` ]; then
         cp `realpath !{params.ref_gbk}` . &
