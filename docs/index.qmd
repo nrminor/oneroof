@@ -1,5 +1,5 @@
 ---
-title: "OneRoof: Base-, Variant-, and Consensus-calling under One Proverbial Roof"
+title: "OneRoof: A Pipeline Prototype for Base-, Variant-, and Consensus-calling under One Proverbial Roof"
 toc: true
 format:
     html:
@@ -20,25 +20,25 @@ execute:
 `oneroof` is a pipeline designed to take a common series of bioinformatic tasks (see below) and put them under "one roof". We mean this quite literally: the pipeline will perform at its best when run on networked devices in the same building.
 
 ::: {.callout-note}
-Please note that `oneroof` is still under active development. Even the name of the pipeline is a prototype name that may change at any time. That said, the pipeline at its current state is relatively stable and working well for us in container-based and container-less use cases. The most active area of change at this stage is feature-additions, though in the near future, some of [the more convolated parts of the pipeline's primer-handling will be replaced with a Rust-based toolkit under active development by our team](https://github.com/nrminor/amplicon-tk), so stay tuned!
+Please note that `oneroof` is still under active development, with bug fixes, feature adds, and workflow reorganizations happening daily to weekly. The name of the pipeline itself is a prototype that may change at any time (suggestions welcome!). That said, the core components of the pipeline are relatively stable and working well for us in both container-based and container-less use cases. The most active area of change at this stage is feature-additions, though in the near future, some of the more convolated parts of the pipeline's primer-handling will be replaced with a amplicon-aware FASTQ processing toolkit under active development by our team, so stay tuned!
 :::
 
-`oneroof` was originally developed in the early stages of the United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024, when we wanted one, configurable, easy-to-run pipeline that would do all of the following:
+`oneroof` was originally developed in the early stages of the [United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024](https://nextstrain.org/avian-flu/h5n1/ha/2y), when we wanted one, configurable, easy-to-run pipeline that would do all of the following seamlessly:
 
-1. Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files, working on GCP or AWS if need be.
+1. Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files, working on GCP, AWS, or Slurm if need be.
 2. Demultiplex BAM-formatted reads that come out of basecalling.
 3. Perform the above two steps as signal files become available, either locally or remotely via an SSH client.
 4. Accept raw read BAMs or FASTQs if basecalling and demultiplexing have already been performed elsewhere.
 5. Accept paired Illumina reads in addition to Nanopore reads.
 6. Use forward and reverse primer sequences to select only those reads that represent complete amplicons.
-7. Trim away primers—and also any bases that are upstream of the forward primer or downstream of the reverse primer.
+7. Trim away primers—and also any bases that are upstream of the forward primer or downstream of the reverse primer, *while only retaining those reads identified as complete amplicons by containing both primers*.
 8. Align to a custom reference with the proper presets for the provided data.
 9. Call variants and consensus sequences with appropriate settings for the provided data.
 10. Perform tree building with `nextclade`, quality introspection with `multiQC`, and error correction based on the input sequence platform.
 
 Though many excellent pipelines currently exist, e.g. `nf-core/viralrecon`, `epi2me-labs/wf-amplicon`, and `nf-core/nanoseq`, none of these pipelines quite handled all of the above. `oneroof` seeks to handle these requirements while remaining highly configurable for users, highly modular for developers, and easy to control in the command line for both.
 
-Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by `pixi`. To run it on your own Nanopore pod5s, simply run something like:
+Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by [`pixi`](https://prefix.dev/). To run it on your own Nanopore pod5s with Docker containers, simply run something like:
 
 ```
 nextflow run nrminor/oneroof \
@@ -57,6 +57,10 @@ And for Illumina paired-end reads, it's even simpler:
 nextflow run nrminor/oneroof \
 --illumina_fastq_dir my_illumina_reads/
 ```
+
+If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don't want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline's dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
+
+Nextflow pipelines like this one have a ton of configuration, which can be overwhelming for beginners and new users. To make this process easier, we're developing a Terminal User Interface (TUI) to guide you through setup. Please stay tuned!
 
 ## Quick Start
 
@@ -108,10 +112,10 @@ Note that `oneroof` checks for how to gather data in a particular order for Nano
 
 `oneroof` depends on software packages supplied through various `conda` registries as well as through `PyPI`, the Python Package Index. To unify these various channels, we used the relatively new `pixi` package and environment manager, which stores all dependencies from both locations in the file [`pyproject.toml`](pyproject.toml).
 
-To reproduce the environment required by this pipeline, make sure you are on a Mac with an x86_64 (Intel) processor, a 64-bit linux machine, or a 64-bit Windows machine using Windows Subsystem for Linux (Apple Silicon coming soon!). Then, to reproduce the environment, install pixi with:
+To reproduce the environment required by this pipeline, make sure you are on a Mac, a linux machine, or a Windows machine using Windows Subsystem for Linux. Then, to reproduce the environment, install pixi with:
 
 ```
-curl -fsSL https://pixi.sh/install.sh | bash
+PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
 Download the pipeline with:
@@ -123,7 +127,7 @@ git clone https://github.com/nrminor/oneroof.git && cd oneroof
 And then open a `pixi` subshell within your terminal with:
 
 ```
-pixi shell
+pixi shell --frozen
 ```
 
 As long as you are using a supported system, the pipeline should run within that subshell. You can also run the pipeline within that subshell without containers using the "containerless" profile:
@@ -138,7 +142,7 @@ nextflow run . \
 --kit "SQK-NBD114-24"
 ```
 
-Especially on Macs, this will reduce the overhead of using the Docker Virtual Machine and allow the pipeline to invoke tools installed directly within the local project environment.
+Especially on Apple Silicon Macs, this will reduce the overhead of using the Docker Virtual Machine and allow the pipeline to invoke tools installed directly within the local project environment.
 
 Note also that more information on the repo's files is available in our [developer guide](docs/developer.md).
 
