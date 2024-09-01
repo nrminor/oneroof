@@ -85,7 +85,7 @@ This pipeline follows a slightly shaved-down project organization to the [nf-cor
 
 If this seems like a lot, trust your instincts. Here's why it's worth it anyway:
 
-1. It atomizes each building block for the pipeline, making it much easier to make the pipeline flexible to the inputs provided by the user. The pipeline doesn't just run in one way; it can run in many ways. It also makes it possible to reuse the same processes at multiple stages of the pipeline, like we do with out `reporting.nf` module.
+1. It atomizes each building block for the pipeline, making it much easier to make the pipeline flexible to the inputs provided by the user. The pipeline doesn't just run in one way; it can run in many ways. It also makes it possible to reuse the same processes at multiple stages of the pipeline, like we do with our `reporting.nf` module.
 2. It makes it exceptionally easy to add functionality by plugging in new module scripts.
 3. It also makes it exceptionally easy to switch out or reorder modules or bring in new subworkflows, e.g., a phylogenetics subworkflow. In other words, this project structure makes it easier for the maintainers _to refactor_.
 4. Having defined individual workflow and module files here makes it easier to move around files and reuse Nextflow code for other workflows in the future. Instead of needing to scroll down a very long monolithic Nextflow script, just take the one file you need and get to work.
@@ -102,11 +102,10 @@ Like most Nextflow pipelines, `oneroof` also has a few other important directori
 
 ## Python development
 
-We're big fans of the [Ruff]() linter and formatter, and use it liberally in the writing of our Python scripts. To do so yourself in VSCode, we offer the following configuration for your User Settings JSON:
+We're big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatter, and we use it liberally in the writing of our Python scripts. To do so yourself in VSCode, we offer the following configuration for your User Settings JSON:
 
 ```json
 {
-  // Python settings
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
@@ -122,4 +121,4 @@ We're big fans of the [Ruff]() linter and formatter, and use it liberally in the
 }
 ```
 
-At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in the Ruff rule docs. Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it's a bit annoying the short-term.
+At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in [the Ruff rule docs](https://docs.astral.sh/ruff/rules/). Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it's a bit annoying or overwhelming in the short-term. It's also possible that some of the lints—e.g., using Python's `pathlib` library for all path handling in places like `with open(...)` context managers, or never using `os.system()` calls—will also make you a better programmer.
