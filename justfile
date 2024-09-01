@@ -31,7 +31,7 @@ qmd: render render-dev
 docs: render make-readme render-dev compress_html
 
 setup-env:
-    pixi install
+    pixi install --frozen
 
 docker-build:
     docker build -t nrminor/dorado-and-friends:v0.1.0 .
