@@ -166,6 +166,7 @@ src/
 .nextflow/
 work/
 results/
+.nfresume
 
 .nextflow.log*
 trace.txt*
@@ -206,5 +207,8 @@ scratch*# pixi environments
 # pixi environments
 .pixi
 
+# uv stuff
+uv.lock
 
+# quarto stuff
 /.quarto/

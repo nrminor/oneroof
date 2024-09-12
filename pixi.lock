@@ -578,7 +578,7 @@ environments:
       - pypi: .
 packages:
 - kind: pypi
-  name: '30252'
+  name: 'oneroof'
   version: 0.1.0
   path: .
   sha256: 0f96ab784c715858b438af8b519792b94ca99b44becf92d6cbb6e7f0a14bc1a1

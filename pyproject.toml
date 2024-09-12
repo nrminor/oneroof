@@ -1,18 +1,16 @@
 [project]
-name = "30252"
+name = "oneroof"
 version = "0.1.0"
-description = ""
-authors = [{ name = "Nicholas Minor", email = "nrminor@wisc.edu" }]
+description = "Base-, Variant-, and Consensus-calling under One Proverbial Roof. Work in progress!"
+authors = [
+    { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
+    { name = "Andrew J. Lail Minor", email = "ajlail@wisc.edu" },
+]
 requires-python = ">= 3.10"
 dependencies = [
-    "ruff",
-    "uv",
-    "quarto",
     "polars-lts-cpu",
     "xlsxwriter",
     "xlsx2csv",
-    "pre-commit",
-    "just",
     "biopython",
     "pysam",
     "marimo",
@@ -26,17 +24,14 @@ requires = ["setuptools >= 40.8.0", "cffi >=1.15.0,!=1.17.0"]
 build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools]
-py-modules = []
+py-modules = ["bin"]
 
 [tool.pixi.project]
 channels = ["conda-forge", "bioconda", "anaconda"]
 platforms = ["osx-64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
-30252 = { path = ".", editable = false }
-
-[tool.pixi.tasks]
-# install = "cargo install amplicon-tk"
+oneroof = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 samtools = ">=1.5,<2"
@@ -65,3 +60,23 @@ snpsift = ">=5.2,<6"
 loguru = ">=0.7.2,<0.8"
 lxml = ">=5.2.2,<5.3"
 cffi = ">=1.15.0,<1.17.0"
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.29.5",
+    "ipython>=8.12.3",
+    "jupyter>=0.6.4",
+    "just>=0.8.162",
+    "mamba>=0.11.3",
+    "marimo[sql]>=0.8.14",
+    "pip>=24.2",
+    "pre-commit>=3.8.0",
+    "pytest>=8.3.3",
+    "quarto>=0.1.0",
+    "ruff>=0.6.4",
+    "tox>=4.18.1",
+]
+compile-bytecode = true
+
+[project.scripts]
+"oneroof" = "bin.__main__:main"
