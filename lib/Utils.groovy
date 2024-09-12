@@ -46,6 +46,7 @@ class Utils {
 
         // Return the number of unique items
         return uniqueItems.size()
-        }
 
     }
+
+}
