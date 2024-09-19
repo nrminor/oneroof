@@ -18,6 +18,7 @@ workflow NANOPORE {
         ch_refseq
         ch_refgbk
         ch_snpeff_config
+        ch_sample_lookup
 
     main:
         assert params.platform == "ont"
@@ -34,7 +35,8 @@ workflow NANOPORE {
 
             ALIGNMENT (
                 PRIMER_HANDLING.out,
-                ch_refseq
+                ch_refseq,
+                ch_sample_lookup
             )
 
             QUALITY_CONTROL (
@@ -46,7 +48,8 @@ workflow NANOPORE {
 
             ALIGNMENT (
                 GATHER_NANOPORE.out,
-                ch_refseq
+                ch_refseq,
+                ch_sample_lookup
             )
 
             QUALITY_CONTROL (

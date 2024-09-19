@@ -16,6 +16,7 @@ workflow ILLUMINA {
         ch_refseq
         ch_ref_gbk
         ch_snpeff_config
+        ch_sample_lookup
 
     main:
         assert params.platform == "illumina"
@@ -40,7 +41,8 @@ workflow ILLUMINA {
 
             ALIGNMENT (
                 PRIMER_HANDLING.out,
-                ch_refseq
+                ch_refseq,
+                ch_sample_lookup
             )
 
             QUALITY_CONTROL (
@@ -52,7 +54,8 @@ workflow ILLUMINA {
 
             ALIGNMENT (
                 ILLUMINA_CORRECTION.out,
-                ch_refseq
+                ch_refseq,
+                ch_sample_lookup
             )
 
             QUALITY_CONTROL (

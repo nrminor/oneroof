@@ -31,6 +31,7 @@ def helpMessage() {
 
     Optional arguments:
     --primer_bed                   A bed file of primer coordinates relative to the reference provided with the parameters 'refseq' and 'ref_gbk'.
+    --sample_lookup                Lookup JSON file where the key is the barcode or sequencer ID and the value is the desired sample ID.
     --ref_gbk                      The reference sequence to be used for variant annotation in Genbank format.
     --fwd_suffix                   Suffix in the primer bed file denoting whether a primer is forward. Default: '_LEFT'
     --rev_suffix                   Suffix in the primer bed file denoting whether a primer is reverse. Default: '_RIGHT'
@@ -130,6 +131,7 @@ log.info    """
             Remote POD5 directory       : ${params.remote_pod5_location ?: ""}
             Local POD5 directory        : ${params.pod5_dir ?: ""}
             Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data}
+            Sample ID lookup            : ${params.sample_lookup ?: ""}
             Results directory           : ${params.results}
 
             """
@@ -168,6 +170,10 @@ workflow {
         Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
 
+    ch_sample_lookup = params.sample_lookup ?
+        Channel.fromPath( params.sample_lookup ) :
+        Channel.empty()
+
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
@@ -175,7 +181,8 @@ workflow {
             ch_primer_bed,
             ch_refseq,
             ch_ref_gbk,
-            ch_snpeff_config
+            ch_snpeff_config,
+            ch_sample_lookup
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -184,7 +191,8 @@ workflow {
             ch_primer_bed,
             ch_refseq,
             ch_ref_gbk,
-            ch_snpeff_config
+            ch_snpeff_config,
+            ch_sample_lookup
         )
 
     } else {
