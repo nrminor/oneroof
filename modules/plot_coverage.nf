@@ -24,3 +24,30 @@ process PLOT_COVERAGE {
     """
 
 }
+
+process MULTI_SAMPLE_PLOT {
+
+    /* */
+
+    tag "${sample_id}"
+    publishDir params.cov_plots, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    path "inputs/*"
+    path sample_lookup
+
+    output:
+    path "*.pdf"
+
+    script:
+    """
+    multisample_plot.py \
+    --input_dir inputs \
+    --sample_lookup ${sample_lookup}
+    """
+
+}
+
