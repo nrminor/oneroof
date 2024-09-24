@@ -7,7 +7,6 @@ authors = [
   { name = "Andrew J. Lail", email = "ajlail@wisc.edu" },
   { name = "Annabelle Kalweit", email = "akalweit@wisc.edu" },
 ]
-license = "MIT"
 requires-python = ">= 3.10"
 keywords = [
   "science",
