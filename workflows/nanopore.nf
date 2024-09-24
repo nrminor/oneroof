@@ -70,7 +70,7 @@ workflow NANOPORE {
             ch_snpeff_config
         )
 
-        if ( Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
+        if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) ) {
 
             HAPLOTYPING (
                 ALIGNMENT.out
