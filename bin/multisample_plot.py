@@ -176,6 +176,8 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
 
     df_list = []
     for bed_file, barcode in zip(bed_list, bc_list):
+        if barcode not in sample_lookup:
+            continue
         bc_df = pl.read_csv(
             bed_file,
             separator="\t",
