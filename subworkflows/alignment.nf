@@ -55,7 +55,7 @@ workflow ALIGNMENT {
             MOSDEPTH.out
                 .map { sample_id, files -> files }
                 .flatten()
-                .filter { mosdepth_file -> mosdepth_file.toString().endswith(".per-base.bed") }
+                .filter { mosdepth_file -> mosdepth_file.toString().endsWith(".per-base.bed") }
                 .collect(),
             ch_sample_lookup
         )

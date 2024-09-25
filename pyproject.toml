@@ -3,20 +3,47 @@ name = "oneroof"
 version = "0.1.0"
 description = "Base-, Variant-, and Consensus-calling under One Proverbial Roof. Work in progress!"
 authors = [
-    { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
-    { name = "Andrew J. Lail Minor", email = "ajlail@wisc.edu" },
+  { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
+  { name = "Andrew J. Lail", email = "ajlail@wisc.edu" },
+  { name = "Annabelle Kalweit", email = "akalweit@wisc.edu" },
 ]
 requires-python = ">= 3.10"
+keywords = [
+  "science",
+  "biology",
+  "research",
+  "bioinformatics",
+  "sequencing",
+  "genomics",
+  "virus",
+  "SARS-CoV-2",
+  "H5N1",
+  "influenze",
+  "haplotyping",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+
+  "License :: OSI Approved :: MIT License",
+
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
 dependencies = [
-    "polars-lts-cpu",
-    "xlsxwriter",
-    "xlsx2csv",
-    "biopython",
-    "pysam",
-    "marimo",
-    "numpy",
-    "scipy",
-    "paramiko",
+  "polars-lts-cpu",
+  "xlsxwriter",
+  "xlsx2csv",
+  "biopython",
+  "pysam",
+  "marimo",
+  "numpy",
+  "scipy",
+  "paramiko",
 ]
 
 [build-system]
@@ -63,18 +90,18 @@ cffi = ">=1.15.0,<1.17.0"
 
 [tool.uv]
 dev-dependencies = [
-    "ipykernel>=6.29.5",
-    "ipython>=8.12.3",
-    "jupyter>=0.6.4",
-    "just>=0.8.162",
-    "mamba>=0.11.3",
-    "marimo[sql]>=0.8.14",
-    "pip>=24.2",
-    "pre-commit>=3.8.0",
-    "pytest>=8.3.3",
-    "quarto>=0.1.0",
-    "ruff>=0.6.4",
-    "tox>=4.18.1",
+  "ipykernel>=6.29.5",
+  "ipython>=8.12.3",
+  "jupyter>=0.6.4",
+  "just>=0.8.162",
+  "mamba>=0.11.3",
+  "marimo[sql]>=0.8.14",
+  "pip>=24.2",
+  "pre-commit>=3.8.0",
+  "pytest>=8.3.3",
+  "quarto>=0.1.0",
+  "ruff>=0.6.4",
+  "tox>=4.18.1",
 ]
 compile-bytecode = true
 

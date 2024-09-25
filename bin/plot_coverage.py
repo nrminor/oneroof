@@ -109,7 +109,7 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     )
 
 
-def finish_plot(core_plot: ggplot, contig_count: int) -> Tuple[ggplot]:
+def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | Tuple[ggplot, ggplot]:
     """
     Finalize the plot by adding faceting based on the number of contigs.
 
@@ -263,6 +263,7 @@ def main() -> None:
     coverage_lf = pl.scan_csv(
         args.input,
         separator="\t",
+        has_header=False,
         new_columns=["chromosome", "start", "stop", "coverage"],
     )
 
@@ -278,7 +279,7 @@ def main() -> None:
 
     # if the rendered can be unpacked into two plots, write both separately. Otherwise,
     # just output the one plot with a fixed Y-axis
-    if len(rendered) == 2:
+    if isinstance(rendered, tuple) and len(rendered) == 2:
         fixed_plot, free_plot = rendered
         ggsave(
             fixed_plot,
@@ -294,16 +295,18 @@ def main() -> None:
             height=6,
             width=11,
         )
-    elif len(rendered) == 1:
+    elif isinstance(rendered, ggplot):
         ggsave(
-            *rendered,
+            rendered,
             f"{args.label}.coverage.pdf",
             format="pdf",
             height=6,
             width=11,
         )
     else:
-        assert len(rendered) >= 1, f"Unexpected behavior for plot rendering: {rendered}"
+        assert (
+            isinstance(rendered, ggplot) or len(rendered) >= 1
+        ), f"Unexpected behavior for plot rendering: {rendered}"
 
     # write out a table of the percentage of positions that are greater than the cutoff
     (
