@@ -181,6 +181,7 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
         bc_df = pl.read_csv(
             bed_file,
             separator="\t",
+            has_header=False,
             new_columns=["chromosome", "start", "stop", "coverage"],
         ).with_columns(sample=pl.lit(sample_lookup[barcode]))
         df_list.append(bc_df)
