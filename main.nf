@@ -24,7 +24,7 @@ frontMatter = """
 
 def helpMessage() {
 
-    log,info frontMatter
+    log.info frontMatter
     log.info """
     Usage:
 
