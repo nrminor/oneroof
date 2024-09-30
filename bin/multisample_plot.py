@@ -194,6 +194,30 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
 
 
 def fix_dataframe(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Fix and preprocess the input DataFrame for analysis.
+
+    This function takes a Polars DataFrame containing coverage data and performs
+    the following operations:
+    1. Converts the DataFrame to a list of dictionaries.
+    2. Iterates through the rows, adding new rows where there are large
+       jumps in coverage (greater than 50).
+    3. Creates a new row with zero coverage between segments where large
+       jumps occur.
+
+    Parameters:
+    df (pl.DataFrame): Input DataFrame containing coverage data.
+                       Expected columns: 'start', 'stop', 'coverage',
+                       'sample', and 'chromosome'.
+
+    Returns:
+    pl.DataFrame: A new DataFrame with additional rows inserted to
+                  represent gaps in coverage.
+
+    Note:
+    The function assumes that the input DataFrame is sorted by position
+    within each chromosome and sample.
+    """
     rows = df.to_dicts()
     new_rows = []
     for i in range(len(rows) - 1):
