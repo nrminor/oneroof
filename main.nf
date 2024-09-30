@@ -1,8 +1,6 @@
 #!/usr/bin/env nextflow
 
-def helpMessage() {
-
-    log.info """
+frontMatter = """
                                                             .8888b
                                                             88   "
     .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. .d8888b. 88aaa
@@ -20,6 +18,14 @@ def helpMessage() {
     under "one roof."
     (version 0.1.0)
     =========================================================================
+    """
+    .stripIndent()
+
+
+def helpMessage() {
+
+    log.info """
+    $frontMatter
 
     Usage:
 
@@ -79,23 +85,7 @@ include { NANOPORE } from "$projectDir/workflows/nanopore"
 include { ILLUMINA } from "$projectDir/workflows/illumina"
 
 log.info    """
-                                                                  .8888b
-                                                                  88   "
-            .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. .d8888b. 88aaa
-            88'  `88 88'  `88 88ooood8 88'  `88 88'  `88 88'  `88 88
-            88.  .88 88    88 88.  ... 88       88.  .88 88.  .88 88
-            `88888P' dP    dP `88888P' dP       `88888P' `88888P' dP
-            ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
-
-            oneroof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
-            =========================================================================
-            `oneroof` is a bespoke bioinformatic pipeline that can handle Oxford
-            Nanopore POD5 basecalling, Illumina paired-end read-merging, read
-            alignment and variant-calling, variant-effect annotation, consensus
-            sequence calling, quality reporting, and phylogenetic tree-building, all
-            under "one roof."
-            (version 0.1.0)
-            =========================================================================
+            $frontMatter
 
             Workflow settings:
             -------------------------------------------------------------------------
