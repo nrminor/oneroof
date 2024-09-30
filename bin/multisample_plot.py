@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 This module provides functionality for processing and visualizing coverage data from BED files.
 
@@ -20,7 +22,7 @@ Usage:
     coverage data and generate visualizations.
 
 Example:
-    python script_name.py --input_dir /path/to/bed_files --sample_lookup /path/to/lookup.json --min_coverage 20
+    python multisample_plot.py --input_dir /path/to/bed_files --sample_lookup /path/to/lookup.json --min_coverage 20
 """
 
 from __future__ import annotations
@@ -114,9 +116,8 @@ def read_sample_lookup(file_path: str) -> dict[str, str]:
     assert Path(
         file_path,
     ).is_file(), f"The provided file path {file_path} does not exist."
-    with open(file_path) as file:
-        data = json.load(file)
-    return data
+    with Path(file_path).open("r", encoding="utf8") as file:
+        return json.load(file)
 
 
 def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.DataFrame:
@@ -167,8 +168,8 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
     bed_list = []
     bc_list = []
     for filename in os.listdir(directory):
-        f = os.path.join(directory, filename)
-        if not os.path.isfile(f) and not filename.endswith(".bed"):
+        f = Path(directory) / Path(filename)
+        if not Path(f).is_file() and not filename.endswith(".bed"):
             continue
         barcode = filename.split(".")[0]
         bed_list.append(f)

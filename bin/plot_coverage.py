@@ -11,9 +11,10 @@ options:
                         Label to use as a prefix for the output plot
 """
 
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import polars as pl
 from plotnine import (
@@ -109,7 +110,7 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     )
 
 
-def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | Tuple[ggplot, ggplot]:
+def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | tuple[ggplot, ggplot]:
     """
     Finalize the plot by adding faceting based on the number of contigs.
 
@@ -279,7 +280,8 @@ def main() -> None:
 
     # if the rendered can be unpacked into two plots, write both separately. Otherwise,
     # just output the one plot with a fixed Y-axis
-    if isinstance(rendered, tuple) and len(rendered) == 2:
+    multi_segment_plot_count = 2
+    if isinstance(rendered, tuple) and len(rendered) == multi_segment_plot_count:
         fixed_plot, free_plot = rendered
         ggsave(
             fixed_plot,

@@ -113,7 +113,8 @@ def generate_regex_patterns(
     ]
     if start_coords[0] < start_coords[1]:
         warnings.warn(
-            "Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'",
+            message="Please double check that the provided FASTA is formatted like an output from `bedtools getfasta`, e.g.\n\n'>PP599462.1:0-16'",
+            stacklevel=1,
         )
 
     # unpack the sequences

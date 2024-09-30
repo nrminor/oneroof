@@ -158,8 +158,7 @@ def ivar_filter(pass_test):
     """
     if pass_test == "TRUE":
         return False
-    else:
-        return "ft"
+    return "ft"
 
 
 def strand_bias_filter(format):
@@ -184,8 +183,7 @@ def strand_bias_filter(format):
     # If test is significant h0 is refused so there is an strand bias.
     if pvalue < 0.05:
         return "sb"
-    else:
-        return False
+    return False
 
 
 def write_vcf_header(ref, ignore_strand_bias, file_out, filename):
@@ -297,17 +295,16 @@ def check_consecutive(mylist):
     ## Check if the list contains consecutive numbers
     if len(my_list) == 1:
         return False
-    elif sorted(my_list) == list(range(min(my_list), max(my_list) + 1)):
+    if sorted(my_list) == list(range(min(my_list), max(my_list) + 1)):
         return len(my_list)
+    ## If not, and the list is > 1, remove the last item and reevaluate.
+    if len(my_list) > 2:
+        my_list.pop()
+        if sorted(my_list) == list(range(min(my_list), max(my_list) + 1)):
+            return len(my_list)
     else:
-        ## If not, and the list is > 1, remove the last item and reevaluate.
-        if len(my_list) > 2:
-            my_list.pop()
-            if sorted(my_list) == list(range(min(my_list), max(my_list) + 1)):
-                return len(my_list)
-        else:
-            return False
         return False
+    return False
 
 
 def get_diff_position(seq1, seq2):
@@ -328,8 +325,7 @@ def get_diff_position(seq1, seq2):
     if len(ind_diff) > 1:
         print("There has been an issue, more than one difference between the seqs.")
         return False
-    else:
-        return ind_diff[0]
+    return ind_diff[0]
 
 
 def check_merge_codons(q_pos, fe_codon_ref, fe_codon_alt):

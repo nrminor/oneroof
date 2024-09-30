@@ -6,7 +6,6 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self
 
 import yaml
 from loguru import logger
@@ -33,7 +32,7 @@ class TransferRunner:
     ready: bool = field(init=False)
     local_path: str | Path = field(default=Path.cwd())
 
-    def __post_init__(self) -> Self:
+    def __post_init__(self) -> TransferRunner:
         if self.is_file_done_writing():
             object.__setattr__(self, "ready", True)
         else:
@@ -61,7 +60,7 @@ class TransferRunner:
             logger.info(
                 f"File {self.filename} successfully transferred to '{self.local_path}'.",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.warning(f"Error transferring file {self.filename}: {e}")
         finally:
             sftp.close()
@@ -78,14 +77,14 @@ class TransferRunner:
         while checks < max_checks:
             try:
                 current_size = sftp.stat(
-                    os.path.join(self.remote_path, self.filename),
+                    str(Path(self.remote_path) / Path(self.filename)),
                 ).st_size
                 if current_size == previous_size:
                     return True
                 previous_size = current_size
                 checks += 1
                 time.sleep(wait_time)
-            except OSError as e:
+            except OSError as e:  # noqa: PERF203
                 # Handle file not found or other I/O errors
                 logger.warning(f"Error checking file size: {e}")
                 return False
@@ -192,7 +191,7 @@ def main() -> None:
 
     # set up ssh client and connection
     client = SSHClient()
-    # This may or may not be necessary: client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # noqa: E501
+    # This may or may not be necessary: client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(creds.host, username=creds.username, password=creds.password)
 
     # Record the start time
