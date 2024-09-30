@@ -42,11 +42,11 @@ setup-env:
 
 # Build the Docker image for the pipeline locally.
 docker-build:
-    docker build -t nrminor/dorado-and-friends:v0.2.2 .
+    docker build -t nrminor/dorado-and-friends:v0.2.3 .
 
 # Push the docker image to Docker Hub (requires N.R. Minor's login credentials).
 docker-push:
-    docker push nrminor/dorado-and-friends:v0.2.2
+    docker push nrminor/dorado-and-friends:v0.2.3
 
 # Run both docker recipes in sequence
 docker: docker-build docker-push
