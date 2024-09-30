@@ -37,7 +37,7 @@ Most of this project was written in VSCode, as it's currently the only editor wi
 
 Of these tools, Pixi is the only one that is essential for most use cases, as it handles installing the pipeline's dependencies from various `conda` registries as well as the Python Package Index. That said, you could even get away with not using `pixi` by manually installing the packages in [`pyproject.toml`](../pyproject.toml) in a `conda` environment, using pip when needed. While this solution is inelegant compared to having a unified package manager like Pixi, it may be more familiar to some users.
 
-If you are sticking with Pixi, run `pixi shell --frozen` in the project root before you get started. This will create a terminal environment with everything you need to work on and run `oneroof`. The `--frozen` flag is critical; it tells Pixi to install the exact dependency versions recorded in `pixi.lock` as opposed to searching for newer versions where possible. This ensures reproducibility, as updates to the dependencies in `pixi.lock` will only be pushed when they have been tested on Linux and MacOS systems by the core maintainer team.
+If you are sticking with Pixi, run `pixi shell --frozen` in the project root before you get started. This will create a terminal environment with everything you need to work on and run `oneroof` (or rather: everything except Dorado. More on that below). The `--frozen` flag is critical; it tells Pixi to install the exact dependency versions recorded in `pixi.lock` as opposed to searching for newer versions where possible. This ensures reproducibility, as updates to the dependencies in `pixi.lock` will only be pushed when they have been tested on Linux and MacOS systems by the core maintainer team.
 
 #### Just
 
