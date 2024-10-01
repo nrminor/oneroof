@@ -2,8 +2,8 @@ process BUILD_DB {
 
     storeDir params.snpeff_cache
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
     input:
     path refseq
@@ -61,8 +61,8 @@ process EXTRACT_FIELDS {
 
     tag "${sample_id}"
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
     input:
     tuple val(sample_id), path(vcf)
