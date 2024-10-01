@@ -79,10 +79,14 @@ def fix_bed_files(input_bed: Path, output_prefix: str = "validated") -> None:
 
 def main() -> None:
     arguments = sys.argv
-    assert len(arguments) >= 2, f"Inputs were less than the required 2: {arguments}"  # noqa: PLR2004
+    min_arg_count = 2
+    assert (
+        len(arguments) >= min_arg_count
+    ), f"Inputs were less than the required 2: {arguments}"
     input_bed = Path(arguments[1])
     assert input_bed.is_file(), f"Inputed path is not file: {input_bed}"
-    output_prefix = arguments[2] if len(arguments) >= 3 else "validated"
+    whether_prefix = 3
+    output_prefix = arguments[2] if len(arguments) >= whether_prefix else "validated"
     fix_bed_files(input_bed, output_prefix)
 
 
