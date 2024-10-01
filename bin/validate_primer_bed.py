@@ -1,10 +1,50 @@
 #!/usr/bin/env python3
 
+"""
+This script validates and fixes BED files.
+
+It reads a BED file, ensures each row has at least 6 columns, and corrects
+the start and stop positions if they are in the wrong order. It also flips
+the strand sign if necessary. The fixed data is then written to a new file.
+
+Usage:
+    python validate_primer_bed.py <input_bed_file> [output_prefix]
+
+Arguments:
+    input_bed_file: Path to the input BED file
+    output_prefix: Optional prefix for the output file (default: "validated")
+
+The script will create a new file named "<output_prefix>.bed" with the fixed data.
+"""
+
 import sys
 from pathlib import Path
 
 
 def fix_bed_files(input_bed: Path, output_prefix: str = "validated") -> None:
+    """
+    Fix a BED file by correcting start and stop positions and strand signs.
+
+    This function reads a BED file, ensures each row has at least 6 columns,
+    and corrects the start and stop positions if they are in the wrong order.
+    It also flips the strand sign if necessary. The fixed data is then written
+    to a new file.
+
+    Args:
+        input_bed (Path): Path to the input BED file.
+        output_prefix (str, optional): Prefix for the output file. Defaults to "validated".
+
+    Returns:
+        None
+
+    Example usage:
+        from pathlib import Path
+
+        input_file = Path("input.bed")
+        fix_bed_files(input_file, "corrected")
+        # This will create a new file named "corrected.bed" with the fixed data.
+    """
+
     with open(input_bed, encoding="utf8") as file, open(
         f"{output_prefix}.bed",
         "w",
