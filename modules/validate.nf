@@ -4,8 +4,8 @@ process VALIDATE_NANOPORE {
 
     tag "${label}"
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
 
     cpus 3
 
@@ -36,8 +36,8 @@ process VALIDATE_ILLUMINA {
 
     tag "${label}"
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
 
     cpus 3
 
