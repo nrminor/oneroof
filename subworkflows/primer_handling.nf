@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { VALIDATE_PRIMER_BED } from "../modules/validate"
 include { REPORT_REFERENCES } from "../modules/reporting"
 include { RESPLICE_PRIMERS } from "../modules/resplice_primers"
 include { SPLIT_PRIMER_COMBOS } from "../modules/split_primer_combos"
@@ -31,12 +32,16 @@ workflow PRIMER_HANDLING {
         ch_refseq
 
     main:
-        REPORT_REFERENCES (
+        VALIDATE_PRIMER_BED (
             ch_primer_bed
         )
 
+        REPORT_REFERENCES (
+            VALIDATE_PRIMER_BED.out
+        )
+
         RESPLICE_PRIMERS (
-            ch_primer_bed
+            VALIDATE_PRIMER_BED.out
         )
 
         SPLIT_PRIMER_COMBOS (
