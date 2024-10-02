@@ -3,10 +3,9 @@ process RESPLICE_PRIMERS {
     /*
     */
 
-	publishDir params.respliced, mode: 'copy', overwrite: true
+    publishDir params.respliced, mode: 'copy', overwrite: true
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy 'finish'
 
     input:
     path bed_file
@@ -16,7 +15,7 @@ process RESPLICE_PRIMERS {
 
     script:
     """
-	resplice_primers.py -i ${bed_file}
+    resplice_primers.py -i ${bed_file}
     """
 
 }
