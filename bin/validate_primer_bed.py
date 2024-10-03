@@ -112,7 +112,6 @@ def check_for_suffixes(
     return primer_label
 
 
-@logger.catch
 def orient_primer_coords(row: list[str], row_index: int) -> list[str]:
     """
     Orient primer coordinates to ensure start position precedes stop position.
@@ -151,7 +150,6 @@ def orient_primer_coords(row: list[str], row_index: int) -> list[str]:
     return row
 
 
-@logger.catch
 def normalize_bed_lines(
     input_bed: Path,
     output_prefix: str = "validated",
@@ -189,9 +187,10 @@ def normalize_bed_lines(
         # suffix or the expected reverse suffix, which is necessary to be able to
         # properly handle cases where one primer may end up paired with multiple other
         # primers
-        invalid_labels = [
+        label_test = [
             check_for_suffixes(line, fwd_suffix, rev_suffix) for line in lines
         ]
+        invalid_labels = [label for label in label_test if label is not None]
 
         # crash if any invalid primer labels were provided
         assert (
