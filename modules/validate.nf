@@ -69,7 +69,11 @@ process VALIDATE_PRIMER_BED {
     script:
     bed_name = file(primer_bed).getSimpleName()
     """
-    validate_primer_bed.py ${primer_bed} ${bed_name}_validated
+    validate_primer_bed.py
+    --input_bed ${primer_bed} \
+    --output_prefix ${bed_name}_validated \
+    --fwd_suffix ${params.fwd_suffix} \
+    --rev_suffix ${params.rev_suffix}
     """
 
 }
