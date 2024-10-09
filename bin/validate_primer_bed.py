@@ -195,7 +195,11 @@ def normalize_bed_lines(
         # crash if any invalid primer labels were provided
         assert (
             len(invalid_labels) == 0
-        ), f"Here are all detected invalid primer label(s): {invalid_labels}."
+        ), f"Invalid primer label(s) without the expected forward suffix, {fwd_suffix}, and the expected reverse suffix, {rev_suffix}detected: {invalid_labels}."
+
+        # ---------------------------------------------------------------------------------------
+        # PLACE CODE THAT CHECKS FOR >= 2 PRIMER LABEL INSTANCES HERE
+        # ---------------------------------------------------------------------------------------
 
         # for all lines, make sure there are at least 6 columns, make sure all primers
         # are oriented correctly such that all start positions precede stop positions,

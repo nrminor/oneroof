@@ -29,7 +29,7 @@ import polars as pl
 from loguru import logger
 
 
-def parse_command_line_args() -> tuple[Path, str]:
+def parse_command_line_args() -> argparse.Namespace:
     """
         Parse command line arguments while passing errors onto main.
 
@@ -57,16 +57,22 @@ def parse_command_line_args() -> tuple[Path, str]:
         help="Output prefix for final respliced amplicon BED file.",
     )
     parser.add_argument(
-        "--config",
-        "-c",
+        "--fwd_suffix",
+        "-f",
         type=str,
         required=False,
-        default="config.yaml",
-        help="YAML file used to configure module such that it avoids hardcoding",
+        default="_LEFT",
+        help="The suffix to be expected in the names for forward primers",
     )
-    args = parser.parse_args()
-
-    return args.input_bed, args.output_prefix
+    parser.add_argument(
+        "--rev_suffix",
+        "-r",
+        type=str,
+        required=False,
+        default="_RIGHT",
+        help="The suffix to be expected in the names for reverse primers",
+    )
+    return parser.parse_args()
 
 
 def dedup_primers(partitioned_bed: list[pl.DataFrame]) -> list[pl.DataFrame]:
@@ -283,11 +289,11 @@ def main() -> None:
     `main()` coordinates the flow of data through the module's functions.
     """
 
-    bed_file, output_prefix = parse_command_line_args()
+    args = parse_command_line_args()
 
     partitioned_bed = (
         pl.read_csv(
-            bed_file,
+            args.bed_file,
             separator="\t",
             has_header=False,
             new_columns=[
@@ -302,8 +308,8 @@ def main() -> None:
         .with_columns(pl.col("NAME").alias("ORIG_NAME"))
         .with_columns(
             pl.col("NAME")
-            .str.replace_all("_LEFT", "")
-            .str.replace_all("_RIGHT", "")
+            .str.replace_all(args.fwd_prefix, "")
+            .str.replace_all(args.rev_suffix, "")
             .str.replace_all(r"-\d+", "")
             .alias("Amplicon"),
         )
@@ -326,7 +332,7 @@ def main() -> None:
     mutated_frames = resplice_primers(dedup_partitioned)
 
     if len(mutated_frames) == 0:
-        shutil.copy(bed_file, f"{output_prefix}.bed")
+        shutil.copy(args.bed_file, f"{args.output_prefix}.bed")
         return
 
     final_df = finalize_primer_pairings(mutated_frames)
@@ -335,7 +341,7 @@ def main() -> None:
         "Start Position",
         "Stop Position",
     ).write_csv(
-        f"{output_prefix}.bed",
+        f"{args.output_prefix}.bed",
         separator="\t",
         include_header=False,
     )
