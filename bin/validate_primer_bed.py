@@ -113,33 +113,55 @@ def check_for_suffixes(
 
 
 def check_for_pairs(
-    row: list[str],
+    rows: list[list[str]],
     fwd_suffix: str = "_LEFT",
     rev_suffix: str = "_RIGHT",
-) -> None | list:
+) -> list[str]:
+    """
+    Check for primer pairs in the given rows of a BED file.
+
+    This function identifies primer pairs based on the provided forward and reverse suffixes.
+    It counts the occurrences of each amplicon label and identifies singletons (unpaired primers).
+
+    Args:
+        rows (list[list[str]]): A list of rows from the BED file, where each row is a list of strings.
+        fwd_suffix (str, optional): The suffix for forward primers. Defaults to "_LEFT".
+        rev_suffix (str, optional): The suffix for reverse primers. Defaults to "_RIGHT".
+
+    Returns:
+        list[str]: A list of amplicon labels that appear only once (singletons).
+
+    Note:
+        This function assumes that primer labels follow a specific naming convention,
+        where the amplicon label is separated from the primer direction suffix by either
+        the provided suffixes or a hyphen.
+    """
     primer_matching = []
-    matching = {}
-    single_lines = []
+    amplicon_tally = {}
+    singletons = []
     pair_limit = 2
 
-    line = row[3]
-    if line.endswith((fwd_suffix, rev_suffix)):
-        split_line = line.split(fwd_suffix if line.endswith(fwd_suffix) else rev_suffix)
-        hyphen_detector = str(split_line[0])
-        if "-" in hyphen_detector:
-            split_line = hyphen_detector.split("-")
-        primer_matching.append(split_line[0])
+    for row in rows:
+        primer_label = row[3]
+        if primer_label.endswith((fwd_suffix, rev_suffix)):
+            amplicon_label = primer_label.split(
+                fwd_suffix if primer_label.endswith(fwd_suffix) else rev_suffix,
+            )
+            hyphen_detector = str(amplicon_label[0])
+            if "-" in hyphen_detector:
+                amplicon_label = hyphen_detector.split("-")
+            primer_matching.append(amplicon_label[0])
 
-    for line in primer_matching:
-        if line not in matching:
-            matching[line] = 0
-        matching[line] += 1
+        for primer_label in primer_matching:
+            if primer_label not in amplicon_tally:
+                amplicon_tally[primer_label] = 0
+            amplicon_tally[primer_label] += 1
 
-    for key, val in matching:
-        if val < pair_limit:
-            single_lines.append(key)
+        for amplicon, tally in amplicon_tally:
+            if tally < pair_limit:
+                singletons.append(amplicon)
 
-    return single_lines
+    return singletons
 
 
 def orient_primer_coords(row: list[str], row_index: int) -> list[str]:
@@ -227,15 +249,11 @@ def normalize_bed_lines(
             len(invalid_labels) == 0
         ), f"Invalid primer label(s) without the expected forward suffix, {fwd_suffix}, and the expected reverse suffix, {rev_suffix}detected: {invalid_labels}."
 
-        # ---------------------------------------------------------------------------------------
-        # PLACE CODE THAT CHECKS FOR >= 2 PRIMER LABEL INSTANCES HERE
-        # ---------------------------------------------------------------------------------------
-
-        pair_test = [check_for_pairs(line, fwd_suffix, rev_suffix) for line in lines]
-        single_lines = [primer for primer in pair_test if primer is not None]
+        # make sure that each primer label can be mapped back to at least two primers
+        pair_test = check_for_pairs(lines, fwd_suffix, rev_suffix)
         assert (
-            len(single_lines) == 0
-        ), f"These primers do not have a matching forward or reverse primer: {single_lines}."
+            len(pair_test) == 0
+        ), f"These amplicon labels do not appear in more than one primer: {pair_test}."
 
         # for all lines, make sure there are at least 6 columns, make sure all primers
         # are oriented correctly such that all start positions precede stop positions,
