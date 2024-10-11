@@ -112,6 +112,36 @@ def check_for_suffixes(
     return primer_label
 
 
+def check_for_pairs(
+    row: list[str],
+    fwd_suffix: str = "_LEFT",
+    rev_suffix: str = "_RIGHT",
+) -> None | list:
+    primer_matching = []
+    matching = {}
+    single_lines = []
+    pair_limit = 2
+
+    line = row[3]
+    if line.endswith((fwd_suffix, rev_suffix)):
+        split_line = line.split(fwd_suffix if line.endswith(fwd_suffix) else rev_suffix)
+        hyphen_detector = str(split_line[0])
+        if "-" in hyphen_detector:
+            split_line = hyphen_detector.split("-")
+        primer_matching.append(split_line[0])
+
+    for line in primer_matching:
+        if line not in matching:
+            matching[line] = 0
+        matching[line] += 1
+
+    for key, val in matching:
+        if val < pair_limit:
+            single_lines.append(key)
+
+    return single_lines
+
+
 def orient_primer_coords(row: list[str], row_index: int) -> list[str]:
     """
     Orient primer coordinates to ensure start position precedes stop position.
@@ -200,6 +230,12 @@ def normalize_bed_lines(
         # ---------------------------------------------------------------------------------------
         # PLACE CODE THAT CHECKS FOR >= 2 PRIMER LABEL INSTANCES HERE
         # ---------------------------------------------------------------------------------------
+
+        pair_test = [check_for_pairs(line, fwd_suffix, rev_suffix) for line in lines]
+        single_lines = [primer for primer in pair_test if primer is not None]
+        assert (
+            len(single_lines) == 0
+        ), f"These primers do not have a matching forward or reverse primer: {single_lines}."
 
         # for all lines, make sure there are at least 6 columns, make sure all primers
         # are oriented correctly such that all start positions precede stop positions,
