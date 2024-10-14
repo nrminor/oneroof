@@ -2,10 +2,10 @@ process TRIM_ENDS_TO_PRIMERS {
 
     /* */
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
-	cpus 3
+    cpus 3
 
     input:
     tuple val(barcode), path(patterns_file), path(untrimmed)

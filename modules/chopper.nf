@@ -3,10 +3,10 @@ process FILTER_WITH_CHOPPER {
     /* */
 
     tag "${label}"
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
-	cpus 4
+    cpus 4
 
     input:
     tuple val(label), path(fastq)

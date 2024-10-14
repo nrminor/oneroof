@@ -82,3 +82,37 @@ process MERGE_BY_SAMPLE {
 	| bgzip -o ${barcode}.amplicons.fastq.gz
 	"""
 }
+
+process TRIM_ENDS_TO_PRIMERS {
+
+    /* */
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
+
+    cpus 3
+
+    input:
+    tuple val(barcode), path(patterns_file), path(untrimmed)
+
+    output:
+    tuple val(barcode), path("${barcode}*.trimmed.fastq.gz")
+
+    script:
+    amplicon = file(patterns_file).getSimpleName()
+    """
+    FORWARD_PATTERN=\$(head -n 1 ${patterns_file})
+    REVERSE_PATTERN=\$(tail -n 1 ${patterns_file})
+
+    seqkit amplicon \
+    -f -r 1:-1 \
+    --forward \$FORWARD_PATTERN \
+    --reverse \$REVERSE_PATTERN \
+    --max-mismatch ${params.max_mismatch} \
+    --strict-mode \
+    --threads ${task.cpus} \
+    --out-file ${barcode}.${amplicon}.trimmed.fastq.gz \
+    ${untrimmed}
+    """
+
+}
