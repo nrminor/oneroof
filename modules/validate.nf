@@ -45,13 +45,13 @@ process VALIDATE_ILLUMINA {
     tuple val(label), path(reads1), path(reads2)
 
     output:
-    tuple val(label), path(reads1), path(reads2), path("${barcode}.report.txt")
+    tuple val(label), path(reads1), path(reads2), path("${label}.report.txt")
 
     script:
     """
     seqfu check --deep --verbose --thousands \
     ${reads1} ${reads2} \
-    > ${barcode}.report.txt
+    > ${label}.report.txt
     """
 
 }
