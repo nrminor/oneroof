@@ -2,28 +2,28 @@ process BBMERGE {
 
     /* */
 
-    tag "${sample_id}"
+	tag "${sample_id}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
-    input:
+	input:
 	tuple val(sample_id), path(reads1), path(reads2)
 
-    output:
-    tuple val(sample_id), path("${sample_id}.merged.preclump.fastq.gz")
+	output:
+	tuple val(sample_id), path("${sample_id}.merged.preclump.fastq.gz")
 
-    script:
-    """
-    bbmerge-auto.sh \
-    in1=`realpath ${reads1}` \
+	script:
+	"""
+	bbmerge.sh \
+	in1=`realpath ${reads1}` \
 	in2=`realpath ${reads2}` \
-    out=${sample_id}.merged.preclump.fastq.gz \
-    outu=${sample_id}.unmerged.preclump.fastq.gz \
-    strict k=93 extend2=80 rem ordered \
-    ihist=${sample_id}_ihist_merge.txt \
-    threads=${task.cpus}
-    """
+	out=${sample_id}.merged.preclump.fastq.gz \
+	outu=${sample_id}.unmerged.preclump.fastq.gz \
+	strict k=93 extend2=80 rem ordered \
+	ihist=${sample_id}_ihist_merge.txt \
+	threads=${task.cpus}
+	"""
 
 }
 
