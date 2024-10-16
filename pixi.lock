@@ -27,6 +27,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/aws-sdk-cpp-1.11.329-hba8bd5f_3.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/bbmap-39.01-h92535d8_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/bcftools-1.17-h3cc50cf_1.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/linux-64/bedtools-2.31.1-hf5e1c6e_2.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/binutils_impl_linux-64-2.40-ha1999f0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-1.1.0-hd590300_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/brotli-bin-1.1.0-hd590300_1.conda
@@ -289,6 +290,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/aws-sdk-cpp-1.11.329-h6b2b1af_3.conda
       - conda: https://conda.anaconda.org/bioconda/osx-64/bbmap-39.01-hd5a9a93_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/bcftools-1.16-h83fc8ca_1.tar.bz2
+      - conda: https://conda.anaconda.org/bioconda/osx-64/bedtools-2.31.1-hdd9cfa2_2.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/brotli-1.1.0-h0dc2134_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/brotli-bin-1.1.0-h0dc2134_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/brotli-python-1.1.0-py311hdf8f085_1.conda
@@ -1163,6 +1165,41 @@ packages:
   - pytest!=3.3.0,>=3.2.1 ; extra == 'tests'
   - mypy ; extra == 'typecheck'
   requires_python: '>=3.7'
+- kind: conda
+  name: bedtools
+  version: 2.31.1
+  build: hdd9cfa2_2
+  build_number: 2
+  subdir: osx-64
+  url: https://conda.anaconda.org/bioconda/osx-64/bedtools-2.31.1-hdd9cfa2_2.tar.bz2
+  sha256: 17c685eba585e753f617204443a421e7293353ccd8cec488a582d6cae02bca30
+  md5: 1f66f8ceac0e134b67f297caa63c0450
+  depends:
+  - bzip2 >=1.0.8,<2.0a0
+  - libcxx >=16
+  - libzlib >=1.2.13,<2.0a0
+  - xz >=5.2.6,<6.0a0
+  license: MIT
+  size: 787056
+  timestamp: 1720648629082
+- kind: conda
+  name: bedtools
+  version: 2.31.1
+  build: hf5e1c6e_2
+  build_number: 2
+  subdir: linux-64
+  url: https://conda.anaconda.org/bioconda/linux-64/bedtools-2.31.1-hf5e1c6e_2.tar.bz2
+  sha256: bb257aa49d4039bd24363d0d5d2948bfb4ae6de2245fe706b1152bfc2229da3f
+  md5: 55aacbd977c83d6d4849c91310ef48c5
+  depends:
+  - bzip2 >=1.0.8,<2.0a0
+  - libgcc-ng >=12
+  - libstdcxx-ng >=12
+  - libzlib >=1.2.13,<2.0a0
+  - xz >=5.2.6,<6.0a0
+  license: MIT
+  size: 1601046
+  timestamp: 1720647529569
 - kind: conda
   name: binutils_impl_linux-64
   version: '2.40'
