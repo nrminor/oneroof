@@ -293,7 +293,7 @@ def main() -> None:
 
     partitioned_bed = (
         pl.read_csv(
-            args.bed_file,
+            args.input_bed,
             separator="\t",
             has_header=False,
             new_columns=[
@@ -308,7 +308,7 @@ def main() -> None:
         .with_columns(pl.col("NAME").alias("ORIG_NAME"))
         .with_columns(
             pl.col("NAME")
-            .str.replace_all(args.fwd_prefix, "")
+            .str.replace_all(args.fwd_suffix, "")
             .str.replace_all(args.rev_suffix, "")
             .str.replace_all(r"-\d+", "")
             .alias("Amplicon"),
@@ -332,7 +332,7 @@ def main() -> None:
     mutated_frames = resplice_primers(dedup_partitioned)
 
     if len(mutated_frames) == 0:
-        shutil.copy(args.bed_file, f"{args.output_prefix}.bed")
+        shutil.copy(args.input_bed, f"{args.output_prefix}.bed")
         return
 
     final_df = finalize_primer_pairings(mutated_frames)

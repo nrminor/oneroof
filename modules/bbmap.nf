@@ -56,7 +56,6 @@ process TRIM_ADAPTERS {
 	/* */
 
 	tag "${sample_id}"
-	publishDir params.trim_adapters, mode: params.pubMode, overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2

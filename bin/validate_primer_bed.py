@@ -140,7 +140,6 @@ def check_for_pairs(
     amplicon_tally = {}
     singletons = []
     pair_limit = 2
-
     for row in rows:
         primer_label = row[3]
         if primer_label.endswith((fwd_suffix, rev_suffix)):
@@ -152,14 +151,14 @@ def check_for_pairs(
                 amplicon_label = hyphen_detector.split("-")
             primer_matching.append(amplicon_label[0])
 
-        for primer_label in primer_matching:
-            if primer_label not in amplicon_tally:
-                amplicon_tally[primer_label] = 0
-            amplicon_tally[primer_label] += 1
+    for primer_label in primer_matching:
+        if primer_label not in amplicon_tally:
+            amplicon_tally[primer_label] = 0
+        amplicon_tally[primer_label] += 1
 
-        for amplicon, tally in amplicon_tally:
-            if tally < pair_limit:
-                singletons.append(amplicon)
+    for amplicon, tally in amplicon_tally.items():
+        if tally < pair_limit:
+            singletons.append(amplicon)
 
     return singletons
 
