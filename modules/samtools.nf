@@ -151,7 +151,6 @@ process FASTQ_CONVERSION {
 process FAIDX {
 
     tag "${barcode}"
-    publishDir params.basecall_fastqs, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
