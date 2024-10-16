@@ -48,7 +48,9 @@ These are the core elements required to run on Nanopore data: a directory of pod
 And for Illumina paired-end reads, it’s even simpler:
 
     nextflow run nrminor/oneroof \
-    --illumina_fastq_dir my_illumina_reads/
+    --illumina_fastq_dir my_illumina_reads/ \
+    --refseq my_ref.fasta \
+    --primer_bed my_primers.bed
 
 If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don’t want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline’s dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
 
