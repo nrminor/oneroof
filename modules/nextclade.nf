@@ -1,5 +1,7 @@
 process CHECK_DATASET {
 
+    errorStrategy 'ignore'
+
     output:
     val "${params.nextclade_dataset}"
 
@@ -46,7 +48,7 @@ process RUN_NEXTCLADE {
 
     input:
     path sequences
-    each path("${nextclade_dataset}") 
+    each path("${nextclade_dataset}")
 
     output:
     path "${label}/"
