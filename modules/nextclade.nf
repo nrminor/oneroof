@@ -10,13 +10,14 @@ process CHECK_DATASET {
 
     shell:
     '''
-    dataset_options=$(nextclade datasets list)
+    dataset_options=$(nextclade dataset list)
 
-    if grep -Fxq !{params.nextclade_dataset} <<< "$dataset_options"; then
-        echo "!{params.nextclade_dataset} found in supported Nextclade datasets. It is safe to proceed."
+    query_name_line="\"name\"=\"!{params.nextclade_dataset}\""
+
+    if grep -Fq "$query_name_line" <<< "$dataset_options"; then
+        echo "$query_name_line found in supported Nextclade datasets. It is safe to proceed."
     else
-        echo "!{params.nextclade_dataset} not found in the list of supported Nextclade datasets."
-        exit 1
+        echo "$query_name_line not found in the list of supported Nextclade datasets."
     fi
     '''
 
