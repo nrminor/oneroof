@@ -252,7 +252,11 @@ def resplice_primers(dedup_partitioned: list[pl.DataFrame]) -> list[pl.DataFrame
     return mutated_frames
 
 
-def finalize_primer_pairings(mutated_frames: list[pl.DataFrame]) -> pl.DataFrame:
+def finalize_primer_pairings(
+    mutated_frames: list[pl.DataFrame],
+    fwd_suffix: str,
+    rev_suffix: str,
+) -> pl.DataFrame:
     """
         `finalize_primer_pairings()` removes any spikeins with possible pairings
         that could not be determined.
@@ -271,12 +275,12 @@ def finalize_primer_pairings(mutated_frames: list[pl.DataFrame]) -> pl.DataFrame
         fwd_keepers = [
             primer
             for primer in df.select("NAME").to_series().to_list()
-            if "_LEFT" in primer
+            if fwd_suffix in primer
         ]
         rev_keepers = [
             primer
             for primer in df.select("NAME").to_series().to_list()
-            if "_RIGHT" in primer
+            if rev_suffix in primer
         ]
         if len(fwd_keepers) > 0 and len(rev_keepers) > 0:
             final_frames.append(df)
@@ -293,7 +297,7 @@ def main() -> None:
 
     partitioned_bed = (
         pl.read_csv(
-            args.input_bed,
+            args.bed_file,
             separator="\t",
             has_header=False,
             new_columns=[
@@ -308,7 +312,7 @@ def main() -> None:
         .with_columns(pl.col("NAME").alias("ORIG_NAME"))
         .with_columns(
             pl.col("NAME")
-            .str.replace_all(args.fwd_suffix, "")
+            .str.replace_all(args.fwd_prefix, "")
             .str.replace_all(args.rev_suffix, "")
             .str.replace_all(r"-\d+", "")
             .alias("Amplicon"),
@@ -332,7 +336,7 @@ def main() -> None:
     mutated_frames = resplice_primers(dedup_partitioned)
 
     if len(mutated_frames) == 0:
-        shutil.copy(args.input_bed, f"{args.output_prefix}.bed")
+        shutil.copy(args.bed_file, f"{args.output_prefix}.bed")
         return
 
     final_df = finalize_primer_pairings(mutated_frames)
