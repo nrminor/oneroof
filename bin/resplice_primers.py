@@ -176,7 +176,11 @@ def resolve_primer_names(
 
 
 @logger.catch
-def resplice_primers(dedup_partitioned: list[pl.DataFrame]) -> list[pl.DataFrame]:
+def resplice_primers(
+    dedup_partitioned: list[pl.DataFrame],
+    fwd_suffix: str,
+    rev_suffix: str,
+) -> list[pl.DataFrame]:
     """
         `resplice_primers()` determines whether spike-ins are forward or reverse
         primers (or both) and uses that information to handle resplicing
@@ -197,8 +201,8 @@ def resplice_primers(dedup_partitioned: list[pl.DataFrame]) -> list[pl.DataFrame
         if dedup_df.shape[0] != primer_pair_number:
             primers = dedup_df["NAME"]
 
-            fwd_primers = [primer for primer in primers if "LEFT" in primer]
-            rev_primers = [primer for primer in primers if "RIGHT" in primer]
+            fwd_primers = [primer for primer in primers if fwd_suffix in primer]
+            rev_primers = [primer for primer in primers if rev_suffix in primer]
 
             if len(fwd_primers) == 0 and len(rev_primers) == 0:
                 return mutated_frames
@@ -312,7 +316,7 @@ def main() -> None:
         .with_columns(pl.col("NAME").alias("ORIG_NAME"))
         .with_columns(
             pl.col("NAME")
-            .str.replace_all(args.fwd_prefix, "")
+            .str.replace_all(args.fwd_suffix, "")
             .str.replace_all(args.rev_suffix, "")
             .str.replace_all(r"-\d+", "")
             .alias("Amplicon"),
@@ -333,13 +337,21 @@ def main() -> None:
 
     dedup_partitioned = dedup_primers(partitioned_bed)
 
-    mutated_frames = resplice_primers(dedup_partitioned)
+    mutated_frames = resplice_primers(
+        dedup_partitioned,
+        args.fwd_suffix,
+        args.rev_suffix,
+    )
 
     if len(mutated_frames) == 0:
         shutil.copy(args.bed_file, f"{args.output_prefix}.bed")
         return
 
-    final_df = finalize_primer_pairings(mutated_frames)
+    final_df = finalize_primer_pairings(
+        mutated_frames,
+        args.fwd_suffix,
+        args.rev_suffix,
+    )
 
     final_df.drop("Amplicon").drop("NAME").sort(
         "Start Position",
