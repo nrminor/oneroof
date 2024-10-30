@@ -88,7 +88,7 @@ class Utils {
         --min_consensus_freq           Minimum frequency of a variant base to be included in a consensus sequence. Default: 0.5
         --min_haplo_reads              Minimum read support to report an amplicon-haplotype. Default: 2
         --snpeff_cache                 Directory to cache a custom snpEff database. Default: '$launchDir/work/snpEff_cache'
-        --min_depth_coverage           Minimum depth of coverage. Default: 20
+        --min_depth_coverage           Minimum depth of coverage. Default: 10
         --nextclade_dataset            Nextclade dataset location. Default: null
         --nextclade_cache              Directory to cache Nextclade datasets. Default: '$launchDir/work/nextclade_datasets'
         --results                      Where to place the results. Default: '$launchDir/results'
