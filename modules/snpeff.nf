@@ -61,6 +61,8 @@ process EXTRACT_FIELDS {
 
     tag "${sample_id}"
 
+    publishDir params.variant_tsv, mode: 'copy', overwrite: true, pattern: "*.tsv"
+
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     maxRetries 2
 
