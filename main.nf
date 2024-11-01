@@ -32,7 +32,7 @@ include { NANOPORE } from "$projectDir/workflows/nanopore"
 include { ILLUMINA } from "$projectDir/workflows/illumina"
 
 log.info frontMatter
-Utils.workflowDisplay()
+Utils.workflowDisplay(params, workflow)
 
 workflow {
 
@@ -109,7 +109,7 @@ if ( params.email ) {
       def msg = """\
           Oneroof has finished running with the following settings:
 
-          ${Utils.workflowDisplay()}
+          ${Utils.workflowDisplay(params, workflow)}
           """
           .stripIndent()
 
