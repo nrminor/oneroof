@@ -37,6 +37,9 @@ process PUBLISH_COMMAND {
 
     cpus 1
 
+    output:
+    path "run_command.sh"
+
     script:
     command = workflow.commandLine
     """
