@@ -2,7 +2,7 @@ process AMPLICON_TK_TRIM {
 
     /* */
 
-    tag "${}"
+    // tag "${}"
     publishDir , mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }

@@ -18,10 +18,6 @@ include { FILTER_WITH_CHOPPER } from "../modules/chopper"
 include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 
 
-// use some Groovy to count the number of amplicons
-int ampliconCount = params.primer_bed ? Utils.countAmplicons(params.primer_bed) : 0
-
-
 workflow PRIMER_HANDLING {
 
     /* */
@@ -32,6 +28,10 @@ workflow PRIMER_HANDLING {
         ch_refseq
 
     main:
+
+        // use some Groovy to count the number of amplicons
+        int ampliconCount = params.primer_bed ? Utils.countAmplicons(params.primer_bed) : 0
+
         VALIDATE_PRIMER_BED (
             ch_primer_bed
         )
