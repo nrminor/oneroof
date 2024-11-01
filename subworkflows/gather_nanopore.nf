@@ -1,6 +1,7 @@
 #!/usr/bin/env nextflow
 
 include { WATCH_FOR_POD5S } from "../modules/file_watcher"
+include { PUBLISH_COMMAND } from "../modules/reporting"
 include { DOWNLOAD_MODELS; BASECALL; DEMULTIPLEX } from "../modules/dorado"
 include { MERGE_BARCODES } from "../modules/samtools"
 include { VALIDATE_NANOPORE } from "../modules/validate"
@@ -11,6 +12,8 @@ workflow GATHER_NANOPORE {
     /* */
 
     main:
+
+        PUBLISH_COMMAND ( )
 
         // Invoke Dorado basecaller and demultiplexer if pod5's are provided
         // ------------------------------------------------------------------ //

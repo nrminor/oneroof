@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+include { PUBLISH_COMMAND } from "../modules/reporting"
 include { VALIDATE_ILLUMINA } from "../modules/validate"
 include { BBMERGE; CLUMP_READS } from "../modules/bbmap"
 
@@ -10,6 +11,9 @@ workflow GATHER_ILLUMINA {
     main:
         ch_prepped = Channel
             .fromFilePairs ( "${params.illumina_fastq_dir}/*{R1,R2}*.fastq.gz", flat: true, maxDepth: 1 )
+
+
+        PUBLISH_COMMAND ( )
 
         VALIDATE_ILLUMINA (
             ch_prepped
