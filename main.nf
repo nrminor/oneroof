@@ -24,7 +24,7 @@ frontMatter = """
     .stripIndent()
 
 if (params.help) {
-    Utils.helpMessage()
+    Utils.helpMessage(workflow, log, frontMatter)
     exit 0
 }
 
@@ -32,7 +32,7 @@ include { NANOPORE } from "$projectDir/workflows/nanopore"
 include { ILLUMINA } from "$projectDir/workflows/illumina"
 
 log.info frontMatter
-Utils.workflowDisplay(params, workflow)
+Utils.workflowDisplay(params, workflow, log, nextflow)
 
 workflow {
 
@@ -109,7 +109,7 @@ if ( params.email ) {
       def msg = """\
           Oneroof has finished running with the following settings:
 
-          ${Utils.workflowDisplay(params, workflow)}
+          ${Utils.workflowDisplay(params, workflow, log, nextflow)}
           """
           .stripIndent()
 
