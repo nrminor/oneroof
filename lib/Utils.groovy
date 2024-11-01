@@ -8,6 +8,7 @@ import java.util.stream.Collectors
 
 class Utils {
 
+
     public static Integer countFastaHeaders(String filePath) {
         def headerCount = 0
         def file = new File(filePath)
@@ -101,7 +102,7 @@ class Utils {
         .stripIndent()
     }
 
-    public static void workflowDisplay() {
+    public static void workflowDisplay(params, workflow) {
         log.info """
                 Workflow settings:
                 -------------------------------------------------------------------------
