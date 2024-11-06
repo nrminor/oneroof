@@ -2,8 +2,7 @@ process AMPLICON_TK_TRIM {
 
     /* */
 
-    // tag "${}"
-    publishDir , mode: 'copy', overwrite: true
+    tag "${sample_id}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
@@ -29,7 +28,3 @@ process AMPLICON_TK_TRIM {
     """
 
 }
-
-// process AMPLICON_TK_SORT {}
-
-// process AMPLICON_TK_CONSENSUS {}

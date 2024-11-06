@@ -29,9 +29,6 @@ workflow PRIMER_HANDLING {
 
     main:
 
-        // use some Groovy to count the number of amplicons
-        int ampliconCount = params.primer_bed ? Utils.countAmplicons(params.primer_bed) : 0
-
         VALIDATE_PRIMER_BED (
             ch_primer_bed
         )

@@ -2,42 +2,42 @@
 
 nextflow.enable.dsl = 2
 
-frontMatter = """
-                                                            .8888b
-                                                            88   "
-    .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. .d8888b. 88aaa
-    88'  `88 88'  `88 88ooood8 88'  `88 88'  `88 88'  `88 88
-    88.  .88 88    88 88.  ... 88       88.  .88 88.  .88 88
-    `88888P' dP    dP `88888P' dP       `88888P' `88888P' dP
-    ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+include { NANOPORE } from "./workflows/nanopore"
+include { ILLUMINA } from "./workflows/illumina"
 
-    oneroof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
-    =========================================================================
-    `oneroof` is a bespoke bioinformatic pipeline that can handle Oxford
-    Nanopore POD5 basecalling, Illumina paired-end read-merging, read
-    alignment and variant-calling, variant-effect annotation, consensus
-    sequence calling, quality reporting, and phylogenetic tree-building, all
-    under "one roof."
-    (version 0.1.0)
-    =========================================================================
-    """
-    .stripIndent()
-
-if (params.help) {
-    Utils.helpMessage(workflow, log, frontMatter)
-    exit 0
-}
-
-include { NANOPORE } from "$projectDir/workflows/nanopore"
-include { ILLUMINA } from "$projectDir/workflows/illumina"
-
-log.info frontMatter
-Utils.workflowDisplay(params, workflow, log, nextflow)
+// the sequencing platform used
+params.platform = params.illumina_fastq_dir == "" ? "ont" : "illumina"
 
 workflow {
 
-    // the sequencing platform used
-    params.platform = params.illumina_fastq_dir == "" ? "ont" : "illumina"
+    frontMatter = """
+                                                                .8888b
+                                                                88   "
+        .d8888b. 88d888b. .d8888b. 88d888b. .d8888b. .d8888b. 88aaa
+        88'  `88 88'  `88 88ooood8 88'  `88 88'  `88 88'  `88 88
+        88.  .88 88    88 88.  ... 88       88.  .88 88.  .88 88
+        `88888P' dP    dP `88888P' dP       `88888P' `88888P' dP
+        ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+
+        oneroof: Base-, Variant-, and Consensus-calling under One Proverbial Roof
+        =========================================================================
+        `oneroof` is a bespoke bioinformatic pipeline that can handle Oxford
+        Nanopore POD5 basecalling, Illumina paired-end read-merging, read
+        alignment and variant-calling, variant-effect annotation, consensus
+        sequence calling, quality reporting, and phylogenetic tree-building, all
+        under "one roof."
+        (version 0.1.0)
+        =========================================================================
+        """
+        .stripIndent()
+
+    if (params.help) {
+        Utils.helpMessage(workflow, log, frontMatter)
+        exit 0
+    }
+
+    log.info frontMatter
+    Utils.workflowDisplay(params, workflow, log, nextflow)
 
     // Checking for required files
     // ---------------------------------------------------------------------- //
@@ -101,18 +101,18 @@ workflow {
 
     }
 
-}
+    if ( params.email ) {
+    workflow.onComplete {
 
-if ( params.email ) {
-  workflow.onComplete {
+        def msg = """\
+            Oneroof has finished running with the following settings:
 
-      def msg = """\
-          Oneroof has finished running with the following settings:
+            ${Utils.workflowDisplay(params, workflow, log, nextflow)}
+            """
+            .stripIndent()
 
-          ${Utils.workflowDisplay(params, workflow, log, nextflow)}
-          """
-          .stripIndent()
+        sendMail(to: params.email, subject: 'Oneroof Execution Report', body: msg)
+    }
+    }
 
-      sendMail(to: params.email, subject: 'Oneroof Execution Report', body: msg)
-  }
 }

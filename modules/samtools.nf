@@ -159,7 +159,7 @@ process FAIDX {
     tuple val(barcode), path(fastq)
 
     output:
-    tuple val(barcode), path(fastq), path("*.fai")
+    tuple val(barcode), path(fastq), path("${index_name}.fai")
 
     script:
     index_name = file(fastq).getName()
