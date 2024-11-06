@@ -14,7 +14,7 @@ process ALIGN_WITH_PRESET {
 
     script:
     preset = params.platform == "ont" ? "map-ont" : "sr"
-    secondary = params.secondary ? "no" : "ues"
+    secondary = params.secondary ? "no" : "yes"
     """
     minimap2 \
     --secondary=${secondary} \
