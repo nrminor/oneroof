@@ -36,6 +36,9 @@ process ANNOTATE_VCF {
     tag "${barcode}"
     publishDir params.vcf, mode: 'copy', overwrite: true
 
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
+
     input:
     each path(snpeff_db)
     each path(snpeff_config)
