@@ -50,7 +50,7 @@ process ANNOTATE_VCF {
     script:
     """
     cp ${snpeff_config} local.config && \
-    snpEff -Xmx1g \
+    snpEff -Xmx3g \
     -c local.config \
     -dataDir genome/ \
     -v ref_genome \
@@ -77,7 +77,7 @@ process EXTRACT_FIELDS {
 
     script:
     """
-    SnpSift -Xmx1g extractFields \
+    SnpSift -Xmx3g extractFields \
     -s "," \
     ${vcf} \
     CHROM REF POS ALT AF AC DP GEN[0].REF_DP GEN[0].ALT_DP GEN[0].ALT_FREQ MQ ANN[0].GENE ANN[0].EFFECT ANN[0].HGVS_P ANN[0].CDS_POS ANN[0].AA_POS \

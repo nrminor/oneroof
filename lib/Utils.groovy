@@ -140,7 +140,7 @@ class Utils {
                 Illumina FASTQs directory   : ${params.illumina_fastq_dir ?: ""}
                 Sample ID lookup            : ${params.sample_lookup ?: ""}
                 Results directory           : ${params.results}
-                Email Address(es)            : ${params.email ?: ""}
+                Email Address(es)           : ${params.email ?: ""}
 
                 """
                 .stripIndent()
