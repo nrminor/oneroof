@@ -137,6 +137,7 @@ class Utils {
                 Remote POD5 directory       : ${params.remote_pod5_location ?: ""}
                 Local POD5 directory        : ${params.pod5_dir ?: ""}
                 Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data}
+                Illumina FASTQs directory   : ${params.illumina_fastq_dir ?: ""}
                 Sample ID lookup            : ${params.sample_lookup ?: ""}
                 Results directory           : ${params.results}
                 Email Address(es)            : ${params.email ?: ""}
