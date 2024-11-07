@@ -30,7 +30,7 @@ process PUBLISH_COMMAND {
 
     /* */
 
-    publishDir params.results, mode: "copy", overwrite: true
+    publishDir params.run_command, mode: "copy", overwrite: true
 
 	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
 	maxRetries 1
