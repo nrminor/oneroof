@@ -299,8 +299,9 @@ process QUALITY_TRIM {
 	"""
 	bbduk.sh -Xmx2g in=`realpath ${reads}` \
 	out=${sample_id}_qtrimmed.fastq.gz \
-	qtrim=rl trimq=10 minlen=70 ordered \
-	threads=${task.cpus}
+	qtrim=rl minavgquality=${params.min_qual} \
+	maxlength=${params.max_len} minlength=${params.min_len} \
+	ordered threads=${task.cpus}
 	"""
 
 }
