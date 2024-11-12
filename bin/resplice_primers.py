@@ -126,8 +126,8 @@ def dedup_primers(partitioned_bed: list[pl.DataFrame]) -> list[pl.DataFrame]:
 
 
 def resolve_primer_names(
-    to_combine: list[str],
-    combine_to: list[str],
+    combine_from: list[str],
+    combine_onto: list[str],
 ) -> tuple[list[str], list[str]]:
     """
         `resolve_primer_names()` names each possible pairing of primers in
@@ -144,7 +144,7 @@ def resolve_primer_names(
         a list of new primer names to use once left-joining is complete.
     """
 
-    primer_pairs = list(product(to_combine, combine_to))
+    primer_pairs = list(product(combine_from, combine_onto))
 
     new_primer_pairs = []
     for fwd_primer, rev_primer in primer_pairs:
@@ -152,7 +152,7 @@ def resolve_primer_names(
         rev_suffix = rev_primer.split("_")[-1]
         primer_label = fwd_primer.replace(f"_{fwd_suffix}", "").split("-")[-1]
         try:
-            int(primer_label)
+            _ = int(primer_label)
         except TypeError:
             primer_label = "1"
         amplicon = "_".join(
@@ -175,7 +175,6 @@ def resolve_primer_names(
     return (primers_to_join, new_primer_names)
 
 
-@logger.catch
 def resplice_primers(
     dedup_partitioned: list[pl.DataFrame],
     fwd_suffix: str,
