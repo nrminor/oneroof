@@ -21,25 +21,15 @@ options:
 from __future__ import annotations
 
 import argparse
-import shutil
 from itertools import product
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 from loguru import logger
 
 
 def parse_command_line_args() -> argparse.Namespace:
-    """
-        Parse command line arguments while passing errors onto main.
-
-    Args:
-        `None`
-
-    Returns:
-        `tuple[Path, str]`: a tuple containing the path to the input BED
-        file and a string representing the desired output name.
-    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--input_bed",
@@ -75,165 +65,92 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def dedup_primers(partitioned_bed: list[pl.DataFrame]) -> list[pl.DataFrame]:
-    """
-        `dedup_primers()` primers finds repeated instances of the same primer
-        name and adds a unique identifier for each. This ensures that joins
-        downstream are one-to-many as opposed to many-to-many.
-
-    Args:
-        `partitioned_bed: list[pl.DataFrame]`: A list of Polars DataFrames that
-        have been partitioned by amplicon.
-
-    Returns:
-        `list[pl.DataFrame]`: A partitioned list of Polars dataframes with no
-        repeat primer names.
-    """
-
-    for i, primer_df in enumerate(partitioned_bed):
-        if True in primer_df.select("NAME").is_duplicated().to_list():
-            new_dfs = primer_df.with_columns(
-                primer_df.select("NAME").is_duplicated().alias("duped"),
-            ).partition_by("duped")
-
-            for j, dup_frame in enumerate(new_dfs):
-                if True in dup_frame.select("duped").to_series().to_list():
-                    renamed = (
-                        dup_frame.with_row_count(offset=1)
-                        .cast({"row_nr": pl.Utf8})
-                        .with_columns(
-                            pl.concat_str(
-                                [pl.col("NAME"), pl.col("row_nr")],
-                                separator="-",
-                            ).alias("NAME"),
-                        )
-                        .select(
-                            "Ref",
-                            "Start Position",
-                            "Stop Position",
-                            "ORIG_NAME",
-                            "NAME",
-                            "INDEX",
-                            "SENSE",
-                            "Amplicon",
-                            "duped",
-                        )
-                    )
-                    new_dfs[j] = renamed
-            partitioned_bed[i] = pl.concat(new_dfs)
-
-    return pl.concat(partitioned_bed).drop("duped").partition_by("Amplicon")
-
-
-def resolve_primer_names(
-    combine_from: list[str],
-    combine_onto: list[str],
-) -> tuple[list[str], list[str]]:
-    """
-        `resolve_primer_names()` names each possible pairing of primers in
-        amplicons where singletons, forward or reverse, have been added to
-        increase template coverage.
-
-    Args:
-        `to_combine: list[str]`: A list of forward primers to resolve.
-        `combine_to: list[str]`: A list of reverse primers to resolve.
-
-    Returns:
-        `tuple[list[str], list[str]]`: A tuple containing two lists, the first
-        being a list of primer names to use with joining, and the second being
-        a list of new primer names to use once left-joining is complete.
-    """
-
-    primer_pairs = list(product(combine_from, combine_onto))
-
-    new_primer_pairs = []
-    for fwd_primer, rev_primer in primer_pairs:
-        fwd_suffix = fwd_primer.split("_")[-1]
-        rev_suffix = rev_primer.split("_")[-1]
-        primer_label = fwd_primer.replace(f"_{fwd_suffix}", "").split("-")[-1]
-        try:
-            _ = int(primer_label)
-        except TypeError:
-            primer_label = "1"
-        amplicon = "_".join(
-            fwd_primer.replace(f"_{fwd_suffix}", "")
-            .replace(f"-{primer_label}", "")
-            .split("_")[0:2],
+def partition_by_amplicon(parsed_bed: pl.DataFrame) -> list[pl.DataFrame]:
+    return (
+        parsed_bed.with_columns(
+            # make sure to save the original name for debugging purposes
+            pl.col("NAME").alias("ORIG_NAME"),
+            # this gets rid of any pre-existing spike-in primer indices, delimited by a hyphen,
+            # that might need to be corrected, .e.g, having "amplicon01_left" and
+            # "amplicon02-2_LEFT", but not "amplicon02-1_LEFT"
+            pl.col("NAME").str.replace_all(r"-\d+", "").alias("NAME"),
         )
-        new_fwd_primer = f"{amplicon}_splice{primer_label}_{fwd_suffix}"
-        new_rev_primer = f"{amplicon}_splice{primer_label}_{rev_suffix}"
-        new_primer_pairs.append([new_fwd_primer, new_rev_primer])
+        .with_columns(
+            pl.col("NAME")
+            .str.replace_all("_LEFT", "")
+            .str.replace_all("_RIGHT", "")
+            .alias("Amplicon"),
+        )
+        .select(
+            "Ref",
+            "Start Position",
+            "Stop Position",
+            "ORIG_NAME",
+            "NAME",
+            "INDEX",
+            "SENSE",
+            "Amplicon",
+        )
+        .partition_by("Amplicon")
+    )
 
-    primers_to_join = [item[0] for item in primer_pairs] + [
-        item[1] for item in primer_pairs
-    ]
 
-    new_primer_names = [item[0] for item in new_primer_pairs] + [
-        item[1] for item in new_primer_pairs
-    ]
-
-    return (primers_to_join, new_primer_names)
-
-
-def resplice_primers(
-    dedup_partitioned: list[pl.DataFrame],
+def normalize_indices(
+    partitioned_bed: list[pl.DataFrame],
     fwd_suffix: str,
     rev_suffix: str,
-) -> list[pl.DataFrame]:
-    """
-        `resplice_primers()` determines whether spike-ins are forward or reverse
-        primers (or both) and uses that information to handle resplicing
-        possible combinations.
+) -> dict[Any, pl.DataFrame]:
+    normalized_dfs: list[pl.DataFrame] = []
+    for primer_df in partitioned_bed:
+        new_dfs = primer_df.partition_by("NAME")
 
-    Args:
-        `dedup_partitioned: list[pl.DataFrame]`: A Polars dataframe with no
-        duplicate primer names.
+        # TODO: Should there be a step here that appends and continues if the name
+        # dataframe has only one row? Also, in the current setup where `partition_by_amplicon()`
+        # does what it does before this function is run, can't we assume that any dataframes
+        # with more than one row *are guaranteed* to have duplicates, in which case the dupe
+        # check here is unnecessary (and verbose)?
 
-    Returns:
-        `list[pl.DataFrame]`: A list of Polars DataFrames where each dataframe
-        is represents all possible pairings of primers within a single amplicon.
-    """
-
-    mutated_frames: list[pl.DataFrame] = []
-    for i, dedup_df in enumerate(dedup_partitioned):
-        primer_pair_number = 2
-        if dedup_df.shape[0] != primer_pair_number:
-            primers = dedup_df["NAME"]
-
-            fwd_primers = [primer for primer in primers if fwd_suffix in primer]
-            rev_primers = [primer for primer in primers if rev_suffix in primer]
-
-            if len(fwd_primers) == 0 and len(rev_primers) == 0:
-                return mutated_frames
-
-            if len(fwd_primers) > len(rev_primers):
-                to_combine = rev_primers
-                combine_to = fwd_primers
-            elif len(fwd_primers) < len(rev_primers):
-                to_combine = fwd_primers
-                combine_to = rev_primers
-            else:
-                break
-
-            primers_to_join, new_primer_names = resolve_primer_names(
-                to_combine,
-                combine_to,
+        for j, name_df in enumerate(new_dfs):
+            # run a check for whether there's >= 1 spikein. If there are none, there will just
+            # be one primer per name partition, in which case we can skip to the next primer
+            # set without renaming anything
+            dupe_check = (
+                name_df.with_columns(pl.col("NAME").is_duplicated().alias("duped"))
+                .select("duped")
+                .to_series()
+                .to_list()
             )
+            if True not in dupe_check:
+                normalized_dfs.append(name_df)
+                continue
 
-            assert len(primers_to_join) == len(
-                new_primer_names,
-            ), f"Insufficient number of replacement names generated for partition {i}"
-            new_df = (
-                pl.DataFrame({"NAME": primers_to_join})
-                .cast(pl.Utf8)
-                .join(
-                    dedup_df.with_columns(pl.col("NAME").cast(pl.Utf8)),
-                    how="left",
-                    on="NAME",
-                    validate="m:1",
-                    coalesce=False,
+            # otherwise, we'll need to rename the primers to account for spike-ins explicitly.
+            corrected_indices = (
+                # add a row that is the 1-based index of the primer and cast it as a string
+                # to make concatenating columns more type-safe
+                name_df.with_row_index("index", offset=1)
+                .cast({"index": pl.Utf8})
+                # overwrite the old NAME column with a new column that takes the core
+                # amplicon label, the index of the primer, and the forward or reverse suffix
+                .with_columns(
+                    # use the polars.concat_str argument to concatenate the amplicon value,
+                    # a hyphen, the row index column, and the forward or reverse suffix
+                    # depending on what the original primer was.
+                    pl.concat_str(
+                        [
+                            pl.col("Amplicon"),
+                            pl.lit("-"),
+                            pl.col("index"),
+                            pl.when(pl.col("NAME").str.contains(fwd_suffix))
+                            .then(pl.lit(fwd_suffix))
+                            .otherwise(pl.lit(rev_suffix)),
+                        ],
+                        separator="",
+                    ).alias(
+                        "NAME",
+                    ),
                 )
-                .with_columns(pl.Series(new_primer_names).alias("NAME"))
+                # reorder the relevant columns with a select expression.
                 .select(
                     "Ref",
                     "Start Position",
@@ -243,14 +160,228 @@ def resplice_primers(
                     "INDEX",
                     "SENSE",
                     "Amplicon",
-                )
+                ),
             )
-            mutated_frames.append(new_df)
-        elif dedup_df.shape[0] == 1:
-            logger.error("There is a single primer without an amplicon running around!")
-            raise ValueError
+
+            # overwrite the previous entry in this position of the dataframe list with the
+            # updated entry, which has renamed primers to account for spike-ins.
+            new_dfs[j] = corrected_indices[0]
+
+        # after going through the forward and reverse primers for this amplicon in the above
+        # control flow, append the updated dataframes to the accumulating normalized dataframes.
+        normalized_dfs.append(pl.concat(new_dfs))
+
+    return pl.concat(normalized_dfs).partition_by("Amplicon", as_dict=True)
+
+
+def convertable_to_int(s: str) -> bool:
+    try:
+        int(s)
+    except ValueError:
+        return False
+    except TypeError:
+        return False
+    else:
+        return True
+
+
+def resolve_primer_names(
+    deficit_primers: list[str],
+    excess_primers: list[str],
+    fwd_suffix: str = "_LEFT",
+    rev_suffix: str = "_RIGHT",
+) -> tuple[list[str], list[str]]:
+    # TODO: Is it possible that we no longer need to keep track of whether a primer is
+    # in the deficit or the excess groups? This would spare us having to check yet again
+    # for which primers are forward and reverse below.
+
+    # find all possible combinations of the provided primers
+    all_possible_pairs = list(product(deficit_primers, excess_primers))
+
+    # initialize some mutable state to keep track of the new primer labels and their
+    # pairing, which pairs have previously been handled, which resplice combo the current
+    # iteration is handling, and the which old primer names should be in which order for
+    # a join downstream
+    new_primer_pairs: list[tuple[str, str]] = []
+    handled_pairs: list[list[int]] = []
+    old_primer_pairs: list[tuple[str, str]] = []
+    combo_ticker = 0
+
+    # loop through both primers, where primer1 is from the "deficit primer" list, and
+    # primer2 is from the "excess primer" list.
+    for primer1, primer2 in all_possible_pairs:
+        # pull of the last element, delimited by hyphen, on both primer names
+        primer1_final_element = primer1.split("-")[-1]
+        primer2_final_element = primer2.split("-")[-1]
+
+        # run checks to make sure indices that could be used for tracking each pair are
+        # parseable from the primer name
+        assert convertable_to_int(
+            primer1_final_element,
+        ), f"The primer {primer1} does not end with a hyphen-delimited integer, e.g. \
+        '-1', which is required for properly handling different possible primer combinations. Aborting."
+        assert convertable_to_int(
+            primer2_final_element,
+        ), f"The primer {primer2} does not end with a hyphen-delimited integer, e.g. \
+        '-1', which is required for properly handling different possible primer combinations. Aborting."
+
+        # figure out which combination of primers is being handled and check
+        # whether it has already been handled
+        primer1_index = int(primer1_final_element)
+        primer2_index = int(primer2_final_element)
+        current_pair = sorted((primer1_index, primer2_index))
+        if current_pair in handled_pairs:
+            continue
+
+        handled_pairs.append(current_pair)
+
+        # now that we know we're working with a previously unhandled pairing, incrememt
+        # the combo ticker by one
+        combo_ticker += 1
+
+        # determine which of the primers are forward and which are reverse
+        if fwd_suffix in primer1:
+            old_fwd_primer = primer1
+
+            # crash if the other primer doesn't contain a reverse suffix
+            assert (
+                rev_suffix in primer2
+            ), f"Could not find the expected reverse suffix {rev_suffix} in the primer {primer2}. Aborting."
+            old_rev_primer = primer2
+
+        elif fwd_suffix in primer2:
+            old_fwd_primer = primer2
+
+            # crash if the other primer doesn't contain a reverse suffix
+            assert (
+                rev_suffix in primer1
+            ), f"Could not find the expected reverse suffix {rev_suffix} in the primer {primer1}. Aborting."
+            old_rev_primer = primer1
+
         else:
-            mutated_frames.append(dedup_df)
+            # if the suffixes aren't found in either of the primers, something has gone very wrong.
+            message = f"Neither {primer1} nor {primer2} contained the required \
+            forward suffix {fwd_suffix} or the required reverse suffix {rev_suffix}. \
+            Aborting."
+            raise ValueError(message)
+
+        # use f-strings to construct new names that make the combinations explicit
+        new_fwd_primer = f"{old_fwd_primer}_splice{combo_ticker}"
+        new_rev_primer = f"{old_rev_primer}_splice{combo_ticker}"
+
+        # continue accumulating old and new primer pair lists
+        old_primer_pairs.append((old_fwd_primer, old_rev_primer))
+        new_primer_pairs.append((new_fwd_primer, new_rev_primer))
+
+    # flatten the tuples at each position of the pair lists with two comprehensions
+    # to make it explicit to the reader that forward primers come before reverse primers
+    # in the flattened list. These comprehensions handle the old primer names.
+    old_primer_names = [old_fwd for old_fwd, _ in old_primer_pairs] + [
+        old_rev for _, old_rev in old_primer_pairs
+    ]
+
+    # do the same thing for the new primer names
+    new_primer_names = [new_fwd for new_fwd, _ in new_primer_pairs] + [
+        new_rev for _, new_rev in new_primer_pairs
+    ]
+
+    return (old_primer_names, new_primer_names)
+
+
+def resplice_primers(
+    amplicon_dfs: dict[Any, pl.DataFrame],
+    fwd_suffix: str,
+    rev_suffix: str,
+) -> list[pl.DataFrame]:
+    mutated_frames: list[pl.DataFrame] = []
+    for amplicon, primer_df in amplicon_dfs.items():
+        # our usual expectation is that there are two primers per amplicon. If this is
+        # the case, append it to our output list and skip to the next amplicon's primers
+        primer_pair_number = 2
+        if primer_df.shape[0] == primer_pair_number:
+            mutated_frames.append(primer_df)
+            continue
+
+        # If an amplicon only has one primer associated with it, something has gone wrong.
+        if primer_df.shape[0] == 1:
+            logger.error(
+                f"There is a single primer without an amplicon running around! Here's \
+                the parsed BED file for this amplicon:\n\n{primer_df}",
+            )
+            raise ValueError
+
+        # pull out the primer labels and separate out forward and reverse primers
+        primers = primer_df["NAME"]
+        fwd_primers = [primer for primer in primers if fwd_suffix in primer]
+        rev_primers = [primer for primer in primers if rev_suffix in primer]
+
+        # determine which of the primer groupings, between the forward and reverse
+        # primers, is the larger group.
+        # TODO: Restating the above, this may no longer be necessary because of the
+        # use of the product function. Instead, we could just replace it for an equality
+        # check for the lengths of the two primer lists. If the check is true, append
+        # the current primer_df, which won't need to go through the combinatorics, and
+        # continue, i.e.,:
+        # ```
+        # if len(fwd_primers) == len(rev_primers):
+        #   mutated_frames.append(primer_df)  # noqa: ERA001
+        #   continue  # noqa: ERA001
+        # ````
+        if len(fwd_primers) > len(rev_primers):
+            deficit_primers = rev_primers
+            excess_primers = fwd_primers
+        elif len(fwd_primers) < len(rev_primers):
+            deficit_primers = fwd_primers
+            excess_primers = rev_primers
+        else:
+            assert (
+                (len(fwd_primers) + len(rev_primers)) % 2 == 0
+            ), f"Invalid primer partitioning encountered with the forward primers \
+            {fwd_primers} and the reverse primers {rev_primers}. Aborting."
+            mutated_frames.append(primer_df)
+            continue
+
+        # compute the new names for the primers that will be used to expand shared primers
+        # across all spike-ins
+        old_primer_names, new_primer_names = resolve_primer_names(
+            deficit_primers,
+            excess_primers,
+            fwd_suffix,
+            rev_suffix,
+        )
+
+        # double check that we have the correct number of primer labels, though with the
+        # current design this should be impossible
+        assert len(old_primer_names) == len(
+            new_primer_names,
+        ), f"Insufficient number of replacement names ({new_primer_names}) \
+        generated for partition for amplicon {amplicon}: {primer_df}"
+
+        # run a join on the old primer names to bring in the new primer names in their
+        # proper locations
+        new_df = (
+            pl.DataFrame({"NAME": old_primer_names})
+            .cast(pl.Utf8)
+            .join(
+                primer_df.with_columns(pl.col("NAME").cast(pl.Utf8)),
+                how="left",
+                on="NAME",
+                validate="1:1",
+                coalesce=False,
+            )
+            .with_columns(pl.Series(new_primer_names).alias("NAME"))
+            .select(
+                "Ref",
+                "Start Position",
+                "Stop Position",
+                "ORIG_NAME",
+                "NAME",
+                "INDEX",
+                "SENSE",
+                "Amplicon",
+            )
+        )
+        mutated_frames.append(new_df)
 
     return mutated_frames
 
@@ -298,60 +429,55 @@ def main() -> None:
 
     args = parse_command_line_args()
 
-    partitioned_bed = (
-        pl.read_csv(
-            args.input_bed,
-            separator="\t",
-            has_header=False,
-            new_columns=[
-                "Ref",
-                "Start Position",
-                "Stop Position",
-                "NAME",
-                "INDEX",
-                "SENSE",
-            ],
-        )
-        .with_columns(pl.col("NAME").alias("ORIG_NAME"))
-        .with_columns(
-            pl.col("NAME")
-            .str.replace_all(args.fwd_suffix, "")
-            .str.replace_all(args.rev_suffix, "")
-            .str.replace_all(r"-\d+", "")
-            .alias("Amplicon"),
-        )
-        .select(
+    bed_df = pl.read_csv(
+        args.input_bed,
+        separator="\t",
+        has_header=False,
+        new_columns=[
             "Ref",
             "Start Position",
             "Stop Position",
-            "ORIG_NAME",
             "NAME",
             "INDEX",
             "SENSE",
-            "Amplicon",
+        ],
+    )
+
+    # identify amplicons/primer pairings and create a separate dataframe for the primers
+    # associated with each
+    partitioned_bed = partition_by_amplicon(bed_df)
+
+    # make sure that all primers have informative names in amplicons where there are
+    # spiked-in primers
+    indexed_primer_dfs = normalize_indices(
+        partitioned_bed,
+        args.fwd_suffix,
+        args.rev_suffix,
+    )
+
+    respliced_dfs = resplice_primers(
+        indexed_primer_dfs,
+        args.fwd_suffix,
+        args.rev_suffix,
+    )
+
+    if len(respliced_dfs) == len(indexed_primer_dfs):
+        logger.warning(
+            f"The number of amplicon primer sets that made it through resplicing,\
+            {len(respliced_dfs)}, does not match the number of input amplicons, \
+            {len(indexed_primer_dfs)}. Data loss may have occurred for this primer set.",
         )
-        .with_columns(pl.col("NAME").is_duplicated().alias("duped"))
-        .partition_by("Amplicon")
-    )
 
-    dedup_partitioned = dedup_primers(partitioned_bed)
-
-    mutated_frames = resplice_primers(
-        dedup_partitioned,
-        args.fwd_suffix,
-        args.rev_suffix,
-    )
-
-    if len(mutated_frames) == 0:
-        shutil.copy(args.input_bed, f"{args.output_prefix}.bed")
-        return
-
+    # TODO: Is this function necessary? It seems to be controlling for something that
+    # should no longer be possible, right?
     final_df = finalize_primer_pairings(
-        mutated_frames,
+        respliced_dfs,
         args.fwd_suffix,
         args.rev_suffix,
     )
 
+    # write the now unnecessary columns, sort by start and stop position, and write
+    # out with the user-provided output prefix
     final_df.drop("Amplicon").drop("NAME").sort(
         "Start Position",
         "Stop Position",
