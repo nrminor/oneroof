@@ -66,6 +66,31 @@ def parse_command_line_args() -> argparse.Namespace:
         default="_RIGHT",
         help="The suffix to be expected in the names for reverse primers",
     )
+    parser.add_argument(
+        "--idx_delim",
+        "-d",
+        type=str,
+        required=False,
+        default="-",
+        help="The symbol used to delimit the index of a spike-in primer, which \
+        differentiates it from the primer original around the same position. Defaults \
+        to a hyphen/dash: '-'.",
+    )
+    parser.add_argument(
+        "--idx_position",
+        "-p",
+        type=int,
+        required=False,
+        default=-1,
+        help="The position where the primer spike-in index should be expected, \
+        defaulting to the final position after splitting by the specified index \
+        delimiter symbol.",
+    )
+
+    # TODO @nick: The spike-in primer index delimiter, which is currently assumed to be
+    # a hyphen, should be customizable by the user, and perhaps also the index of the
+    # position in the original primer label string once split with the delimiter.
+
     return parser.parse_args()
 
 
@@ -159,27 +184,35 @@ def normalize_indices(
         # to have duplicates, in which case the dupe check here is unnecessary (and
         # verbose)?
 
-        for j, name_df in enumerate(new_dfs):
+        for j, primer_name_df in enumerate(new_dfs):
             # run a check for whether there's >= 1 spikein. If there are none, there
             # will just be one primer per name partition, in which case we can skip to
             # the next primer set without renaming anything
             dupe_check = (
-                name_df.with_columns(pl.col("NAME").is_duplicated().alias("duped"))
+                primer_name_df.with_columns(
+                    pl.col("NAME").is_duplicated().alias("duped"),
+                )
                 .select("duped")
                 .to_series()
                 .to_list()
             )
             if True not in dupe_check:
-                normalized_dfs.append(name_df)
+                normalized_dfs.append(primer_name_df)
                 continue
 
             # otherwise, we'll need to rename the primers to account for spike-ins
             # explicitly.
-            corrected_indices = assign_new_indices(name_df, fwd_suffix, rev_suffix)
+            corrected_indices = assign_new_indices(
+                primer_name_df,
+                fwd_suffix,
+                rev_suffix,
+            )
 
             # overwrite the previous entry in this position of the dataframe list with
             # the updated entry, which has renamed primers to account for spike-ins.
-            new_dfs[j] = corrected_indices[0]
+            new_dfs[j] = corrected_indices[
+                0
+            ]  # TODO @nick: I guess this is okay even if the corrected_indices isn't a tuple??
 
         # after going through the forward and reverse primers for this amplicon in the
         # above control flow, append the updated dataframes to the accumulating
@@ -203,6 +236,8 @@ def _convertable_to_int(s: str) -> bool:
 def resolve_primer_names(
     old_fwd_primers: list[str],
     old_rev_primers: list[str],
+    idx_delim: str = "-",
+    idx_position: int = -1,
 ) -> tuple[list[str], list[str]]:
     # find all possible combinations of the provided primers
     all_possible_pairs = list(product(old_fwd_primers, old_rev_primers))
@@ -220,8 +255,8 @@ def resolve_primer_names(
     # primer2 is from the "excess primer" list.
     for old_fwd_primer, old_rev_primer in all_possible_pairs:
         # pull of the last element, delimited by hyphen, on both primer names
-        fwd_final_element = old_fwd_primer.split("-")[-1]
-        rev_final_element = old_rev_primer.split("-")[-1]
+        fwd_final_element = old_fwd_primer.split(idx_delim)[idx_position]
+        rev_final_element = old_rev_primer.split(idx_delim)[idx_position]
 
         # run checks to make sure indices that could be used for tracking each pair are
         # parseable from the primer name
@@ -304,8 +339,7 @@ def resplice_primers(
         rev_primers = [primer for primer in primers if rev_suffix in primer]
 
         # compute the new names for the primers that will be used to expand shared
-        # primers
-        # across all spike-ins
+        # primers across all spike-ins
         old_primer_names, new_primer_names = resolve_primer_names(
             fwd_primers,
             rev_primers,
@@ -315,8 +349,8 @@ def resplice_primers(
         # current design this should be impossible
         assert len(old_primer_names) == len(
             new_primer_names,
-        ), f"Insufficient number of replacement names ({new_primer_names}) \
-        generated for partition for amplicon {amplicon}: {primer_df}"
+        ), f"Insufficient number of replacement names ({new_primer_names}) generated \
+        for partition for amplicon {amplicon}: {primer_df}"
 
         # run a join on the old primer names to bring in the new primer names in their
         # proper locations
