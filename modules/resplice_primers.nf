@@ -15,7 +15,10 @@ process RESPLICE_PRIMERS {
 
     script:
     """
-    resplice_primers.py -i ${bed_file}
+    resplice_primers.py \
+    --input_bed ${bed_file} \
+    --fwd_suffix ${params.fwd_suffix} \
+    --rev_suffix ${params.rev_suffix}
     """
 
 }
