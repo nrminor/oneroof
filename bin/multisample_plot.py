@@ -179,64 +179,29 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
     for bed_file, barcode in zip(bed_list, bc_list):
         if barcode not in sample_lookup:
             continue
-        bc_df = pl.read_csv(
-            bed_file,
-            separator="\t",
-            has_header=False,
-            new_columns=["chromosome", "start", "stop", "coverage"],
-        ).with_columns(sample=pl.lit(sample_lookup[barcode]))
+        bc_df = (
+            pl.read_csv(
+                bed_file,
+                separator="\t",
+                has_header=False,
+                new_columns=["chromosome", "start", "stop", "coverage"],
+            )
+            .with_columns(sample=pl.lit(sample_lookup[barcode]))
+            .with_columns(
+                pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
+                    "position",
+                ),
+            )
+            .drop("start", "stop")
+            .explode("position")
+        )
+
         df_list.append(bc_df)
 
     bc_stacked = df_list[0]
     for df in df_list[1:]:
         bc_stacked = bc_stacked.vstack(df)
     return bc_stacked
-
-
-def fix_dataframe(df: pl.DataFrame) -> pl.DataFrame:
-    """
-    Fix and preprocess the input DataFrame for analysis.
-
-    This function takes a Polars DataFrame containing coverage data and performs
-    the following operations:
-    1. Converts the DataFrame to a list of dictionaries.
-    2. Iterates through the rows, adding new rows where there are large
-       jumps in coverage (greater than 50).
-    3. Creates a new row with zero coverage between segments where large
-       jumps occur.
-
-    Parameters:
-    df (pl.DataFrame): Input DataFrame containing coverage data.
-                       Expected columns: 'start', 'stop', 'coverage',
-                       'sample', and 'chromosome'.
-
-    Returns:
-    pl.DataFrame: A new DataFrame with additional rows inserted to
-                  represent gaps in coverage.
-
-    Note:
-    The function assumes that the input DataFrame is sorted by position
-    within each chromosome and sample.
-    """
-    rows = df.to_dicts()
-    new_rows = []
-    for i in range(len(rows) - 1):
-        new_rows.append(rows[i])
-        coverage_diff = abs(rows[i + 1]["coverage"] - rows[i]["coverage"])
-        max_jump = 50
-        if coverage_diff > max_jump:
-            new_row = {
-                "start": rows[i]["stop"],
-                "stop": rows[i + 1]["start"],
-                "coverage": 0,
-                "sample": rows[i]["sample"],
-                "chromosome": rows[i]["chromosome"],
-            }
-            new_rows.append(new_row)
-
-    new_rows.append(rows[-1])
-
-    return pl.DataFrame(new_rows)
 
 
 def plot_coverage(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> ggplot:
@@ -281,11 +246,8 @@ def plot_coverage(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> gg
         ggplot(
             all_barcodes.to_pandas(),
             aes(
-                x="start",
-                xend="stop",
-                ymin=0,
+                x="position",
                 y="coverage",
-                yend="coverage",
                 color="sample",
             ),
         )
@@ -334,8 +296,7 @@ def main() -> None:
     min_desired_depth = args.min_coverage
     sample_list = read_sample_lookup(args.sample_lookup)
     sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
-    all_barcodes = fix_dataframe(sample_dataframe)
-    plot_instance = plot_coverage(all_barcodes, min_desired_depth)
+    plot_instance = plot_coverage(sample_dataframe, min_desired_depth)
 
     ggsave(
         plot_instance,
