@@ -192,7 +192,7 @@ def check_idx_delims(
         return
 
     logger.warning(
-        f"{len(warning_list)} primer names contained more than one of the symbol used to delimit spike-in primer index, '{idx_delim}', which is a special value in this program. Unexpected behavior, such as merging multiple amplicons into one or incorrect resplicing, is likely to occur.\n\nTo fix it, either use a different delimiter symbol than '{idx_delim}' or modify the primer names so that the symbol '{idx_delim}' is only used to denote a spike-in index.\n\nBelow is the list of {len(warning_list)} primers that generated this warning:\n\n{pformat(warning_list, indent=4)}",
+        f"{len(warning_list)} primer names contained more than one of the symbol used to delimit spike-in primer index, '{idx_delim}', which is a special value in this program. Unexpected behavior, such as merging multiple amplicons into one or incorrect resplicing, is likely to occur.\n\nTo fix it, either use a different delimiter symbol than '{idx_delim}' or modify the primer names so that the symbol '{idx_delim}' is only used to denote a spike-in index.\n\nBelow is the list of {len(warning_list)} primers that generated this warning:\n\n{pformat(warning_list, indent=1)}",
     )
 
 
@@ -774,11 +774,19 @@ def main() -> None:
     logger.info(
         f"{len(bed_df)} input primers split into {len(partitioned_bed)} discrete amplicons.",
     )
+    if len(bed_df) % len(partitioned_bed) != 0:
+        logger.info(
+            f"There appear to be {len(bed_df) % len(partitioned_bed)} spike-in primers.",
+        )
+    else:
+        logger.info(
+            "There don't appear to be any spike-in primers. Assuming that amplicons can be parsed properly, this means that no resplicing will occur, though primer indices will still be updated.",
+        )
 
     # make sure that all primers have informative names in amplicons where there are
     # spiked-in primers
     logger.info(
-        f"Re-assigning 1-based indices to account for spike-ins amongst the {len(bed_df)} input primers.",
+        f"Re-assigning 1-based indices to account for current or future spike-ins amongst the {len(bed_df)} input primers.",
     )
     indexed_primer_dfs = normalize_indices(
         partitioned_bed,
@@ -805,7 +813,7 @@ def main() -> None:
     # run one last check that each group has at least one identifiable forward primer
     # and one identifiable reverse primer, if not multiple.
     logger.info(
-        f"Finalizing primer pairings amongst {len(respliced_dfs)} primers by verifying that every forward primer comes with a reverse primer.",
+        f"Finalizing primer pairings amongst {len(respliced_dfs)} amplicons by verifying that every forward primer comes with a reverse primer.",
     )
     final_df = finalize_primer_pairings(
         respliced_dfs,
@@ -826,6 +834,10 @@ def main() -> None:
         f"{args.output_prefix}.bed",
         separator="\t",
         include_header=False,
+    )
+
+    logger.success(
+        f"Reading and processing of primers in '{args.input_bed}' was successful. The output BED file was written to '{Path.cwd()!s}/{args.output_prefix}.bed'. Goodbye!",
     )
 
 

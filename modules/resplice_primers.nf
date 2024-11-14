@@ -18,7 +18,8 @@ process RESPLICE_PRIMERS {
     resplice_primers.py \
     --input_bed ${bed_file} \
     --fwd_suffix ${params.fwd_suffix} \
-    --rev_suffix ${params.rev_suffix}
+    --rev_suffix ${params.rev_suffix} \
+    -vv
     """
 
 }
