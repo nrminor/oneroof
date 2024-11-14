@@ -122,6 +122,19 @@ def parse_command_line_args() -> argparse.Namespace:
 
 
 def check_bed_existence(provided_bed_path: str | Path) -> None:
+    """
+    Checks for the existence of a BED file at the provided path.
+
+    Args:
+        provided_bed_path (str | Path): Path to the BED file to verify
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit: If BED file does not exist or is not a file. Lists available .bed
+        files in the same directory if any are found.
+    """
     logger.info(f"Parsing input BED file at {provided_bed_path}...")
     if not Path(provided_bed_path).is_file():
         available_bed_files = [
@@ -143,10 +156,30 @@ def check_idx_delims(
     idx_delim: str = "-",
     _idx_position: int = -1,
 ) -> None:
+    """
+    Checks primer names for multiple occurrences of the index delimiter symbol.
+
+    This function examines all primer names in the BED file to identify any that contain
+    multiple instances of the specified index delimiter symbol. Having multiple
+    delimiters could cause issues with proper primer indexing and matching.
+
+    Args:
+        parsed_bed (pl.DataFrame): A polars DataFrame containing the parsed BED file
+        data
+        idx_delim (str, optional): The symbol used to delimit spike-in primer indices.
+            Defaults to "-".
+        _idx_position (int, optional): Position to expect the index after splitting by
+            delimiter. Defaults to -1.
+
+    Returns:
+        None
+
+    If any primers are found with multiple delimiter symbols, a warning message is
+    logged listing the problematic primer names.
+    """
     primer_names = parsed_bed.select("NAME").to_series().to_list()
 
     warning_list = []
-
     for name in primer_names:
         delim_count = name.count(idx_delim)
 
