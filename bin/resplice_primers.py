@@ -387,37 +387,6 @@ def normalize_indices(
         # primers), they should all have the same name at this stage, and will thus have
         # -1, -2, and -3 appended to them respectively.
         for j, primer_name_df in enumerate(new_dfs):
-            # run a check to make sure the expectation that entries in this NAME-
-            # partitioned dataframe all have the same name at this stage.
-            if len(primer_name_df.select("NAME").unique().to_series().to_list()) != 1:
-                logger.warning(
-                    f"Unable to properly assign indices for these primers: {primer_name_df.select('NAME').unique().to_series().to_list()}. Skipping. Please open an issue if the program should crash here rather than skipping.",
-                )
-                new_dfs[j] = primer_name_df.clear()
-                continue
-
-            # run a check for whether there's >= 1 spikein. If there are none, there
-            # will just be one primer per name partition, in which case we can skip to
-            # the next primer set without renaming anything. We retain this duplicate
-            # check instead of simply counting rows in case this function has been used
-            # outside the context of this script's main workflow, in which case we
-            # report a helpful error.
-            dupe_check = (
-                primer_name_df.with_columns(
-                    pl.col("NAME").is_duplicated().alias("duped"),
-                )
-                .select("duped")
-                .to_series()
-                .to_list()
-            )
-            assert dupe_check.count(False) <= 1
-            if True not in dupe_check and primer_name_df.shape[0] == 1:
-                new_dfs[j] = assign_new_indices(
-                    primer_name_df,
-                    fwd_suffix,
-                    rev_suffix,
-                )
-                continue
 
             # having passed the above checks, we can now proceed to assigning new names
             # to the primers to account for spike-ins explicitly.
