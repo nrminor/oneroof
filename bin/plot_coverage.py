@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "plotnine",
+#     "polars",
+# ]
+# ///
 
 """
 usage: plot_coverage.py [-h] --input INPUT [--label LABEL]

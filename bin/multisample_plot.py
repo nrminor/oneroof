@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "plotnine",
+#     "polars",
+# ]
+# ///
 
 """
 This module provides functionality for processing and visualizing coverage data from BED files.

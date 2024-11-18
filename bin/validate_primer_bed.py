@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "loguru",
+# ]
+# ///
 
 """
 This module provides functionality to validate and normalize BED files containing primer information.

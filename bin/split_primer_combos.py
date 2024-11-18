@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "polars",
+# ]
+# ///
 
 """
 Short Python script for splitting a BED file with many possible primer

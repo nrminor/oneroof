@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">= 3.10"
+
+# dependencies = [
+#     "polars-lts-cpu",
+#     "loguru",
+# ]
+# ///
 
 """
 Module that finds all possible combinations of spike-in primers in an amplicon scheme.
