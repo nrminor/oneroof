@@ -387,7 +387,6 @@ def normalize_indices(
         # primers), they should all have the same name at this stage, and will thus have
         # -1, -2, and -3 appended to them respectively.
         for j, primer_name_df in enumerate(new_dfs):
-
             # having passed the above checks, we can now proceed to assigning new names
             # to the primers to account for spike-ins explicitly.
             corrected_indices = assign_new_indices(
