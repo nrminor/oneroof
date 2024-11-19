@@ -92,7 +92,12 @@ def parse_command_line_args() -> argparse.Namespace:
         type=int,
         required=False,
         default=20,
-        help="",
+        help="The minimum expected coverage.",
+    )
+    parser.add_argument(
+        "--log",
+        action="store_true",
+        help="Whether to plot the log of coverage.",
     )
     return parser.parse_args()
 
@@ -211,7 +216,54 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
     return bc_stacked
 
 
-def plot_coverage(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> ggplot:
+def plot_log_coverages(all_barcodes: pl.DataFrame) -> ggplot:
+    """
+    Create a line plot of log-transformed coverage depth across different samples and chromosomes.
+
+    This function generates a plot showing the log-transformed coverage depth for different
+    samples across chromosomes or segments. The coverage values are log10-transformed before
+    plotting to better visualize large variations in coverage.
+
+    Parameters:
+        all_barcodes (pl.DataFrame): A Polars DataFrame containing the coverage data. Must include
+                                    columns 'coverage', 'sample', 'position', and 'chromosome'.
+
+    Returns:
+        ggplot: A `ggplot` object representing the log-transformed coverage plot.
+
+    Example:
+        >>> sample_df = pl.DataFrame({
+        >>>     'position': [1, 2, 3, 4],
+        >>>     'coverage': [10, 100, 1000, 10000],
+        >>>     'sample': ['A', 'A', 'B', 'B'],
+        >>>     'chromosome': ['chr1', 'chr1', 'chr2', 'chr2']
+        >>> })
+        >>> plot = plot_log_coverages(sample_df)
+    """
+    barcodes_log = all_barcodes.with_columns(
+        pl.col("coverage").log(base=10).alias("log_coverage"),
+    )
+    return (
+        ggplot(
+            barcodes_log.to_pandas(),
+            aes(
+                x="position",
+                y="log_coverage",
+                color="sample",
+            ),
+        )
+        + geom_line()
+        + labs(
+            title="Log Coverage across Samples",
+            x="Position on Chromosome/Segment",
+            y="Depth of Coverage (read count)",
+        )
+        + facet_wrap("~chromosome", scales="free_x")
+        + theme_minimal()
+    )
+
+
+def plot_coverages(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> ggplot:
     """
     Create a line plot of coverage depth across different barcodes and chromosomes.
 
@@ -246,7 +298,7 @@ def plot_coverage(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> gg
     >>>     'sample': ['A', 'A', 'B', 'B'],
     >>>     'chromosome': ['chr1', 'chr1', 'chr2', 'chr2']
     >>> })
-    >>> plot = plot_coverage(df)
+    >>> plot = plot_coverages(df)
     >>> print(plot)
     """
     return (
@@ -289,9 +341,8 @@ def main() -> None:
     Steps:
     1. **Read Samples**: Reads sample data from a JSON file using `read_sample_lookup()`.
     2. **Accumulate Coverage Data Frames**: Processes the data frames using `accumulate_cov_dfs()`.
-    3. **Fix Data Frame**: Adjusts the data frame with `fix_dataframe()`.
-    4. **Plot Coverage**: Generates a plot using `plot_coverage()`.
-    5. **Save Plot**: Saves the plot to a PDF file using `ggsave()`.
+    3. **Plot Coveraged**: Generates a plot using `plot_coverages()` or `plot_log_coverages()`.
+    4. **Save Plot**: Saves the plot to a PDF file using `ggsave()`.
 
     Example:
     >>> main()
@@ -303,7 +354,11 @@ def main() -> None:
     min_desired_depth = args.min_coverage
     sample_list = read_sample_lookup(args.sample_lookup)
     sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
-    plot_instance = plot_coverage(sample_dataframe, min_desired_depth)
+
+    if args.log:
+        plot_instance = plot_log_coverages(sample_dataframe)
+    else:
+        plot_instance = plot_coverages(sample_dataframe, min_desired_depth)
 
     ggsave(
         plot_instance,

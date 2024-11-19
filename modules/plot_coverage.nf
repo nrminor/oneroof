@@ -42,11 +42,18 @@ process MULTI_SAMPLE_PLOT {
     path "*.pdf"
 
     script:
-    """
-    multisample_plot.py \
-    --input_dir inputs \
-    --sample_lookup ${sample_lookup}
-    """
+    if (params.log)
+        """
+        multisample_plot.py \
+        --input_dir inputs \
+        --sample_lookup ${sample_lookup} \
+        --log
+        """
+    else
+        """
+        multisample_plot.py \
+        --input_dir inputs \
+        --sample_lookup ${sample_lookup}
+        """
 
 }
-
