@@ -256,7 +256,7 @@ def plot_log_coverages(all_barcodes: pl.DataFrame) -> ggplot:
         + labs(
             title="Log Coverage across Samples",
             x="Position on Chromosome/Segment",
-            y="Depth of Coverage (read count)",
+            y="Log10 Depth of Coverage",
         )
         + facet_wrap("~chromosome", scales="free_x")
         + theme_minimal()
