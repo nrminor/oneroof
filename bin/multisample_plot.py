@@ -36,8 +36,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from math import log
 import os
+from math import log10
 from pathlib import Path
 
 import polars as pl
@@ -218,7 +218,8 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
 
 
 def plot_log_coverages(
-    all_barcodes: pl.DataFrame, min_desired_depth: int = 20
+    all_barcodes: pl.DataFrame,
+    min_desired_depth: int = 20,
 ) -> ggplot:
     """
     Create a line plot of log-transformed coverage depth across different samples and chromosomes.
@@ -246,7 +247,7 @@ def plot_log_coverages(
     barcodes_log = all_barcodes.with_columns(
         pl.col("coverage").log(base=10).alias("log_coverage"),
     )
-    log_desired_depth = log(min_desired_depth, base=10)
+    log_desired_depth = log10(min_desired_depth)
     return (
         ggplot(
             barcodes_log.to_pandas(),
