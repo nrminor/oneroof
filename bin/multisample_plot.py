@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from math import log
 import os
 from pathlib import Path
 
@@ -216,7 +217,9 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
     return bc_stacked
 
 
-def plot_log_coverages(all_barcodes: pl.DataFrame) -> ggplot:
+def plot_log_coverages(
+    all_barcodes: pl.DataFrame, min_desired_depth: int = 20
+) -> ggplot:
     """
     Create a line plot of log-transformed coverage depth across different samples and chromosomes.
 
@@ -243,6 +246,7 @@ def plot_log_coverages(all_barcodes: pl.DataFrame) -> ggplot:
     barcodes_log = all_barcodes.with_columns(
         pl.col("coverage").log(base=10).alias("log_coverage"),
     )
+    log_desired_depth = log(min_desired_depth, base=10)
     return (
         ggplot(
             barcodes_log.to_pandas(),
@@ -253,6 +257,7 @@ def plot_log_coverages(all_barcodes: pl.DataFrame) -> ggplot:
             ),
         )
         + geom_line()
+        + geom_hline(yintercept=log_desired_depth, linetype="dashed")
         + labs(
             title="Log Coverage across Samples",
             x="Position on Chromosome/Segment",
