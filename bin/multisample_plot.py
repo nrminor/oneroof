@@ -362,9 +362,15 @@ def main() -> None:
     sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
 
     if args.log:
-        plot_instance = plot_log_coverages(sample_dataframe)
+        plot_instance = plot_log_coverages(
+            sample_dataframe,
+            min_desired_depth,
+        )
     else:
-        plot_instance = plot_coverages(sample_dataframe, min_desired_depth)
+        plot_instance = plot_coverages(
+            sample_dataframe,
+            min_desired_depth,
+        )
 
     ggsave(
         plot_instance,
