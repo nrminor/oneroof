@@ -28,6 +28,13 @@ process VALIDATE_NANOPORE {
     else
         error "Unrecognized file format provided."
 
+    stub:
+	"""
+	touch label
+    touch ${label}.validated.fastq.gz
+    touch "success!"
+	"""
+
 }
 
 process VALIDATE_ILLUMINA {
@@ -54,6 +61,14 @@ process VALIDATE_ILLUMINA {
     > ${label}.report.txt
     """
 
+    stub:
+	"""
+	touch label
+    touch reads1
+    touch reads2
+    touch ${label}.report.txt
+	"""
+
 }
 
 process VALIDATE_PRIMER_BED {
@@ -75,5 +90,10 @@ process VALIDATE_PRIMER_BED {
     --fwd_suffix ${params.fwd_suffix} \
     --rev_suffix ${params.rev_suffix}
     """
+
+    stub:
+	"""
+	touch ${bed_name}_validated.bed
+	"""
 
 }

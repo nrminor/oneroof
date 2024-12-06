@@ -17,6 +17,12 @@ process MERGE_BARCODES {
     """
     samtools merge -o ${barcode}.bam to_merge/*.bam
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.bam
+	"""
 }
 
 process CONVERT_AND_SORT {
@@ -37,6 +43,12 @@ process CONVERT_AND_SORT {
     samtools view -bS ${sam} \
     | samtools sort -M -o ${barcode}.bam
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.bam
+	"""
 
 }
 
@@ -59,6 +71,12 @@ process SORT_BAM {
     | samtools sort -M -o ${barcode}.sorted.bam
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.sorted.bam
+	"""
+
 }
 
 process INDEX {
@@ -79,6 +97,13 @@ process INDEX {
     """
     samtools index ${bam}
     """
+
+    stub:
+	"""
+	touch barcode
+    touch bam
+    touch ${barcode}*.bam.bai
+	"""
 
 }
 
@@ -106,6 +131,12 @@ process CALL_CONSENSUS {
     > ${barcode}.consensus.fasta
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.consensus.fasta
+	"""
+
 }
 
 process GENERATE_MPILEUP {
@@ -125,6 +156,12 @@ process GENERATE_MPILEUP {
     """
     samtools mpileup -aa -A -Q 0 -d 0 ${bam} > ${barcode}.mpileup
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.mpileup
+	"""
 
 }
 
@@ -146,6 +183,12 @@ process FASTQ_CONVERSION {
     samtools fastq ${bam} | bgzip -o ${barcode}.fastq.gz
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.fastq.gz
+	"""
+
 }
 
 process FAIDX {
@@ -166,6 +209,13 @@ process FAIDX {
     """
     samtools faidx --fastq ${fastq}
     """
+
+    stub:
+	"""
+	touch barcode
+    touch fastq
+    touch ${index_name}.fai
+	"""
 
 }
 
@@ -204,5 +254,10 @@ process SPLIT_SEGMENTS {
 
     echo "Splitting the !{sample_id} BAM is complete."
     '''
+
+    stub:
+	"""
+	touch ${sample_id}_*.bam
+	"""
 
 }

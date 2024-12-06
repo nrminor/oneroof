@@ -17,4 +17,10 @@ process CONCAT {
     """
     concat_consensus.py
     """
+
+    stub:
+	"""
+	touch *.fasta
+
+	"""
 }

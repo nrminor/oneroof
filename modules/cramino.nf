@@ -30,4 +30,10 @@ process CRAMINO {
     ${bam}
     """
 
+    stub:
+	"""
+	touch ${label}.cramino.arrow
+
+	"""
+
 }

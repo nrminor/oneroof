@@ -16,6 +16,11 @@ process WATCH_FOR_POD5S {
     file_watcher.py --host_config ${config}
     """
 
+    stub:
+	"""
+	touch *.pod5
+	"""
+
 }
 
 process WATCH_FOR_FASTQS {
@@ -35,5 +40,11 @@ process WATCH_FOR_FASTQS {
     """
     file_watcher.py --host_config ${config}
     """
+
+    stub:
+	"""
+	touch *.fastq*
+	"""
+
 
 }

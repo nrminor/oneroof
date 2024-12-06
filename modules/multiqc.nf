@@ -13,4 +13,9 @@ process MULTIQC {
     multiqc .
     """
 
+    stub:
+	"""
+	touch *.html
+	"""
+
 }

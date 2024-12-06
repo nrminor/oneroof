@@ -17,4 +17,8 @@ process SPLIT_PRIMER_COMBOS {
 	split_primer_combos.py -i ${all_primer_combos}
 	"""
 
+	stub:
+	"""
+	touch *.bed
+	"""
 }

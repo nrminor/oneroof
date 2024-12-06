@@ -45,4 +45,11 @@ process TRIM_ENDS_TO_PRIMERS {
     rm tmp.fq
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}*.trimmed.fastq.gz
+
+	"""
+
 }

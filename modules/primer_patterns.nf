@@ -21,4 +21,9 @@ process GET_PRIMER_PATTERNS {
 	-r ""
 	"""
 
+	stub:
+	"""
+	touch ${primer_combo}.txt
+	"""
+
 }

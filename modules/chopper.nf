@@ -25,4 +25,10 @@ process FILTER_WITH_CHOPPER {
     --threads ${task.cpus} \
     | bgzip -c > ${new_id}.filtered.fastq.gz
     """
+
+    stub:
+	"""
+	touch ${new_id}.filtered.fastq.gz
+    touch label
+	"""
 }
