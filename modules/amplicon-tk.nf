@@ -27,4 +27,9 @@ process AMPLICON_TK_TRIM {
     --output ${sample_id}.amplicons.fastq.gz
     """
 
+    stub:
+    """
+    touch ${sample_id}.amplicons.fastq.gz
+    """
+
 }

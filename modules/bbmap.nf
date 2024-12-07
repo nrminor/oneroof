@@ -25,6 +25,12 @@ process BBMERGE {
 	threads=${task.cpus}
 	"""
 
+	stub:
+	"""
+	touch ${sample_id}.merged.preclump.fastq.gz
+	touch sample_id
+	"""
+
 }
 
 process FIND_ADAPTER_SEQS {
@@ -48,6 +54,13 @@ process FIND_ADAPTER_SEQS {
 	"""
     bbmerge.sh in=`realpath ${reads}` outa="${sample_id}_adapters.fasta" # ow qin=33
 	"""
+	stub:
+	"""
+	touch ${sample_id}_adapters.fasta
+	touch sample_id
+	touch reads
+	"""
+
 
 }
 
@@ -75,6 +88,12 @@ process TRIM_ADAPTERS {
 	ref=`realpath ${adapters}` \
 	uniquenames=t overwrite=true t=${task.cpus} -Xmx8g
     """
+
+	stub:
+	"""
+	touch ${sample_id}_no_adapters.fastq.gz
+	touch sample_id
+	"""
 
 }
 
@@ -114,6 +133,12 @@ process REMOVE_OPTICAL_DUPLICATES {
 		optical tossbrokenreads reorder
 		"""
 
+	stub:
+	"""
+	touch ${sample_id}_deduped.fastq.gz
+	touch sample_id
+
+	"""
 }
 
 process REMOVE_LOW_QUALITY_REGIONS {
@@ -151,6 +176,12 @@ process REMOVE_LOW_QUALITY_REGIONS {
 		threads=${task.cpus}
 		"""
 
+	stub:
+	"""
+	touch ${sample_id}_filtered.fastq.gz
+	touch sample_id
+	"""
+
 }
 
 process REMOVE_ARTIFACTS {
@@ -180,6 +211,11 @@ process REMOVE_ARTIFACTS {
 	out=${sample_id}_remove_artifacts.fastq.gz \
 	k=31 ref=artifacts,phix ordered cardinality \
 	threads=${task.cpus}
+	"""
+	stub:
+	"""
+	touch ${sample_id}_remove_artifacts.fastq.gz
+	touch sample_id
 	"""
 
 }
@@ -214,6 +250,12 @@ process ERROR_CORRECT_PHASE_ONE {
 	threads=${task.cpus}
 	"""
 
+	stub:
+	"""
+	touch ${sample_id}_error_correct1.fastq.gz
+	touch sample_id
+	"""
+
 }
 
 process ERROR_CORRECT_PHASE_TWO {
@@ -240,6 +282,12 @@ process ERROR_CORRECT_PHASE_TWO {
 	ecc passes=4 reorder \
 	threads=${task.cpus} \
 	-Xmx2g
+	"""
+
+	stub:
+	"""
+	touch ${sample_id}_error_correct2.fastq.gz
+	touch sample_id
 	"""
 
 }
@@ -272,6 +320,11 @@ process ERROR_CORRECT_PHASE_THREE {
 	threads=${task.cpus}
 	"""
 
+	stub:
+	"""
+	touch ${sample_id}_error_correct3.fastq.gz
+	touch sample_id
+	"""
 }
 
 process QUALITY_TRIM {
@@ -303,6 +356,11 @@ process QUALITY_TRIM {
 	minlength=${params.min_len} \
 	ordered threads=${task.cpus}
 	"""
+	stub:
+	"""
+	touch ${sample_id}_qtrimmed.fastq.gz
+	touch sample_id
+	"""
 
 }
 
@@ -327,6 +385,11 @@ process CLUMP_READS {
 	script:
 	"""
 	clumpify.sh in=${reads} out=${sample_id}.merged.fastq.gz t=${task.cpus} reorder
+	"""
+	stub:
+	"""
+	touch ${sample_id}.merged.fastq.gz
+	touch sample_id
 	"""
 
 }

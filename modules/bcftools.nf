@@ -19,4 +19,10 @@ process MERGE_VCF_FILES {
     tabix -p vcf all_sample_vcf.gz
     """
 
+    stub:
+	"""
+	touch all_sample_vcf.gz.tbi
+	touch all_sample_vcf.gz
+	"""
+
 }

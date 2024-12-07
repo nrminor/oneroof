@@ -25,6 +25,13 @@ process FIND_COMPLETE_AMPLICONS {
 	-o ${barcode}_amplicons.fastq.gz
     """
 
+    stub:
+	"""
+	touch barcode
+    touch patterns
+    touch ${barcode}_amplicons.fastq.gz
+	"""
+
 }
 
 process AMPLICON_STATS {
@@ -53,6 +60,11 @@ process AMPLICON_STATS {
 	amplicons/*.fastq.gz > ${barcode}.per_amplicon_stats.tsv
     """
 
+    stub:
+	"""
+	touch ${barcode}.per_amplicon_stats.tsv
+	"""
+
 }
 
 process MERGE_BY_SAMPLE {
@@ -80,6 +92,12 @@ process MERGE_BY_SAMPLE {
 	--threads ${task.cpus} \
 	fastqs/ \
 	| bgzip -o ${barcode}.amplicons.fastq.gz
+	"""
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.amplicons.fastq.gz
 	"""
 }
 
@@ -114,5 +132,11 @@ process TRIM_ENDS_TO_PRIMERS {
     --out-file ${barcode}.${amplicon}.trimmed.fastq.gz \
     ${untrimmed}
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}*.trimmed.fastq.gz
+	"""
 
 }

@@ -12,6 +12,10 @@ process DOWNLOAD_MODELS {
     """
     dorado download --verbose
     """
+    stub:
+	"""
+	touch *
+	"""
 
 }
 
@@ -36,6 +40,11 @@ process BASECALL {
     --kit-name ${params.kit} \
     > basecalled.bam
     """
+
+    stub:
+	"""
+	touch basecalled.bam
+	"""
 
 }
 
@@ -63,4 +72,8 @@ process DEMULTIPLEX {
     --output-dir demux/
     """
 
+    stub:
+	"""
+	touch demux/*barcode*
+	"""
 }

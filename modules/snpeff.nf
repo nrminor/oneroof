@@ -29,6 +29,11 @@ process BUILD_DB {
     snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
     """
 
+    stub:
+	"""
+	touch genome
+	"""
+
 }
 
 process ANNOTATE_VCF {
@@ -58,6 +63,12 @@ process ANNOTATE_VCF {
     > ${barcode}.annotated.vcf
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.annotated.vcf
+	"""
+
 }
 
 process EXTRACT_FIELDS {
@@ -83,4 +94,11 @@ process EXTRACT_FIELDS {
     CHROM REF POS ALT AF AC DP GEN[0].REF_DP GEN[0].ALT_DP GEN[0].ALT_FREQ MQ ANN[0].GENE ANN[0].EFFECT ANN[0].HGVS_P ANN[0].CDS_POS ANN[0].AA_POS \
     > ${sample_id}_variant_effects.tsv
     """
+
+    stub:
+	"""
+	touch sample_id
+    touch vcf
+    touch ${sample_id}_variant_effects.tsv
+	"""
 }

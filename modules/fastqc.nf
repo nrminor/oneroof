@@ -23,6 +23,12 @@ process FASTQC {
 	${reads}
 	"""
 
+	 stub:
+	"""
+	touch *.html
+	touch *.zip
+	"""
+
 }
 
 process FASTQC_RS {
@@ -49,4 +55,9 @@ process FASTQC_RS {
 	mv fastqc_data.txt ${label}/fastqc_data.txt
 	"""
 
+	 stub:
+	"""
+	touch ${label}_qc.html
+	touch ${label}/
+	"""
 }

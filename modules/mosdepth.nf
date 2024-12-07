@@ -25,4 +25,10 @@ process MOSDEPTH {
     gunzip ${sample_id}.per-base.bed.gz
     """
 
+    stub:
+	"""
+	touch sample_id
+    touch ${sample_id}*
+	"""
+
 }

@@ -24,6 +24,10 @@ process REPORT_REFERENCES {
         cp `realpath ${file}` !{params.results}/reference_assets/
     done
     '''
+
+    stub:
+	"""
+	"""
 }
 
 process PUBLISH_COMMAND {
@@ -45,5 +49,10 @@ process PUBLISH_COMMAND {
     """
     echo "${command}" > run_command.sh
     """
+
+    stub:
+	"""
+	touch run_command.sh
+	"""
 
 }

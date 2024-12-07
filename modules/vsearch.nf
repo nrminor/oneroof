@@ -20,6 +20,12 @@ process ORIENT_READS {
     --fastqout ${barcode}.oriented.fastq
     """
 
+	stub:
+	"""
+	touch barcode
+	touch ${barcode}.oriented.fastq
+	"""
+
 }
 
 process IDENTIFY_HAPLOTYPES {
@@ -60,5 +66,10 @@ process IDENTIFY_HAPLOTYPES {
 
 	rm tmp.tsv
 	"""
-
+	stub:
+	"""
+	touch sample_id
+	touch ${sample_id}_haplotypes.fasta
+	touch ${sample_id}_haplotype_metadata.tsv
+	"""
 }

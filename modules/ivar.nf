@@ -23,6 +23,12 @@ process CALL_VARIANTS {
     -r ${refseq}
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.tsv
+	"""
+
 }
 
 process CALL_CONSENSUS {
@@ -49,6 +55,12 @@ process CALL_CONSENSUS {
     -q 0 \
     -n N
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.consensus.fa*
+	"""
 }
 
 process CONVERT_TO_VCF {
@@ -68,5 +80,11 @@ process CONVERT_TO_VCF {
     """
     ivar_variants_to_vcf.py ${ivar_table} ${barcode}.vcf
     """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.vcf
+	"""
 
 }

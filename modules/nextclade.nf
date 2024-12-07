@@ -21,6 +21,11 @@ process CHECK_DATASET {
     fi
     '''
 
+    stub:
+	"""
+	touch ${params.nextclade_dataset}
+	"""
+
 }
 
 process DOWNLOAD_DATASET {
@@ -40,6 +45,11 @@ process DOWNLOAD_DATASET {
     --name ${valid_dataset} \
     --output-dir ${dataset_label}
     """
+
+    stub:
+	"""
+	touch dataset_label/
+	"""
 
 }
 
@@ -62,5 +72,10 @@ process RUN_NEXTCLADE {
     --output-all=${label}/ \
     ${sequences}
     """
+
+    stub:
+	"""
+	touch ${label}/
+	"""
 
 }

@@ -22,4 +22,9 @@ process RESPLICE_PRIMERS {
     -vv
     """
 
+    stub:
+	"""
+	touch respliced.bed
+	"""
+
 }

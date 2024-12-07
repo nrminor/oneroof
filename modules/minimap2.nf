@@ -24,4 +24,10 @@ process ALIGN_WITH_PRESET {
     | samtools view -h -e '(rlen)<=${params.max_len}' > ${barcode}.sam
     """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}.sam
+	"""
+
 }

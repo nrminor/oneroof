@@ -18,4 +18,9 @@ process GET_PRIMER_SEQS {
 	bedtools getfasta -fi ${refseq} -bed ${bed} > ${primer_combo}.fasta
 	"""
 
+	stub:
+	"""
+	touch ${primer_combo}.fasta
+	"""
+
 }

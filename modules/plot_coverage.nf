@@ -23,6 +23,12 @@ process PLOT_COVERAGE {
     --depth ${params.min_depth_coverage}
     """
 
+    stub:
+	"""
+	touch ${sample_id}.*.pdf
+    touch ${sample_id}*.tsv
+	"""
+
 }
 
 process MULTI_SAMPLE_PLOT {
@@ -55,5 +61,10 @@ process MULTI_SAMPLE_PLOT {
         --input_dir inputs \
         --sample_lookup ${sample_lookup}
         """
+
+    stub:
+	"""
+	touch *.pdf
+	"""
 
 }

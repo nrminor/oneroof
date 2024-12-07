@@ -33,6 +33,12 @@ process RASUSA_READ_DOWNSAMPLING {
         ${amplicons}
         """
 
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}*.fastq.gz
+	"""
+
 }
 
 process RASUSA_ALN_DOWNSAMPLING {
@@ -67,5 +73,11 @@ process RASUSA_ALN_DOWNSAMPLING {
         --output ${basename}.${params.downsample_to}x.bam \
         ${bam}
         """
+
+    stub:
+	"""
+	touch barcode
+    touch ${barcode}*.bam
+	"""
 
 }
