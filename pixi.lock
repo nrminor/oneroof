@@ -5445,7 +5445,7 @@ packages:
   name: oneroof
   version: 0.1.0
   path: .
-  sha256: cbd9331f06cffdadbc4a07e10c5464cc10293c8fb8faa80c0539592582bcae79
+  sha256: c5a644564710c346d49869d932c51cb61c6544286c0e463a75a8ea72875a9a40
   requires_dist:
   - polars-lts-cpu
   - xlsxwriter

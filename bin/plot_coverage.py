@@ -4,6 +4,7 @@
 # dependencies = [
 #     "plotnine",
 #     "polars",
+#     "pyarrow",
 # ]
 # ///
 
