@@ -45,6 +45,9 @@ dependencies = [
     "paramiko>=3.5.0",
     "plotnine>=0.14.4",
     "loguru>=0.7.0",
+    "edlib>=1.3.9.post1",
+    "lxml>=5.3.0",
+    "pyyaml",
 ]
 
 [build-system]
@@ -79,16 +82,10 @@ nextclade = ">=3.7.1,<3.8"
 cutadapt = ">=4.8,<5"
 ivar = ">=1.4.2,<1.5"
 seqfu = ">=1.20.3,<1.21"
-pyyaml = ">=5.4.1,<5.5"
 rasusa = ">=2.0.0,<2.1"
-python-edlib = ">=1.3.9,<1.4"
 mosdepth = ">=0.3.8,<0.4"
-pyarrow = ">=16.1.0,<16.2"
-rust = ">=1.77.2,<1.80"
 csvtk = ">=0.30.0,<0.31"
 snpsift = ">=5.2,<6"
-loguru = ">=0.7.2,<0.8"
-lxml = ">=5.2.2,<5.3"
 cffi = ">=1.15.0,<1.17.0"
 bbmap = ">=39.1,<40"
 bedtools = ">=2.31.1,<3"
