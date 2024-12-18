@@ -6,6 +6,7 @@ authors = [
     { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
     { name = "Andrew J. Lail", email = "ajlail@wisc.edu" },
     { name = "Annabelle Kalweit", email = "akalweit@wisc.edu" },
+    { name = "William K. Gardner", email = "wkgardner@wisc.edu" }
 ]
 requires-python = ">= 3.10"
 keywords = [
@@ -35,17 +36,15 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "polars-lts-cpu",
-    "xlsxwriter",
-    "xlsx2csv",
-    "biopython",
-    "pysam",
-    "marimo",
-    "numpy",
-    "scipy",
-    "paramiko",
-    "plotnine",
-    "loguru",
+    "polars-lts-cpu>=1.17.1",
+    "xlsxwriter>=3.2.0",
+    "xlsx2csv>=0.8.4",
+    "biopython>=1.84",
+    "pysam>=0.22.1",
+    "scipy>=1.14.1",
+    "paramiko>=3.5.0",
+    "plotnine>=0.14.4",
+    "loguru>=0.7.0",
 ]
 
 [build-system]
