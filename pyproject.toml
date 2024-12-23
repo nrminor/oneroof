@@ -36,7 +36,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "polars-lts-cpu[all]>=1.17.1",
+    "polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1",
     "xlsxwriter>=3.2.0",
     "xlsx2csv>=0.8.4",
     "biopython>=1.84",
@@ -84,9 +84,8 @@ ivar = ">=1.4.2,<1.5"
 seqfu = ">=1.20.3,<1.21"
 rasusa = ">=2.0.0,<2.1"
 mosdepth = ">=0.3.8,<0.4"
-csvtk = ">=0.30.0,<0.31"
+csvtk = { version = ">=0.30.0,<0.31", channel = "bioconda"}
 snpsift = ">=5.2,<6"
-cffi = ">=1.15.0,<1.17.0"
 bbmap = ">=39.1,<40"
 bedtools = ">=2.31.1,<3"
 
