@@ -1,21 +1,19 @@
-process MERGE_BARCODES {
+process MERGE_BAMS {
 
     /* */
-
-    tag "${barcode}"
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
     input:
-    tuple val(barcode), path("to_merge/???.bam")
+    path "to_merge/???.bam"
 
     output:
-    tuple val(barcode), path("${barcode}.bam")
+    path "merged.bam"
 
     script:
     """
-    samtools merge -o ${barcode}.bam to_merge/*.bam
+    samtools merge -o merged.bam to_merge/*.bam
     """
 }
 

@@ -50,17 +50,14 @@ process DEMULTIPLEX {
 	maxRetries 2
 
     input:
-    path bams, stageAs: "bams/???.bam"
+    path bam
 
     output:
     path "demux/*barcode*"
 
     script:
     """
-    dorado demux \
-    bams/ \
-    --kit-name ${params.kit} \
-    --output-dir demux/
+    dorado demux ${bam} --no-classify --output-dir demux
     """
 
 }
