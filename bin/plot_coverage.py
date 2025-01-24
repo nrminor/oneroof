@@ -29,6 +29,7 @@ from plotnine import (
     aes,
     facet_wrap,
     geom_hline,
+    geom_line,
     geom_rect,
     ggplot,
     ggsave,
@@ -96,15 +97,20 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     base_plot = (
         ggplot(
             coverage_lf.collect().to_pandas(),
-            aes(xmin="start", xmax="stop", ymin=0, ymax="coverage"),
+            aes(
+                x="position",
+                y="coverage",
+                color="sample",
+            ),
         )
-        + geom_rect(fill="black", color="black")
+        + geom_line()
         + geom_hline(yintercept=depth, linetype="dashed")
         + labs(
             title=f"Coverage for Sample ID {label}",
             x="Position on Chromosome/Segment",
             y="Depth of Coverage (read count)",
         )
+        + facet_wrap("~chromosome", scales="free_x")
         + theme_minimal()
     )
     if low_cov_df.shape[0] == 0:
@@ -269,11 +275,20 @@ def main() -> None:
     ).is_file(), f"The provided input file {args.input} does not exist."
 
     # open a Polars query to lazily read the file with explicit column names
-    coverage_lf = pl.scan_csv(
-        args.input,
-        separator="\t",
-        has_header=False,
-        new_columns=["chromosome", "start", "stop", "coverage"],
+    coverage_lf = (
+        pl.scan_csv(
+            args.input,
+            separator="\t",
+            has_header=False,
+            new_columns=["chromosome", "start", "stop", "coverage"],
+        )
+        .with_columns(
+            pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
+                "position",
+            ),
+        )
+        .drop("start", "stop")
+        .explode("position")
     )
 
     # determine how many contigs are present
