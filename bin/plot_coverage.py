@@ -77,6 +77,36 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
+    return (
+        pl.scan_csv(
+            input_bed,
+            separator="\t",
+            has_header=False,
+            new_columns=["chromosome", "start", "stop", "coverage"],
+        )
+        .with_columns(
+            pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
+                "position",
+            ),
+        )
+        .drop("start", "stop")
+        .explode("position")
+        .group_by("chromosome")
+        .agg(
+            pl.col("position").count().alias("reference length"),
+            pl.col("coverage").max().alias("max_coverage"),
+        )
+        .with_columns(
+            pl.when(pl.col("max_coverage") < depth)
+            .then(False)  # noqa: FBT003
+            .otherwise(True)  # noqa: FBT003
+            .alias("passes_depth_cutoff"),
+        )
+        .drop("max_coverage")
+    )
+
+
 def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     """
     Render a coverage plot using the grammar of graphics implementation in plotnine.
@@ -93,8 +123,22 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     Returns:
         ggplot: A ggplot object representing the coverage plot.
     """
-    low_cov_df = coverage_lf.filter(pl.col("coverage") < depth).collect().to_pandas()
-    base_plot = (
+    low_cov_df = (
+        coverage_lf.filter(pl.col("passes_depth_cutoff") and pl.col("coverage") < depth)
+        .group_by("chromosome")
+        .agg(
+            pl.col("position").min().alias("start"),
+            pl.col("position").max().alias("stop"),
+        )
+        .drop("position")
+        .unique()
+        .collect()
+        .to_pandas()
+    )
+
+    assert low_cov_df.shape[0] != 0
+
+    return (
         ggplot(
             coverage_lf.collect().to_pandas(),
             aes(
@@ -103,6 +147,12 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
             ),
         )
         + geom_line()
+        + geom_rect(
+            data=low_cov_df,
+            mapping=aes(xmin="start", xmax="stop", ymin=0, ymax=float("inf")),
+            fill="gray",
+            alpha=0.3,
+        )
         + geom_hline(yintercept=depth, linetype="dashed")
         + labs(
             title=f"Coverage for Sample ID {label}",
@@ -111,15 +161,6 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
         )
         + facet_wrap("~chromosome", scales="free_x")
         + theme_minimal()
-    )
-    if low_cov_df.shape[0] == 0:
-        return base_plot
-
-    return base_plot + geom_rect(
-        data=low_cov_df,
-        mapping=aes(xmin="start", xmax="stop", ymin=0, ymax=float("inf")),
-        fill="gray",
-        alpha=0.3,
     )
 
 
@@ -196,68 +237,35 @@ def compute_perc_cov(
     """
 
     percent_passing_lf = (
-        coverage_lf.with_columns(
-            pl.lit(label).alias("sample id"),
-            pl.col("stop").max().over("chromosome").name.suffix("_max"),
-            pl.col("start").min().over("chromosome").name.suffix("_min"),
-            (pl.col("stop") - pl.col("start")).alias("block_length"),
+        coverage_lf.filter(
+            pl.col("coverage") >= depth and pl.col("passes_depth_cutoff"),
         )
+        .group_by("chromosome")
+        .agg(pl.col("position").count().alias("count"))
         .with_columns(
-            (pl.col("stop_max") - pl.col("start_min")).alias("reference length"),
-        )
-        .drop("stop_max", "start_min")
-        .filter(pl.col("coverage") >= depth)
-        .drop("coverage")
-        .unique()
-        .with_columns(pl.col("block_length").sum().over("chromosome").alias("sum"))
-        .drop("start", "stop", "block_length")
-        .with_columns(
-            (pl.col("sum") / pl.col("reference length"))
-            .over("chromosome")
+            pl.when(pl.col("passes_depth_cutoff"))
+            .then(pl.col("count") / pl.col("reference length"))
+            .otherwise(pl.lit(0.0))
             .alias(f"proportion ≥ {depth}X coverage"),
         )
-        .drop("sum")
+        .drop("count", "position", "passes_depth_cutoff")
+        .unique()
+        .with_columns(
+            pl.lit(label).alias("sample id"),
+        )
         .select(
             "sample id",
             "chromosome",
             "reference length",
             f"proportion ≥ {depth}X coverage",
         )
-        .unique()
     )
 
-    if percent_passing_lf.collect().shape[0] == contig_count:
-        return percent_passing_lf
+    assert (
+        percent_passing_lf.collect().shape[0] == contig_count
+    ), f"The number of rows does not match the expected number of contigs, {contig_count}."
 
-    return (
-        coverage_lf.with_columns(
-            pl.lit(label).alias("sample id"),
-            pl.col("stop").max().over("chromosome").name.suffix("_max"),
-            pl.col("start").min().over("chromosome").name.suffix("_min"),
-            (pl.col("stop") - pl.col("start")).alias("block_length"),
-        )
-        .with_columns(
-            (pl.col("stop_max") - pl.col("start_min")).alias("reference length"),
-        )
-        .select("chromosome", "reference length")
-        .unique()
-        .join(
-            percent_passing_lf,
-            on=["chromosome", "reference length"],
-            how="left",
-            coalesce=True,
-        )
-        .with_columns(
-            pl.when(pl.col(f"proportion ≥ {depth}X coverage").is_null())
-            .then(0)
-            .otherwise(pl.col(f"proportion ≥ {depth}X coverage"))
-            .alias(f"proportion ≥ {depth}X coverage"),
-            pl.when(pl.col("sample id").is_null())
-            .then(pl.lit(label))
-            .otherwise(pl.col("sample id"))
-            .alias("sample id"),
-        )
-    )
+    return percent_passing_lf
 
 
 def main() -> None:
@@ -274,21 +282,7 @@ def main() -> None:
     ).is_file(), f"The provided input file {args.input} does not exist."
 
     # open a Polars query to lazily read the file with explicit column names
-    coverage_lf = (
-        pl.scan_csv(
-            args.input,
-            separator="\t",
-            has_header=False,
-            new_columns=["chromosome", "start", "stop", "coverage"],
-        )
-        .with_columns(
-            pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
-                "position",
-            ),
-        )
-        .drop("start", "stop")
-        .explode("position")
-    )
+    coverage_lf = adapt_bed_to_df(args.input, args.depth)
 
     # determine how many contigs are present
     contig_count = coverage_lf.select("chromosome").unique().collect().shape[0]
