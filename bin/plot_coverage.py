@@ -100,7 +100,6 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
             aes(
                 x="position",
                 y="coverage",
-                color="sample",
             ),
         )
         + geom_line()
@@ -118,7 +117,7 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
 
     return base_plot + geom_rect(
         data=low_cov_df,
-        mapping=aes(ymin=0, ymax=float("inf")),
+        mapping=aes(xmin="start", xmax="stop", ymin=0, ymax=float("inf")),
         fill="gray",
         alpha=0.3,
     )
