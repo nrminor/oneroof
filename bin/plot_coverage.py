@@ -78,6 +78,21 @@ def parse_command_line_args() -> argparse.Namespace:
 
 
 def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
+    """
+    Transform Mosdepth BED output into a Polars LazyFrame for visualization.
+
+    This function takes a BED-format file output by Mosdepth and converts it into a
+    LazyFrame suitable for coverage visualization. It performs initial data loading
+    and transformations including position exploding and coverage aggregation.
+
+    Args:
+        input_bed (str | Path): Path to the BED file containing coverage data.
+        depth (int): Minimum depth threshold for coverage analysis.
+
+    Returns:
+        pl.LazyFrame: A LazyFrame containing processed coverage data with columns for
+                     chromosome, position, coverage, and depth assessment.
+    """
     return (
         pl.scan_csv(
             input_bed,
