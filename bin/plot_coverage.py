@@ -93,7 +93,7 @@ def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
         pl.LazyFrame: A LazyFrame containing processed coverage data with columns for
                      chromosome, position, coverage, and depth assessment.
     """
-    return (
+    exploded_df = (
         pl.scan_csv(
             input_bed,
             separator="\t",
@@ -107,7 +107,10 @@ def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
         )
         .drop("start", "stop")
         .explode("position")
-        .group_by("chromosome")
+    )
+
+    return exploded_df.join(
+        exploded_df.group_by("chromosome")
         .agg(
             pl.col("position").count().alias("reference length"),
             pl.col("coverage").max().alias("max_coverage"),
@@ -118,7 +121,9 @@ def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
             .otherwise(True)  # noqa: FBT003
             .alias("passes_depth_cutoff"),
         )
-        .drop("max_coverage")
+        .drop("max_coverage"),
+        on="chromosome",
+        how="left",
     )
 
 
@@ -139,16 +144,22 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
         ggplot: A ggplot object representing the coverage plot.
     """
     low_cov_df = (
-        coverage_lf.filter(pl.col("passes_depth_cutoff") and pl.col("coverage") < depth)
-        .group_by("chromosome")
+        coverage_lf.filter(
+            ~pl.col("passes_depth_cutoff") | (pl.col("coverage") < depth)
+        )
+        .with_columns(
+            ((pl.col("position") - pl.col("position").shift(1)) != 1)
+            .fill_null(True)
+            .alias("new_block_flag")
+        )  # noqa: FBT003
+        .with_columns(pl.col("new_block_flag").cum_sum().alias("block"))
+        .drop("new_block_flag")
+        .group_by(["chromosome", "block"])
         .agg(
             pl.col("position").min().alias("start"),
             pl.col("position").max().alias("stop"),
         )
-        .drop("position")
-        .unique()
         .collect()
-        .to_pandas()
     )
 
     assert low_cov_df.shape[0] != 0
@@ -156,17 +167,18 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     return (
         ggplot(
             coverage_lf.collect().to_pandas(),
-            aes(
-                x="position",
-                y="coverage",
-            ),
         )
-        + geom_line()
         + geom_rect(
             data=low_cov_df,
             mapping=aes(xmin="start", xmax="stop", ymin=0, ymax=float("inf")),
             fill="gray",
             alpha=0.3,
+        )
+        + geom_line(
+            aes(
+                x="position",
+                y="coverage",
+            ),
         )
         + geom_hline(yintercept=depth, linetype="dashed")
         + labs(
@@ -252,11 +264,17 @@ def compute_perc_cov(
     """
 
     percent_passing_lf = (
-        coverage_lf.filter(
-            pl.col("coverage") >= depth and pl.col("passes_depth_cutoff"),
+        coverage_lf.join(
+            (
+                coverage_lf.filter(
+                    ~pl.col("passes_depth_cutoff") | pl.col("coverage").le(depth),
+                )
+                .group_by("chromosome")
+                .agg(pl.col("position").count().alias("count"))
+            ),
+            on="chromosome",
+            how="left",
         )
-        .group_by("chromosome")
-        .agg(pl.col("position").count().alias("count"))
         .with_columns(
             pl.when(pl.col("passes_depth_cutoff"))
             .then(pl.col("count") / pl.col("reference length"))
@@ -274,6 +292,7 @@ def compute_perc_cov(
             "reference length",
             f"proportion ≥ {depth}X coverage",
         )
+        .unique()
     )
 
     assert (
