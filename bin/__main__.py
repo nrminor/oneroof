@@ -389,9 +389,9 @@ def main() -> None:
 
     args = parse_command_line_args()
     chosen_subcommand = [v for k, v in vars(args).items() if k == "subcommands"]
-    assert (
-        len(chosen_subcommand) == 1
-    ), "Invalid state registered in the form of requesting more than one or zero sub"
+    assert len(chosen_subcommand) == 1, (
+        "Invalid state registered in the form of requesting more than one or zero sub"
+    )
     f"commands: {chosen_subcommand}"
 
     subcommand = chosen_subcommand[0]

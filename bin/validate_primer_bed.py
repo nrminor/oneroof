@@ -6,6 +6,7 @@
 # ]
 # ///
 
+
 """
 This module provides functionality to validate and normalize BED files containing primer information.
 
@@ -104,9 +105,9 @@ def check_for_suffixes(
     """
 
     required_col_count = 6
-    assert (
-        len(row) >= required_col_count
-    ), f"BED file row has fewer than the required 6 columns: \n\n {row}"
+    assert len(row) >= required_col_count, (
+        f"BED file row has fewer than the required 6 columns: \n\n {row}"
+    )
 
     primer_label = row[3]
     if fwd_suffix in primer_label or rev_suffix in primer_label:
@@ -232,11 +233,14 @@ def normalize_bed_lines(
     Returns:
         None: The function writes the normalized data to a new file and doesn't return anything.
     """
-    with open(input_bed, encoding="utf8") as file, open(
-        f"{output_prefix}.bed",
-        "w",
-        encoding="utf8",
-    ) as output:
+    with (
+        open(input_bed, encoding="utf8") as file,
+        open(
+            f"{output_prefix}.bed",
+            "w",
+            encoding="utf8",
+        ) as output,
+    ):
         # collect all the lines from the bed file
         lines = [row.strip().split("\t") for row in file if row != ""]
 
@@ -250,15 +254,15 @@ def normalize_bed_lines(
         invalid_labels = [label for label in label_test if label is not None]
 
         # crash if any invalid primer labels were provided
-        assert (
-            len(invalid_labels) == 0
-        ), f"Invalid primer label(s) without the expected forward suffix, {fwd_suffix}, and the expected reverse suffix, {rev_suffix}detected: {invalid_labels}."
+        assert len(invalid_labels) == 0, (
+            f"Invalid primer label(s) without the expected forward suffix, {fwd_suffix}, and the expected reverse suffix, {rev_suffix}detected: {invalid_labels}."
+        )
 
         # make sure that each primer label can be mapped back to at least two primers
         pair_test = check_for_pairs(lines, fwd_suffix, rev_suffix)
-        assert (
-            len(pair_test) == 0
-        ), f"These amplicon labels do not appear in more than one primer: {pair_test}."
+        assert len(pair_test) == 0, (
+            f"These amplicon labels do not appear in more than one primer: {pair_test}."
+        )
 
         # for all lines, make sure there are at least 6 columns, make sure all primers
         # are oriented correctly such that all start positions precede stop positions,
@@ -266,9 +270,9 @@ def normalize_bed_lines(
         fixed_lines = []
         for i, row in enumerate(lines):
             required_col_count = 6
-            assert (
-                len(row) >= required_col_count
-            ), f"BED file row {i} has fewer than the required 6 columns: \n\n {row}"
+            assert len(row) >= required_col_count, (
+                f"BED file row {i} has fewer than the required 6 columns: \n\n {row}"
+            )
             new_row = orient_primer_coords(row, i)
             fixed_lines.append("\t".join(new_row))
 
