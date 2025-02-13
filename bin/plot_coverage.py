@@ -145,13 +145,13 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     """
     low_cov_df = (
         coverage_lf.filter(
-            ~pl.col("passes_depth_cutoff") | (pl.col("coverage") < depth)
+            ~pl.col("passes_depth_cutoff") | (pl.col("coverage") < depth),
         )
         .with_columns(
             ((pl.col("position") - pl.col("position").shift(1)) != 1)
-            .fill_null(True)
-            .alias("new_block_flag")
-        )  # noqa: FBT003
+            .fill_null(True)  # noqa: FBT003
+            .alias("new_block_flag"),
+        )
         .with_columns(pl.col("new_block_flag").cum_sum().alias("block"))
         .drop("new_block_flag")
         .group_by(["chromosome", "block"])

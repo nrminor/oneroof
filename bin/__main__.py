@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import shlex
 import subprocess
@@ -81,8 +83,7 @@ def parse_command_line_args() -> argparse.Namespace:
         "--ref_gbk",
         type=str,
         default=None,
-        help="The reference sequence to be used for variant annotation in Genbank"
-        "format.",
+        help="The reference sequence to be used for variant annotation in Genbankformat.",
     )
     run.add_argument(
         "--remote_pod5_location",
@@ -107,15 +108,13 @@ def parse_command_line_args() -> argparse.Namespace:
         "--pod5_dir",
         type=str,
         default=None,
-        help="A local, on-device directory where pod5 files have been manually"
-        "transferred.",
+        help="A local, on-device directory where pod5 files have been manuallytransferred.",
     )
     run.add_argument(
         "--precalled_staging",
         type=str,
         default=None,
-        help="A local directory to watch for Nanopore FASTQs or BAMs as they become"
-        "available.",
+        help="A local directory to watch for Nanopore FASTQs or BAMs as they becomeavailable.",
     )
     run.add_argument(
         "--prepped_data",
@@ -198,8 +197,7 @@ def parse_command_line_args() -> argparse.Namespace:
         "--min_consensus_freq",
         type=float,
         default=None,
-        help="The minimum required frequency of a variant base to be included in a"
-        "consensus sequence.",
+        help="The minimum required frequency of a variant base to be included in aconsensus sequence.",
     )
     run.add_argument(
         "--min_haplo_reads",
