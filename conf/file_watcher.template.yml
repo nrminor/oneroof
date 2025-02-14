@@ -1,3 +1,4 @@
+
 # absolute path on remote host where files should be watched for
 watch_path: /~
 
