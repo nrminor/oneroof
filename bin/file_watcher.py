@@ -9,7 +9,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,14 +40,25 @@ class TransferRunner:
     username: str
     ready: bool = field(init=False)
     local_path: str | Path = field(default=Path.cwd())
+    remote_hash: str = field(init=False)
 
     def __post_init__(self) -> TransferRunner:
-        if self.is_file_done_writing():
+        """
+        Initializes the TransferRunner instance by checking if the remote file is ready.
+        If the file is available and not already present in the local directory,
+        the method returns a new instance of TransferRunner after a brief delay.
+
+        Returns:
+            TransferRunner: A new instance if the conditions are met; otherwise, returns self.
+        """
+        if self.is_remote_file_ready():
             object.__setattr__(self, "ready", True)
         else:
             object.__setattr__(self, "ready", False)
 
         if self.ready and self.filename not in os.listdir(self.local_path):
+            remote_hash_bytes = str(self).encode("utf-8")
+            self.remote_hash = hashlib.sha256(remote_hash_bytes).hexdigest()
             return self
 
         time.sleep(10)
@@ -57,10 +70,28 @@ class TransferRunner:
             self.username,
         )
 
-    def transfer_file(self) -> None:
+    def transfer_file(
+        self,
+        max_retries: int = 10,
+        wait_time: int = 3,
+        attempts: int = 0,
+    ) -> None:
+        """
+        Transfers a file from the remote server to the local directory using SFTP.
+        Retries the transfer if an error occurs, up to a maximum number of retries.
+
+        Args:
+            max_retries (int, optional): Maximum number of retry attempts. Defaults to 10.
+            wait_time (int, optional): Time in seconds to wait between retries. Defaults to 3.
+            attempts (int, optional): Current retry attempt count. Defaults to 0.
+
+        Returns:
+            None
+        """
         sftp = self.client.open_sftp()
         remote_file_path = f"{self.remote_path}/{self.filename}"
         local_file_path = Path(self.local_path) / Path(self.filename)
+        attempts += 1
 
         try:
             sftp.get(remote_file_path, local_file_path)
@@ -68,15 +99,40 @@ class TransferRunner:
                 f"File {self.filename} successfully transferred to '{self.local_path}'.",
             )
         except Exception as e:  # noqa: BLE001
-            logger.warning(f"Error transferring file {self.filename}: {e}")
+            logger.warning(
+                f"Error transferring file {self.filename}: {e}. {max_retries} retries remaining.",
+            )
+            time.sleep(wait_time)
+            if attempts > max_retries:
+                logger.error(
+                    f"Transfer for file failed after {max_retries} retries. Skipping.",
+                )
+                return
+            self.transfer_file(
+                max_retries=max_retries,
+                wait_time=wait_time,
+                attempts=attempts,
+            )
+
         finally:
             sftp.close()
 
-    def is_file_done_writing(
+    def is_remote_file_ready(
         self,
         wait_time: int = 3,
         max_checks: int = 10,
     ) -> bool:
+        """
+        Checks if the remote file is ready for transfer by monitoring its size.
+        A file is considered ready if its size remains unchanged for a series of checks.
+
+        Args:
+            wait_time (int, optional): Time in seconds to wait between checks. Defaults to 3.
+            max_checks (int, optional): Maximum number of checks to perform. Defaults to 10.
+
+        Returns:
+            bool: True if the file is ready, False otherwise.
+        """
         sftp = self.client.open_sftp()
         previous_size = -1
         checks = 0
@@ -97,8 +153,42 @@ class TransferRunner:
                 return False
         return False
 
+    def verify_transfer(
+        self,
+        max_retries: int = 10,
+        wait_time: int = 3,
+        attempts: int = 0,
+    ) -> bool:
+        attempts += 1
+
+        # encoding local file to bytes
+        local_file_bytes = self.filename.encode("utf-8")
+
+        # creating the hashes for the local file
+        local_hash = hashlib.sha256(local_file_bytes).hexdigest()
+
+        # checking if the two objects are the same
+        transfer_check = local_hash == self.remote_hash
+
+        if transfer_check:
+            return transfer_check
+        time.sleep(wait_time)
+        if attempts > max_retries:
+            return False
+        return self.verify_transfer(attempts=attempts)
+
 
 def parse_command_line_args() -> argparse.Namespace:
+    """
+    Parses command-line arguments for configuring the file watcher.
+
+    Returns:
+        argparse.Namespace: Parsed command-line arguments including:
+            - watch_path (Path): Directory to watch on the remote host.
+            - watch_pattern (str): Pattern for matching files on the remote host.
+            - watch_duration (int): Number of hours to watch for new files.
+            - host_config (Path): YAML configuration file for connecting to the remote host.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--watch_path",
@@ -136,6 +226,15 @@ def parse_command_line_args() -> argparse.Namespace:
 
 
 def runtime_config_check(config_dict: dict) -> None:
+    """
+    Validates the runtime configuration dictionary to ensure all required fields are present.
+
+    Args:
+        config_dict (dict): The configuration dictionary parsed from the YAML file.
+
+    Raises:
+        AssertionError: If any required field is missing or if the file pattern is unsupported.
+    """
     entries = config_dict.keys()
     assert "watch_path" in entries, """
     A remote absolute file path, not including the IP address itself, must be
@@ -164,28 +263,195 @@ def runtime_config_check(config_dict: dict) -> None:
     """
 
 
-def parse_credential_config(args: argparse.Namespace) -> Credentials:
-    with Path(args.config_path).open(encoding="utf8") as config_handle:
-        config_dict = yaml.safe_load(config_handle)
+def make_credential_error(
+    env_var: str,
+    config_field: str,
+    config_path: str | Path,
+) -> str:
+    """
+    Generates an error message for missing environment variables or configuration fields.
 
-    runtime_config_check(config_dict)
+    Args:
+        env_var (str): The name of the required environment variable.
+        config_field (str): The corresponding field in the configuration file.
+        config_path (str | Path): The path to the configuration file.
 
-    config_dict["watch_path"] = (
-        args.watch_path if args.watch_path else config_dict["watch_path"]
+    Returns:
+        str: The formatted error message.
+    """
+    return f"The ${env_var} environment variable is unset and the '{config_field}' field in the provided config file, '{config_path}', is missing."
+
+
+def try_access_env_setting(
+    env_var: str,
+    config_field: str,
+    config_path: str | Path,
+) -> str:
+    """
+    Attempts to access a required setting from an environment variable.
+
+    Args:
+        env_var (str): The name of the required environment variable.
+        config_field (str): The corresponding field in the configuration file.
+        config_path (str | Path): The path to the configuration file.
+
+    Returns:
+        str: The retrieved setting value.
+
+    Raises:
+        OSError: If the environment variable is not set or empty.
+    """
+    message = make_credential_error(
+        env_var,
+        config_field,
+        config_path,
     )
-    config_dict["pattern"] = (
-        args.watch_pattern if args.watch_path else config_dict["pattern"]
+    if os.getenv(env_var):
+        setting = os.getenv(env_var)
+        if not setting:
+            raise OSError(message)
+    else:
+        raise OSError(message)
+
+    return setting
+
+
+def try_access_config(
+    env_var: str,
+    config_field: str,
+    config_path: str | Path,
+    config_dict: dict[str, str],
+) -> str:
+    """
+    Attempts to retrieve a required setting from the configuration dictionary.
+
+    Args:
+        env_var (str): The corresponding environment variable name (for logging purposes).
+        config_field (str): The field name in the configuration file.
+        config_path (str | Path): The path to the configuration file.
+        config_dict (dict[str, str]): The parsed configuration dictionary.
+
+    Returns:
+        str: The retrieved setting value.
+
+    Raises:
+        OSError: If the required setting is missing in the configuration file.
+    """
+    message = make_credential_error(
+        env_var,
+        config_field,
+        config_path,
+    )
+    setting = config_dict.get(config_field)
+    if not setting:
+        raise OSError(message)
+
+    return setting
+
+
+def try_access_setting(
+    env_var: str,
+    config_field: str,
+    config_path: str | Path,
+    config_dict: dict[str, str],
+) -> str:
+    """
+    Retrieves a required setting from either an environment variable or the configuration file.
+
+    Args:
+        env_var (str): The corresponding environment variable name.
+        config_field (str): The field name in the configuration file.
+        config_path (str | Path): The path to the configuration file.
+        config_dict (dict[str, str]): The parsed configuration dictionary.
+
+    Returns:
+        str: The retrieved setting value.
+
+    Raises:
+        AssertionError: If the provided configuration file does not exist.
+    """
+    if os.getenv(env_var):
+        setting = try_access_env_setting(env_var, config_field, config_path)
+    else:
+        assert Path(config_path).exists(), (
+            f"The provided config path {config_path} does not point to a file that exists."
+        )
+        setting = try_access_config(env_var, config_field, config_path, config_dict)
+
+    return setting
+
+
+def find_credentials(config_path: str | Path) -> Credentials:
+    """
+    Parses the configuration file and retrieves credentials required for file watching.
+
+    Args:
+        config_path (str | Path): The path to the configuration file.
+
+    Returns:
+        Credentials: A Credentials object containing the extracted configuration values.
+
+    Raises:
+        OSError: If any required field is missing from the configuration or environment variables.
+    """
+    config_check = Path(config_path).exists()
+    config_dict: dict[str, str] = {}
+    if config_check:
+        with Path(config_path).open(encoding="utf8") as config_handle:
+            config_dict = yaml.safe_load(config_handle)
+        runtime_config_check(config_dict)
+
+    watch_path = try_access_setting(
+        "ONEROOF_WATCH_PATH",
+        "watch_path",
+        config_path,
+        config_dict,
+    )
+
+    pattern = try_access_setting(
+        "ONEROOF_WATCH_PATTERN",
+        "pattern",
+        config_path,
+        config_dict,
+    )
+
+    host = try_access_setting(
+        "ONEROOF_WATCH_HOST",
+        "host",
+        config_path,
+        config_dict,
+    )
+
+    username = try_access_setting(
+        "ONEROOF_WATCH_USERNAME",
+        "username",
+        config_path,
+        config_dict,
+    )
+
+    password = try_access_setting(
+        "ONEROOF_WATCH_PASSWORD",
+        "password",
+        config_path,
+        config_dict,
+    )
+
+    watch_duration = int(
+        try_access_setting(
+            "ONEROOF_WATCH_DURATION",
+            "watch_duration",
+            config_path,
+            config_dict,
+        ),
     )
 
     return Credentials(
-        watch_path=config_dict["watch_path"],
-        pattern=config_dict["pattern"],
-        host=config_dict["host"],
-        username=config_dict["username"],
-        password=config_dict["password"],
-        watch_duration=args.watch_duration
-        if args.watch_duration
-        else config_dict["watch_duration"],
+        watch_path,
+        pattern,
+        host,
+        username,
+        password,
+        watch_duration,
     )
 
 
@@ -194,7 +460,7 @@ def main() -> None:
     args = parse_command_line_args()
 
     # parse the config file
-    creds = parse_credential_config(args)
+    creds = find_credentials(args.config_path)
 
     # set up ssh client and connection
     client = SSHClient()
@@ -226,9 +492,15 @@ def main() -> None:
                     username=creds.username,
                 )
                 runner.transfer_file()
+                # TODO: check local hash against remote hash here
+                if not runner.verify_transfer():
+                    logger.error(
+                        f"The file, {runner.filename}, was corrupted during the transfer process.",
+                    )
             time.sleep(30)
     except KeyboardInterrupt:
         logger.debug("Process interrupted. Exiting...")
+        sys.exit(1)
     finally:
         # Close the SSH connection
         client.close()
