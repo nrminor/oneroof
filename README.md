@@ -15,10 +15,6 @@
 
 `oneroof` is a pipeline designed to take a common series of bioinformatic tasks (see below) and put them under “one roof”. We mean this quite literally: the pipeline will perform at its best when run on networked devices in the same building.
 
-> [!NOTE]
->
-> Please note that `oneroof` is still under active development, with bug fixes, feature adds, and workflow reorganizations happening daily to weekly. The name of the pipeline itself is a prototype that may change at any time (suggestions welcome!). That said, the core components of the pipeline are relatively stable and working well for us in both container-based and container-less use cases. The most active area of change at this stage is feature-additions, though in the near future, some of the more convolated parts of the pipeline’s primer-handling will be replaced with a amplicon-aware FASTQ processing toolkit under active development by our team, so stay tuned!
-
 `oneroof` was originally developed in the early stages of the [United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024](https://nextstrain.org/avian-flu/h5n1/ha/2y), when we wanted one, configurable, easy-to-run pipeline that would do all of the following seamlessly:
 
 1.  Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files, working on GCP, AWS, or Slurm if need be.
@@ -48,9 +44,7 @@ These are the core elements required to run on Nanopore data: a directory of pod
 And for Illumina paired-end reads, it’s even simpler:
 
     nextflow run nrminor/oneroof \
-    --illumina_fastq_dir my_illumina_reads/ \
-    --refseq my_ref.fasta \
-    --primer_bed my_primers.bed
+    --illumina_fastq_dir my_illumina_reads/
 
 If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don’t want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline’s dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
 
@@ -92,7 +86,7 @@ Most users should configure `oneroof` through the command line via the following
 | `--downsample_to` | 0 | Desired coverage to downsample to, with a special value of 0 to indicate 0 downsampling |
 | `--secondary` | None | Whether to turn on secondary alignments for each amplicon. Secondary alignments can increase depth at the cost of more reads potentially mapping to the wrong locations. By default, secondary alignments are off. |
 | `--min_consensus_freq` | 0.5 | The minimum required frequency of a variant base to be included in a consensu sequence. |
-| `--min_depth_coverage` | 10 | Minimum required depth of coverage to call a variant. |
+| `--min_depth_coverage` | 20 | Minimum required depth of coverage to call a variant. |
 | `--results` | results/ | Where to place results. |
 | `--cleanup` | false | Whether to cleanup work directory after a successful run. |
 

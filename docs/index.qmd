@@ -19,10 +19,6 @@ execute:
 
 `oneroof` is a pipeline designed to take a common series of bioinformatic tasks (see below) and put them under "one roof". We mean this quite literally: the pipeline will perform at its best when run on networked devices in the same building.
 
-::: {.callout-note}
-Please note that `oneroof` is still under active development, with bug fixes, feature adds, and workflow reorganizations happening daily to weekly. The name of the pipeline itself is a prototype that may change at any time (suggestions welcome!). That said, the core components of the pipeline are relatively stable and working well for us in both container-based and container-less use cases. The most active area of change at this stage is feature-additions, though in the near future, some of the more convolated parts of the pipeline's primer-handling will be replaced with a amplicon-aware FASTQ processing toolkit under active development by our team, so stay tuned!
-:::
-
 `oneroof` was originally developed in the early stages of the [United States Bovine Highly Pathogenic Avian Influenza (HPAI) outbreak of 2024](https://nextstrain.org/avian-flu/h5n1/ha/2y), when we wanted one, configurable, easy-to-run pipeline that would do all of the following seamlessly:
 
 1. Handle super-accuracy basecalling with GPU acceleration on pod5-formatted Nanopore signal files, working on GCP, AWS, or Slurm if need be.
