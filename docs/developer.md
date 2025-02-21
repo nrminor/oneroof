@@ -24,11 +24,11 @@ From there, you’ll have a few tools to consider installing if you haven’t al
 5.  Quarto to modify documentation, available here: <https://quarto.org/docs/get-started/>
 6.  An editor with language support for Nextflow (or Groovy as a fallback), Python, and Quarto (or Markdown as a fallback).
 
-Most of this project was written in VSCode, as it’s currently the only editor with plugins for Nextflow, Quarto, and Python linters.
+Much of this project was written in VSCode, as it’s currently the editor that makes it easiest to install Nextflow, Quarto, and Python language servers. We recommend developers use VSCode (or one of the VSCode forks, e.g., Cursor, Positron, etc.) for the same reason, though editors like Zed, Helix, or NeoVim can also be set up to provide the same functionality.
 
 #### Pixi
 
-Of these tools, Pixi is the only one that is essential for most use cases, as it handles installing the pipeline’s dependencies from various `conda` registries as well as the Python Package Index. That said, you could even get away with not using `pixi` by manually installing the packages in [`pyproject.toml`](../pyproject.toml) in a `conda` environment, using pip when needed. While this solution is inelegant compared to having a unified package manager like Pixi, it may be more familiar to some users.
+Of the above tools, Pixi is the only one that is essential for development, as it handles installing the pipeline’s dependencies from various `conda` registries as well as the Python Package Index. That said, you could get away with not using `pixi` by manually installing the packages in [`pyproject.toml`](../pyproject.toml) in a `conda` environment, using pip when needed. While this solution is inelegant compared to having a unified package manager like Pixi, it may be more familiar to some users.
 
 If you are sticking with Pixi, run `pixi shell --frozen` in the project root before you get started. This will create a terminal environment with everything you need to work on and run `oneroof` (or rather: everything except Dorado. More on that below). The `--frozen` flag is critical; it tells Pixi to install the exact dependency versions recorded in `pixi.lock` as opposed to searching for newer versions where possible. This ensures reproducibility, as updates to the dependencies in `pixi.lock` will only be pushed when they have been tested on Linux and MacOS systems by the core maintainer team.
 
@@ -50,11 +50,11 @@ If you run `pre-commit install` in the repo root directory, it will install the 
 
 #### Docker
 
-If you don’t want to futz with all of the above or with setting up Dorado locally, you can also use the Docker Hub image [`nrminor/dorado-and-friends:v0.2.2`](https://hub.docker.com/r/nrminor/dorado-and-friends) as a dev container. It should every everything the pipeline and its dev environment needs, though its use as a dev container has not yet been tested.
+If you don’t want to futz with all of the above or with setting up Dorado locally, you can also use the pipeline’s Docker Hub image [`nrminor/dorado-and-friends:v0.2.3`](https://hub.docker.com/r/nrminor/dorado-and-friends) as a dev container. It should bring everything the pipeline and its dev environment needs, though its use as a dev container has not yet been tested.
 
 #### Quarto
 
-Quarto can be thought of as a renderer or compiler for documents written in supercharged Markdown. It can run code blocks, render to HTML, PDF, `reveal.js` presentations, websites, books, and dozens of other formats. As such, I use Quarto documents as the sort of “ur-format,” and render it out to other formats as desired. To render the project readme or other documents, you will need Quarto installed. The Quarto config file, [`_quarto.yml`](../_quarto.yml), controls project level settings, including a post-render section telling it to regenerate the Github-markdown-formatted readme from [`assets/index.qmd`](index.qmd) (via the project’s `just readme` recipe).
+Quarto can be thought of as a renderer or compiler for documents written in supercharged Markdown. It can run code blocks, render to HTML, PDF, `reveal.js` presentations, Microsoft Powerpoint and Word documents, websites, books, and dozens of other formats. As such, I use Quarto markdown documents as a sort of “ur-format,” and render it out to other formats as desired. To render the project readme and any other `.qmd` documents in this project, you will need Quarto installed. The Quarto config file, [`_quarto.yml`](../_quarto.yml), controls project level settings, including a post-render section telling it to regenerate the Github-markdown-formatted readme from [`assets/index.qmd`](index.qmd) (via the project’s `just readme` recipe).
 
 ## Dorado
 
@@ -74,7 +74,7 @@ The process will be similar for MacOS users; we recommend consulting the above D
 
 ## Nextflow organization
 
-This pipeline follows a slightly shaved-down project organization to the [nf-core](https://nf-co.re/) projects, which you can think of a standardized means of organizing Nextflow `.nf` scripts. Like most Nextflow pipelines, the pipeline entrypoint is `main.nf`. `main.nf` performs some logic to call one of the workflow declaration scripts in the `workflows/` directory. Workflow declaration scripts themselves call subworkflow declaration scripts in the `subworkflows/` directory. Subworkflow scripts then call modules in the `modules/` directory; these scripts actually do work, as they contain the individual processes that make up each workflow run.
+This pipeline follows a slightly shaved-down project organization to the [nf-core](https://nf-co.re/) projects, which you can think of as a standardized means of organizing Nextflow `.nf` scripts. Like most Nextflow pipelines, the pipeline entrypoint is `main.nf`. `main.nf` performs some logic to call one of the workflow declaration scripts in the `workflows/` directory. Workflow declaration scripts themselves call subworkflow declaration scripts in the `subworkflows/` directory. Subworkflow scripts then call modules in the `modules/` directory; these scripts actually do work, as they contain the individual processes that make up each workflow run.
 
 If this seems like a lot, trust your instincts. Here’s why it’s worth it anyway:
 
@@ -87,7 +87,7 @@ Like most Nextflow pipelines, `oneroof` also has a few other important directori
 
 - `bin/`, which contains executable scripts that are called in various processes/modules.
 - `lib/`, which contains Groovy utility functions that can be called natively within Nextflow scripts.
-- `conf/`, which contains Nextflow configuration files with defaults, in our case, for the two workflow options.
+- `conf/`, which contains Nextflow configuration files with defaults, in our case, for the two workflow options (the Illumina workflow and the Nanopore workflow).
 
 ## Nextflow configuration
 
@@ -108,10 +108,10 @@ We’re big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatte
   },
   "ruff.lineLength": 88,
   "ruff.lint.select": ["ALL"],
-  "ruff.lint.ignore": ["D", "S101"],
+  "ruff.lint.ignore": ["D", "S101", "E501", "PTH123", "TD003"],
   "ruff.nativeServer": "on",
   "notebook.defaultFormatter": "charliermarsh.ruff",
 }
 ```
 
-At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in [the Ruff rule docs](https://docs.astral.sh/ruff/rules/). Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it’s a bit annoying or overwhelming in the short-term. It’s also possible that some of the lints—e.g., using Python’s `pathlib` library for all path handling in places like `with open(...)` context managers, or never using `os.system()` calls—will also make you a better programmer.
+At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in [the Ruff rule docs](https://docs.astral.sh/ruff/rules/). Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it’s a bit annoying or overwhelming in the short-term.
