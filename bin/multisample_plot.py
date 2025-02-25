@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
@@ -36,8 +36,6 @@ Example:
 from __future__ import annotations
 
 import argparse
-import json
-import os
 from math import log10
 from pathlib import Path
 
@@ -82,13 +80,6 @@ def parse_command_line_args() -> argparse.Namespace:
         help="Directory to scan for BED files.",
     )
     parser.add_argument(
-        "--sample_lookup",
-        "-s",
-        type=Path,
-        required=True,
-        help="JSON-formatted sample lookup, where the keys are the barcodes, and the values are the sample ID to be associated with each barcode.",
-    )
-    parser.add_argument(
         "--min_coverage",
         "-m",
         type=int,
@@ -104,37 +95,7 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def read_sample_lookup(file_path: str) -> dict[str, str]:
-    """
-    Reads a JSON file and returns its content.
-
-    This function opens the specified JSON file, loads its content into a Python object,
-    prints the content to the console, and then returns the loaded data.
-
-    Parameters:
-    file_path (str): The path to the JSON file that contains the data to be read.
-
-    Returns:
-    data (dict or list): The content of the JSON file as a Python dictionary or list,
-                         depending on the JSON structure.
-
-    Raises:
-    FileNotFoundError: If the specified file does not exist.
-    json.JSONDecodeError: If the file is not a valid JSON format or is empty.
-
-    Example:
-    >>> data = read_sample_lookup('path/to/data.json')
-    >>> print(data)
-    [ "item1", "item2", "item3" ]
-    """
-    assert Path(
-        file_path,
-    ).is_file(), f"The provided file path {file_path} does not exist."
-    with Path(file_path).open("r", encoding="utf8") as file:
-        return json.load(file)
-
-
-def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.DataFrame:
+def accumulate_cov_dfs(directory: str, sample_list: list[str]) -> pl.DataFrame:
     """
     Accumulate and concatenate multiple CSV files from a specified directory into a single Polars DataFrame.
 
@@ -179,20 +140,13 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
         directory,
     ).is_dir(), f"The provided input directory {directory} does not exist."
 
-    bed_list = []
-    bc_list = []
-    for filename in os.listdir(directory):
-        f = Path(directory) / Path(filename)
-        if not Path(f).is_file() and not filename.endswith(".bed"):
-            continue
-        barcode = filename.split(".")[0]
-        bed_list.append(f)
-        bc_list.append(barcode)
+    sample_lookup = {
+        sample_id: Path(directory) / Path(f"{sample_id}.per-base.bed")
+        for sample_id in sample_list
+    }
 
     df_list = []
-    for bed_file, barcode in zip(bed_list, bc_list):
-        if barcode not in sample_lookup:
-            continue
+    for sample_id, bed_file in sample_lookup.items():
         bc_df = (
             pl.read_csv(
                 bed_file,
@@ -200,7 +154,7 @@ def accumulate_cov_dfs(directory: str, sample_lookup: dict[str, str]) -> pl.Data
                 has_header=False,
                 new_columns=["chromosome", "start", "stop", "coverage"],
             )
-            .with_columns(sample=pl.lit(sample_lookup[barcode]))
+            .with_columns(sample=pl.lit(sample_id))
             .with_columns(
                 pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
                     "position",
@@ -359,7 +313,10 @@ def main() -> None:
     """
     args = parse_command_line_args()
     min_desired_depth = args.min_coverage
-    sample_list = read_sample_lookup(args.sample_lookup)
+    sample_list = [
+        str(path).replace(".per-base.bed", "")
+        for path in Path.cwd().glob("*.per-base.bed")
+    ]
     sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
 
     if args.log:

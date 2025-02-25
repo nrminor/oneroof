@@ -67,10 +67,6 @@ workflow {
         Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
 
-    ch_sample_lookup = params.sample_lookup ?
-        Channel.fromPath( params.sample_lookup ) :
-        Channel.empty()
-
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
@@ -79,7 +75,6 @@ workflow {
             ch_refseq,
             ch_ref_gbk,
             ch_snpeff_config,
-            ch_sample_lookup
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -89,7 +84,6 @@ workflow {
             ch_refseq,
             ch_ref_gbk,
             ch_snpeff_config,
-            ch_sample_lookup
         )
 
     } else {
