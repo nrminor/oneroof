@@ -16,6 +16,7 @@ process BBMERGE {
 	script:
 	"""
 	bbmerge.sh \
+	-Xmx3g \
 	in1=`realpath ${reads1}` \
 	in2=`realpath ${reads2}` \
 	out=${sample_id}.merged.preclump.fastq.gz \
@@ -46,7 +47,7 @@ process FIND_ADAPTER_SEQS {
 
 	script:
 	"""
-    bbmerge.sh in=`realpath ${reads}` outa="${sample_id}_adapters.fasta" # ow qin=33
+    bbmerge.sh -Xmx3g in=`realpath ${reads}` outa="${sample_id}_adapters.fasta" # ow qin=33
 	"""
 
 }
@@ -70,7 +71,7 @@ process TRIM_ADAPTERS {
 
     script:
     """
-	reformat.sh in=`realpath ${reads}` \
+	reformat.sh -Xmx3g in=`realpath ${reads}` \
 	out=${sample_id}_no_adapters.fastq.gz \
 	ref=`realpath ${adapters}` \
 	uniquenames=t overwrite=true t=${task.cpus} -Xmx8g
@@ -104,14 +105,14 @@ process REMOVE_OPTICAL_DUPLICATES {
 		rename.sh \
 		in=${reads} \
 		out=${sample_id}_deduped.fastq.gz \
-		addpairnum=t
+		addpairnum=t -Xmx3g
 		"""
 	else
 		"""
 		clumpify.sh -Xmx2g in=`realpath ${reads}` \
 		out=${sample_id}_deduped.fastq.gz \
 		threads=${task.cpus} \
-		optical tossbrokenreads reorder
+		optical tossbrokenreads reorder -Xmx3g
 		"""
 
 }
@@ -142,13 +143,13 @@ process REMOVE_LOW_QUALITY_REGIONS {
 		clumpify.sh -Xmx2g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
 		threads=${task.cpus} \
-		reorder markduplicates
+		reorder markduplicates -Xmx3g
 		"""
 	else
 		"""
 		filterbytile.sh -Xmx2g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
-		threads=${task.cpus}
+		overwrite=true threads=${task.cpus}
 		"""
 
 }
@@ -326,7 +327,7 @@ process CLUMP_READS {
 
 	script:
 	"""
-	clumpify.sh in=${reads} out=${sample_id}.merged.fastq.gz t=${task.cpus} reorder
+	clumpify.sh in=${reads} out=${sample_id}.merged.fastq.gz t=${task.cpus} reorder -Xmx3g
 	"""
 
 }
