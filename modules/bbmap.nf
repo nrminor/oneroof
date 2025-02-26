@@ -140,16 +140,16 @@ process REMOVE_LOW_QUALITY_REGIONS {
 	script:
 	if ( sample_id.toString().contains("SRR") )
 		"""
-		clumpify.sh -Xmx2g in=`realpath ${reads}` \
+		clumpify.sh -Xmx3g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
 		threads=${task.cpus} \
-		reorder markduplicates -Xmx3g
+		reorder markduplicates
 		"""
 	else
 		"""
-		filterbytile.sh -Xmx2g in=`realpath ${reads}` \
+		filterbytile.sh -Xmx3g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
-		overwrite=true threads=${task.cpus}
+		-da overwrite=true threads=${task.cpus}
 		"""
 
 }
