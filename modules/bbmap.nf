@@ -27,7 +27,8 @@ process BBMERGE {
 	outu=${sample_id}.unmerged.preclump.fastq.gz \
 	strict k=93 extend2=80 rem ordered \
 	ihist=${sample_id}_ihist_merge.txt \
-	threads=${task.cpus}
+	threads=${task.cpus} \
+	-eoom
 	"""
 
 }
@@ -52,9 +53,9 @@ process FIND_ADAPTER_SEQS {
 	tuple val(sample_id), path(reads), path("${sample_id}_adapters.fasta")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
-    bbmerge.sh -Xmx${Xmx}g in=`realpath ${reads}` outa="${sample_id}_adapters.fasta" # ow qin=33
+    bbmerge.sh -Xmx${Xmx}g in=`realpath ${reads}` outa="${sample_id}_adapters.fasta" ow -eoom
 	"""
 
 }
@@ -79,12 +80,12 @@ process TRIM_ADAPTERS {
     tuple val(sample_id), path("${sample_id}_no_adapters.fastq.gz")
 
     script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
     """
 	reformat.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_no_adapters.fastq.gz \
 	ref=`realpath ${adapters}` \
-	uniquenames=t overwrite=true t=${task.cpus}
+	uniquenames=t overwrite=true t=${task.cpus} -eoom
     """
 
 }
@@ -112,19 +113,20 @@ process REMOVE_OPTICAL_DUPLICATES {
 	tuple val(sample_id), path("${sample_id}_deduped.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	if ( sample_id.toString().contains("SRR") )
 		"""
 		rename.sh \
 		in=${reads} \
 		out=${sample_id}_deduped.fastq.gz \
-		addpairnum=t -Xmx${Xmx}g
+		addpairnum=t -Xmx${Xmx}g -eoom
 		"""
 	else
 		"""
 		clumpify.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 		out=${sample_id}_deduped.fastq.gz \
 		threads=${task.cpus} \
+		-eoom \
 		optical tossbrokenreads reorder
 		"""
 
@@ -153,19 +155,19 @@ process REMOVE_LOW_QUALITY_REGIONS {
 	tuple val(sample_id), path("${sample_id}_filtered.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	if ( sample_id.toString().contains("SRR") )
 		"""
 		clumpify.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
-		threads=${task.cpus} \
+		threads=${task.cpus} -eoom \
 		reorder markduplicates
 		"""
 	else
 		"""
 		filterbytile.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 		out=${sample_id}_filtered.fastq.gz \
-		-da overwrite=true threads=${task.cpus}
+		-da overwrite=true threads=${task.cpus} -eoom
 		"""
 
 }
@@ -194,12 +196,12 @@ process REMOVE_ARTIFACTS {
 	tuple val(sample_id), path("${sample_id}_remove_artifacts.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
 	bbduk.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_remove_artifacts.fastq.gz \
 	k=31 ref=artifacts,phix ordered cardinality \
-	threads=${task.cpus}
+	threads=${task.cpus} -eoom
 	"""
 
 }
@@ -228,13 +230,13 @@ process ERROR_CORRECT_PHASE_ONE {
 	tuple val(sample_id), path("${sample_id}_error_correct1.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
 	bbmerge.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_error_correct1.fastq.gz \
 	ecco mix vstrict ordered \
 	ihist=${sample_id}_ihist_merge1.txt \
-	threads=${task.cpus}
+	threads=${task.cpus} -eoom
 	"""
 
 }
@@ -257,12 +259,12 @@ process ERROR_CORRECT_PHASE_TWO {
 	tuple val(sample_id), path("${sample_id}_error_correct2.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
 	clumpify.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_error_correct2.fastq.gz \
 	ecc passes=4 reorder \
-	threads=${task.cpus}
+	threads=${task.cpus} -eoom
 	"""
 
 }
@@ -290,12 +292,12 @@ process ERROR_CORRECT_PHASE_THREE {
 	tuple val(sample_id), path("${sample_id}_error_correct3.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
 	tadpole.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_error_correct3.fastq.gz \
 	ecc k=62 ordered \
-	threads=${task.cpus}
+	threads=${task.cpus} -eoom
 	"""
 
 }
@@ -324,13 +326,13 @@ process QUALITY_TRIM {
 	tuple val(sample_id), path("${sample_id}_qtrimmed.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
 	bbduk.sh -Xmx${Xmx}g in=`realpath ${reads}` \
 	out=${sample_id}_qtrimmed.fastq.gz \
 	qtrim=rl minavgquality=${params.min_qual} \
 	minlength=${params.min_len} \
-	ordered threads=${task.cpus}
+	ordered threads=${task.cpus} -eoom
 	"""
 
 }
@@ -356,9 +358,12 @@ process CLUMP_READS {
     tuple val(sample_id), path("${sample_id}.merged.fastq.gz")
 
 	script:
-	def Xmx = 2 * task.attempt
+	def Xmx = 3 * task.attempt
 	"""
-	clumpify.sh in=${reads} out=${sample_id}.merged.fastq.gz t=${task.cpus} reorder -Xmx${Xmx}g
+	clumpify.sh \
+	in=${reads} out=${sample_id}.merged.fastq.gz \
+	reorder \
+	threads=${task.cpus} -Xmx${Xmx}g -eoom
 	"""
 
 }
