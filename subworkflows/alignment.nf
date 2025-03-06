@@ -12,7 +12,6 @@ workflow ALIGNMENT {
     take:
     ch_amplicons
     ch_refseq
-    ch_sample_lookup
 
     main:
     REPORT_REFERENCES(
@@ -50,7 +49,6 @@ workflow ALIGNMENT {
 
     MULTI_SAMPLE_PLOT(
         MOSDEPTH.out.map { _sample_id, files -> files }.flatten().filter { mosdepth_file -> mosdepth_file.toString().endsWith(".per-base.bed") }.collect(),
-        ch_sample_lookup,
     )
 
     emit:

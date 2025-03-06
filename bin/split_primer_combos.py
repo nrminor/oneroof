@@ -104,6 +104,9 @@ def main() -> None:
 
     for df in bed_dfs:
         splicing = df.select("NAME").unique().item()
+        assert (
+            len(df) == 2  # noqa: PLR2004
+        ), f"Problematic splicing occurred with {splicing}"
         df.write_csv(
             file=f"{splicing}.bed",
             separator="\t",

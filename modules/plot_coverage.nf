@@ -36,7 +36,6 @@ process MULTI_SAMPLE_PLOT {
 
     input:
     path "inputs/*"
-    path sample_lookup
 
     output:
     path "*.pdf"
@@ -46,14 +45,12 @@ process MULTI_SAMPLE_PLOT {
         """
         multisample_plot.py \
         --input_dir inputs \
-        --sample_lookup ${sample_lookup} \
         --log
         """
     else
         """
         multisample_plot.py \
         --input_dir inputs \
-        --sample_lookup ${sample_lookup}
         """
 
 }

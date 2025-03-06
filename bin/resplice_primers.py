@@ -458,13 +458,11 @@ def resolve_primer_names(
     # current iteration is handling, and which old primer names should be in which
     # order for a join downstream.
     new_primer_pairs: list[tuple[str, str]] = []
-    handled_pairs: list[list[int]] = []
     old_primer_pairs: list[tuple[str, str]] = []
-    combo_ticker = 0
 
     # loop through both primers, where primer1 is from the "deficit primer" list, and
     # primer2 is from the "excess primer" list.
-    for old_fwd_primer, old_rev_primer in all_possible_pairs:
+    for i, (old_fwd_primer, old_rev_primer) in enumerate(all_possible_pairs):
         # pull of the last element, delimited by hyphen, on both primer names
         fwd_final_element = old_fwd_primer.split(idx_delim)[idx_position]
         rev_final_element = old_rev_primer.split(idx_delim)[idx_position]
@@ -482,29 +480,17 @@ def resolve_primer_names(
             )
             sys.exit(1)
 
-        # figure out which combination of primers is being handled and check
-        # whether it has already been handled
-        primer1_index = int(fwd_final_element)
-        primer2_index = int(rev_final_element)
-        current_pair = sorted((primer1_index, primer2_index))
-        if current_pair in handled_pairs:
-            continue
-
-        # now that we know we're working with a previously unhandled pairing, incrememt
-        # the combo ticker by one
-        combo_ticker += 1
-
         # use f-strings to construct new names that make the combinations explicit
-        new_fwd_primer = f"{old_fwd_primer}_splice{combo_ticker}"
-        new_rev_primer = f"{old_rev_primer}_splice{combo_ticker}"
+        new_fwd_primer = (
+            old_fwd_primer.replace(f"-{fwd_final_element}", "") + f"_splice{i + 1}"
+        )
+        new_rev_primer = (
+            old_rev_primer.replace(f"-{rev_final_element}", "") + f"_splice{i + 1}"
+        )
 
         # continue accumulating old and new primer pair lists
         old_primer_pairs.append((old_fwd_primer, old_rev_primer))
         new_primer_pairs.append((new_fwd_primer, new_rev_primer))
-
-        # now that we know nothing has gone awry, at this pair to the accumulating list
-        # of handled primer pairs
-        handled_pairs.append(current_pair)
 
     # flatten the tuples at each position of the pair lists with two comprehensions
     # to make it explicit to the reader that forward primers come before reverse primers
@@ -565,12 +551,12 @@ def resplice_primers(
             logger.debug(
                 f"Pair of primers within the amplicon {amplicon} detected: {pair_labels}. No resplicing will be needed here, though double check that the necessary forward and reverse suffixes, {fwd_suffix} and {rev_suffix}, are present.",
             )
-            assert any(
-                fwd_suffix in primer for primer in pair_labels
-            ), f"The forward suffix {fwd_suffix} is missing in the provided primer pairs: {pair_labels}. Aborting."
-            assert any(
-                rev_suffix in primer for primer in pair_labels
-            ), f"The reverse suffix {rev_suffix} is missing in the provided primer pairs: {pair_labels}. Aborting."
+            assert any(fwd_suffix in primer for primer in pair_labels), (
+                f"The forward suffix {fwd_suffix} is missing in the provided primer pairs: {pair_labels}. Aborting."
+            )
+            assert any(rev_suffix in primer for primer in pair_labels), (
+                f"The reverse suffix {rev_suffix} is missing in the provided primer pairs: {pair_labels}. Aborting."
+            )
 
             # if so, all is well. Append the primers into the growing list of correct
             # dataframes and move onto the next amplicon
@@ -607,8 +593,10 @@ def resplice_primers(
         # current design this should be impossible
         assert len(old_primer_names) == len(
             new_primer_names,
-        ), f"Insufficient number of replacement names ({new_primer_names}) generated \
+        ), (
+            f"Insufficient number of replacement names ({new_primer_names}) generated \
         for partition for amplicon {amplicon}: {primer_df}"
+        )
 
         # run a join on the old primer names to bring in the new primer names in their
         # proper locations
@@ -669,8 +657,13 @@ def finalize_primer_pairings(
             for primer in df.select("NAME").to_series().to_list()
             if rev_suffix in primer
         ]
-        if len(fwd_keepers) > 0 and len(rev_keepers) > 0:
-            final_frames.append(df)
+        if len(fwd_keepers) == 0 or len(rev_keepers) == 0:
+            logger.warning(
+                "Incorrect splicing occurred for the following sets of primers. The amplicon they are derived from will be skipped:\n{fwd_keepers}\n{rev_keepers}",
+            )
+            continue
+
+        final_frames.append(df)
 
     return pl.concat(final_frames)
 
