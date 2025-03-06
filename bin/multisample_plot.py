@@ -47,6 +47,8 @@ from plotnine import (
     geom_line,
     ggplot,
     ggsave,
+    guide_legend,
+    guides,
     labs,
     theme_minimal,
 )
@@ -221,6 +223,7 @@ def plot_log_coverages(
         )
         + facet_wrap("~chromosome", scales="free_x")
         + theme_minimal()
+        + guides(color=guide_legend(ncol=3))
     )
 
 
@@ -280,6 +283,7 @@ def plot_coverages(all_barcodes: pl.DataFrame, min_desired_depth: int = 20) -> g
         )
         + facet_wrap("~chromosome", scales="free_x")
         + theme_minimal()
+        + guides(color=guide_legend(ncol=3))
     )
 
 
@@ -314,8 +318,8 @@ def main() -> None:
     args = parse_command_line_args()
     min_desired_depth = args.min_coverage
     sample_list = [
-        str(path).replace(".per-base.bed", "")
-        for path in Path.cwd().glob("*.per-base.bed")
+        path.name.replace(".per-base.bed", "")
+        for path in Path(args.input_dir).glob("*.per-base.bed")
     ]
     sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
 
