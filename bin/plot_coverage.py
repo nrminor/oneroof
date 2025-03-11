@@ -267,7 +267,7 @@ def compute_perc_cov(
         coverage_lf.join(
             (
                 coverage_lf.filter(
-                    ~pl.col("passes_depth_cutoff") | pl.col("coverage").le(depth),
+                    ~pl.col("passes_depth_cutoff") | pl.col("coverage").ge(depth),
                 )
                 .group_by("chromosome")
                 .agg(pl.col("position").count().alias("count"))
@@ -295,9 +295,9 @@ def compute_perc_cov(
         .unique()
     )
 
-    assert (
-        percent_passing_lf.collect().shape[0] == contig_count
-    ), f"The number of rows does not match the expected number of contigs, {contig_count}."
+    assert percent_passing_lf.collect().shape[0] == contig_count, (
+        f"The number of rows does not match the expected number of contigs, {contig_count}."
+    )
 
     return percent_passing_lf
 
@@ -356,9 +356,9 @@ def main() -> None:
             width=11,
         )
     else:
-        assert (
-            isinstance(rendered, ggplot) or len(rendered) >= 1
-        ), f"Unexpected behavior for plot rendering: {rendered}"
+        assert isinstance(rendered, ggplot) or len(rendered) >= 1, (
+            f"Unexpected behavior for plot rendering: {rendered}"
+        )
 
     # write out a table of the percentage of positions that are greater than the cutoff
     (
