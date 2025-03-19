@@ -10,6 +10,7 @@
 !uv.lock
 !_quarto.yml
 !.pre-commit-config.yaml
+!refman.toml
 !.gitignore
 !.gitattributes
 !main.nf

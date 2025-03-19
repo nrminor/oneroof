@@ -1,0 +1,22 @@
+[project]
+title = "oneroof"
+description = "Reference files needed for routine runs on viral amplicon data from SARS-CoV-2 and H5N1"
+last_modified = "2025-03-19T17:24:04.673076Z"
+global = false
+
+[[project.datasets]]
+label = "sc2-qiaseq"
+fasta = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3.fasta"
+genbank = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3.gbk"
+gff = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3_corrected_orf1.gff.txt"
+bed = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/qiaseq_direct_boosted.bed"
+
+[[project.datasets]]
+label = "h5n1-B-custom"
+fasta = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/custom_reference.fasta"
+genbank = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/annotation-custom.gbk"
+bed = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/final_truth_no_dashes.bed"
+
+[[project.datasets]]
+label = "h5n1-B-segmental"
+fasta = "https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/h5_cattle_genome_root_segments.fasta"
