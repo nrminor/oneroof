@@ -1,49 +1,49 @@
 files:
 - path: assets/MN908947.3.fasta
   tracked: false
-  locked: false
+  locked: true
   md5: 80ca8308d08c5467c9d8af0f2e5de122
   size: 56879
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3.fasta
 - path: assets/MN908947.3.gbk
   tracked: false
-  locked: false
+  locked: true
   md5: b9b67235a2d9d0b0d7f531166ffefd41
   size: 30344
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3.gbk
 - path: assets/qiaseq_direct_boosted.bed
   tracked: false
-  locked: false
+  locked: true
   md5: dae22dbfdbbab0e81c30491892032839
   size: 24042
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/qiaseq_direct_boosted.bed
 - path: assets/MN908947.3_corrected_orf1.gff
   tracked: false
-  locked: false
+  locked: true
   md5: 2677b642c05d077bb9c11a9c1eb70277
   size: 4212
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/sars-cov-2/MN908947.3_corrected_orf1.gff
 - path: assets/h5_cattle_genome_root_segments.fasta
   tracked: false
-  locked: false
+  locked: true
   md5: fafd551ef4dee976027b3fe651b99c88
   size: 13750
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/h5_cattle_genome_root_segments.fasta
 - path: assets/custom_reference.fasta
   tracked: false
-  locked: false
+  locked: true
   md5: 9a3cd88c2ad25c1eb388ac8144438641
   size: 13947
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/custom_reference.fasta
 - path: assets/final_truth_no_dashes.bed
   tracked: false
-  locked: false
+  locked: true
   md5: 9a516e1519d35e0db2d88760d845b3be
   size: 13802
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/final_truth_no_dashes.bed
 - path: assets/annotation-custom.gbk
   tracked: false
-  locked: false
+  locked: true
   md5: e64da41e0188de2de7f64f1df7a6e55b
   size: 31193
   url: https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/H5N1-B.3.13/annotation-custom.gbk
