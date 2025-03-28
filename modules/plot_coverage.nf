@@ -54,3 +54,25 @@ process MULTI_SAMPLE_PLOT {
         """
 
 }
+
+process COVERAGE_SUMMARY {
+
+    /* */
+
+    publishDir params.alignment, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+    input:
+    path collected_passing_cov
+
+    output:
+    path "coverage_summary.tsv", emit: coverage_summary
+
+    script:
+    """
+    awk -F"\t" 'BEGIN {print "sample id\tproportion ≥ specified depth"} \$1!="sample id"{print \$1, \$4;}' *.tsv > coverage_summary.tsv
+    """
+
+}
