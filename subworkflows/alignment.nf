@@ -5,7 +5,8 @@ include { ALIGN_WITH_PRESET       } from "../modules/minimap2"
 include { CONVERT_AND_SORT ; SORT_BAM ; INDEX } from "../modules/samtools"
 include { RASUSA_ALN_DOWNSAMPLING } from "../modules/rasusa"
 include { MOSDEPTH                } from "../modules/mosdepth"
-include { PLOT_COVERAGE ; MULTI_SAMPLE_PLOT } from "../modules/plot_coverage"
+include { PLOT_COVERAGE ; MULTI_SAMPLE_PLOT ; COVERAGE_SUMMARY } from "../modules/plot_coverage"
+
 
 
 workflow ALIGNMENT {
@@ -49,6 +50,10 @@ workflow ALIGNMENT {
 
     MULTI_SAMPLE_PLOT(
         MOSDEPTH.out.map { _sample_id, files -> files }.flatten().filter { mosdepth_file -> mosdepth_file.toString().endsWith(".per-base.bed") }.collect(),
+    )
+
+    COVERAGE_SUMMARY(
+        PLOT_COVERAGE.out.passing_cov.collect()
     )
 
     emit:
