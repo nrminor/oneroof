@@ -1,4 +1,3 @@
-#!/usr/bin/env nextflow
 
 include { SPLIT_SEGMENTS ; FASTQ_CONVERSION } from "../modules/samtools"
 include { IDENTIFY_HAPLOTYPES } from "../modules/vsearch"
@@ -6,10 +5,16 @@ include { IDENTIFY_HAPLOTYPES } from "../modules/vsearch"
 workflow HAPLOTYPING {
     take:
     ch_bams
+    ch_vcfs
+    ch_ref
 
     main:
     SPLIT_SEGMENTS(
         ch_bams
+    )
+
+    PHASE_READS_WITH_DEVIDER(
+        SPLIT_SEGMENTS.out.join(ch_vcfs).combine(ch_ref)
     )
 
     FASTQ_CONVERSION(
