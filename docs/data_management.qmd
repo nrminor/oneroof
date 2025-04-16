@@ -1,0 +1,15 @@
+---
+title: "Reproducible Data Asset Management for Oneroof"
+toc: true
+format:
+    html:
+        embed-resources: true
+        keep-ipynb: false
+    typst: default
+    gfm:
+        wrap: none
+editor: source
+engine: knitr
+---
+
+Coming soon! This tutorial will cover managing data assets reproducibly with either of two command-line tools: [SciDataFlow](https://github.com/vsbuffalo/scidataflow) and [`refman`](https://github.com/nrminor/refman).

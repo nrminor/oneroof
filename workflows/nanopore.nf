@@ -70,7 +70,9 @@ workflow NANOPORE {
         if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
 
             HAPLOTYPING (
-                ALIGNMENT.out
+                ALIGNMENT.out,
+                VARIANTS.out,
+                ch_refseq
             )
 
         }

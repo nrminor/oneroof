@@ -50,4 +50,7 @@ workflow VARIANTS {
     MERGE_VCF_FILES(
         ANNOTATE_VCF.out.map { _label, vcf -> vcf }.collect()
     )
+
+    emit:
+    ANNOTATE_VCF.out
 }

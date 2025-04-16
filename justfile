@@ -25,13 +25,18 @@ make-readme:
 render-dev:
     quarto render docs/developer.qmd
 
+# Render the developer documentation in docs/developer.qmd.
+render-data-mgmt:
+    quarto render docs/data_management.qmd
+
 # Compress HTML files rendered from both the main and the developer documentation.
 compress_html:
     @gzip -f docs/index.html
     @gzip -f docs/developer.html
+    @gzip -f docs/data_management.html
 
 # Render the main docs and the developer docs.
-qmd: render render-dev
+qmd: render render-dev render-data-mgmt
 
 # Run all quarto recipes in sequence.
 docs: render make-readme render-dev compress_html
