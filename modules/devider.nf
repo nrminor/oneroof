@@ -24,7 +24,6 @@ process PHASE_READS_WITH_DEVIDER {
     -r ${fasta_ref} \
     -o ${sample_id}_devider \
     -t ${task.cpus} \
-    --preset ${devider_preset}
+    --preset ${params.devider_preset}
     """
-
 }

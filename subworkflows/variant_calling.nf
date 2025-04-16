@@ -52,5 +52,5 @@ workflow VARIANTS {
     )
 
     emit:
-    ANNOTATE_VCF.out.
+    ANNOTATE_VCF.out
 }

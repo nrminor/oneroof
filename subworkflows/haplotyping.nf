@@ -1,6 +1,6 @@
-
 include { SPLIT_SEGMENTS ; FASTQ_CONVERSION } from "../modules/samtools"
-include { IDENTIFY_HAPLOTYPES } from "../modules/vsearch"
+include { IDENTIFY_HAPLOTYPES      } from "../modules/vsearch"
+include { PHASE_READS_WITH_DEVIDER } from "../modules/devider"
 
 workflow HAPLOTYPING {
     take:
