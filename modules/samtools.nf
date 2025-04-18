@@ -180,7 +180,7 @@ process SPLIT_SEGMENTS {
     tuple val(sample_id), path(bam), path(index)
 
     output:
-    path "${sample_id}_*.bam"
+    tuple val(sample_id), path("${sample_id}_*.bam")
 
     shell:
     '''
