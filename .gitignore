@@ -35,8 +35,14 @@
 !/conf/*.yml
 
 # bin of executable scripts
-!/bin
+!/bin/
 !/bin/*.py
+!/bin/*.R
+!/bin/*.r
+!/bin/*.pl
+!/bin/*.lua
+!/bin/*.sh
+!/bin/*.awk
 
 # groovy libraries
 !/lib

@@ -17,6 +17,7 @@ workflow NANOPORE {
         ch_primer_bed
         ch_refseq
         ch_refgbk
+        ch_contam_fasta
         ch_snpeff_config
 
     main:
@@ -32,14 +33,14 @@ workflow NANOPORE {
                 ch_refseq
             )
 
+            QUALITY_CONTROL (
+                PRIMER_HANDLING.out,
+                ch_contam_fasta
+            )
+
             ALIGNMENT (
                 PRIMER_HANDLING.out,
                 ch_refseq
-            )
-
-            QUALITY_CONTROL (
-                PRIMER_HANDLING.out,
-                ALIGNMENT.out
             )
 
         } else {
@@ -51,7 +52,7 @@ workflow NANOPORE {
 
             QUALITY_CONTROL (
                 GATHER_NANOPORE.out,
-                ALIGNMENT.out
+                ch_contam_fasta
             )
 
         }
