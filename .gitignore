@@ -20,6 +20,12 @@
 !main.nf
 !nextflow.config
 
+# github action workflows
+!/.github
+!/.github/workflows
+!/.github/workflows/*.yml
+!/.github/workflows/*.yaml
+
 # nextflow workflows
 !/workflows
 !/workflows/*.nf

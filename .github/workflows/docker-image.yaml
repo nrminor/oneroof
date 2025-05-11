@@ -4,13 +4,19 @@ on:
     push:
         branches: [ "main", "dev" ]
         paths:
+        - '.github/workflows/docker-image.yaml'
         - 'Dockerfile'
+        - 'Containerfile'
         - 'pyproject.toml'
+        - 'pixi.lock'
     pull_request:
         branches: [ "main" ]
         paths:
+        - '.github/workflows/docker-image.yaml'
         - 'Dockerfile'
+        - 'Containerfile'
         - 'pyproject.toml'
+        - 'pixi.lock'
 
 jobs:
 
@@ -21,4 +27,4 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         - name: Build the Docker image
-          run: docker build . --tag 30252:ci_test_$(date +%s)
+          run: docker build --file Containerfile --tag oneroof:ci_test_$(date +%s) .
