@@ -27,4 +27,4 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         - name: Build the Docker image
-          run: docker build --file Containerfile --tag oneroof:ci_test_$(date +%s)
+          run: docker build --file Containerfile --tag oneroof:ci_test_$(date +%s) .
