@@ -5,13 +5,16 @@
 !README.md
 !justfile
 !Dockerfile
+!Containerfile
 !pyproject.toml
+!flake.nix
 !pixi.lock
 !uv.lock
 !_quarto.yml
 !.pre-commit-config.yaml
 !refman.toml
 !data_manifest.yml
+!.envrc
 !.gitignore
 !.gitattributes
 !main.nf

@@ -6,6 +6,7 @@ process FILTER_WITH_CHOPPER {
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     maxRetries 2
 
+    array 1000
     cpus 4
 
     input:
