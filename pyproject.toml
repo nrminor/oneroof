@@ -34,6 +34,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1",
@@ -89,6 +90,9 @@ snpsift = ">=5.2,<6"
 bbmap = ">=39.1,<40"
 bedtools = ">=2.31.1,<3"
 devider = ">=0.0.1,<0.0.2"
+deacon = ">=0.2.0,<0.3"
+sylph = ">=0.8.1,<0.9"
+sylph-tax = ">=1.2.0,<2"
 
 [tool.uv]
 dev-dependencies = [
@@ -105,6 +109,7 @@ dev-dependencies = [
     "quarto>=0.1.0",
     "ruff>=0.9.6",
     "tox>=4.18.1",
+    "ty>=0.0.0a8",
 ]
 compile-bytecode = true
 

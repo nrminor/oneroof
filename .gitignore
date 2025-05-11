@@ -5,13 +5,16 @@
 !README.md
 !justfile
 !Dockerfile
+!Containerfile
 !pyproject.toml
+!flake.nix
 !pixi.lock
 !uv.lock
 !_quarto.yml
 !.pre-commit-config.yaml
 !refman.toml
 !data_manifest.yml
+!.envrc
 !.gitignore
 !.gitattributes
 !main.nf
@@ -35,8 +38,14 @@
 !/conf/*.yml
 
 # bin of executable scripts
-!/bin
+!/bin/
 !/bin/*.py
+!/bin/*.R
+!/bin/*.r
+!/bin/*.pl
+!/bin/*.lua
+!/bin/*.sh
+!/bin/*.awk
 
 # groovy libraries
 !/lib

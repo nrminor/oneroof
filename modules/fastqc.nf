@@ -15,6 +15,7 @@ process FASTQC {
 	output:
     path "*.html", emit: html
     path "*.zip", emit: zip
+    tuple val(barcode), path(reads), emit: fastq
 
 	script:
 	"""

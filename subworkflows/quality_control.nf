@@ -1,24 +1,34 @@
-#!/usr/bin/env nextflow
-
 include { FASTQC  } from "../modules/fastqc"
-// include { CRAMINO } from "../modules/cramino"
+include { INDEX_CONTAMINANTS; DECONTAMINATE } from "../modules/deacon"
 include { MULTIQC } from "../modules/multiqc"
 
 workflow QUALITY_CONTROL {
     take:
     ch_reads
-    _ch_alignments
+    ch_contam_fasta
 
     main:
-    FASTQC(
-        ch_reads
-    )
+    if ( params.contam_fasta && file(params.contam_fasta).isFile() ) {
+        INDEX_CONTAMINANTS(ch_contam_fasta)
 
-    // CRAMINO (
-    //     _ch_alignments
-    // )
+        DECONTAMINATE(
+            ch_reads.combine(INDEX_CONTAMINANTS.out)
+        )
+
+        FASTQC(
+            DECONTAMINATE.out
+        )
+    } else {
+        FASTQC(
+            ch_reads
+        )
+       
+    }
 
     MULTIQC(
         FASTQC.out.zip.collect()
     )
+
+    emit:
+    FASTQC.out.fastq
 }

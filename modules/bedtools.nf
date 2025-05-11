@@ -2,6 +2,8 @@ process GET_PRIMER_SEQS {
 
     /* */
 
+    array 1000
+
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 

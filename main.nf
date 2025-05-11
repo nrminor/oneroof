@@ -63,6 +63,16 @@ workflow {
         Channel.fromPath( params.ref_gbk ) :
         Channel.empty()
 
+    ch_contam_fasta = params.contam_fasta && file(params.contam_fasta).isFile()
+        ? Channel.fromPath( params.contam_fasta )
+        : Channel.empty()
+
+    ch_metagenomics_ref = params.meta_ref
+        ? file(params.meta_ref).isFile()
+        ? Channel.fromPath( params.meta_ref )
+        : Channel.from( params.meta_ref )
+        : Channel.empty()
+
     ch_snpeff_config = params.snpEff_config ?
         Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
@@ -74,7 +84,9 @@ workflow {
             ch_primer_bed,
             ch_refseq,
             ch_ref_gbk,
+            ch_contam_fasta,
             ch_snpeff_config,
+            ch_metagenomics_ref,
         )
 
     }  else if ( params.platform == "illumina" ) {
