@@ -1,3 +1,37 @@
+process MERGE_READ_PAIRS {
+
+    /* */
+
+	tag "${sample_id}"
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 4
+
+	input:
+	tuple val(sample_id), path(reads1), path(reads2)
+
+	output:
+	tuple val(sample_id), path("${sample_id}.merged.preclump.fastq.gz")
+
+	script:
+	"""
+	vsearch \
+	--fastq_mergepairs ${reads1} \
+	--reverse ${reads2} \
+	--fastqout_notmerged_fwd ${sample_id}.unmerged_fwd.fastq.gz \
+	--fastqout_notmerged_rev ${sample_id}.unmerged_rev.fastq.gz \
+	--eetabbedout ${sample_id}.merge_stats.tsv \
+	--log ${sample_id}.merging.log \
+	--threads ${task.cpus} \
+	--eeout \
+	--fastqout - \
+	| gzip -c - > ${sample_id}.merged.preclump.fastq.gz
+	"""
+
+}
+
 process ORIENT_READS {
 
     tag "${barcode}"
@@ -10,14 +44,15 @@ process ORIENT_READS {
     each path(refseq)
 
     output:
-    tuple val(barcode), path("${barcode}.oriented.fastq")
+    tuple val(barcode), path("${barcode}.oriented.fastq.gz")
 
     script:
     """
     vsearch \
 	--orient ${reads} \
     --db ${refseq} \
-    --fastqout ${barcode}.oriented.fastq
+    --fastqout - \
+	gzip -c > ${barcode}.oriented.fastq.gz
     """
 
 }

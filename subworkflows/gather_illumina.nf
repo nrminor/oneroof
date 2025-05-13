@@ -2,7 +2,8 @@
 
 include { PUBLISH_COMMAND   } from "../modules/reporting"
 include { VALIDATE_ILLUMINA } from "../modules/validate"
-include { BBMERGE ; CLUMP_READS } from "../modules/bbmap"
+include { MERGE_READ_PAIRS } from "../modules/vsearch.nf"
+// include { BBMERGE ; CLUMP_READS } from "../modules/bbmap"
 
 workflow GATHER_ILLUMINA {
     main:
@@ -15,14 +16,14 @@ workflow GATHER_ILLUMINA {
         ch_prepped
     )
 
-    BBMERGE(
+    MERGE_READ_PAIRS(
         VALIDATE_ILLUMINA.out.map { id, reads1, reads2, _report -> tuple(id, file(reads1), file(reads2)) }
     )
 
-    CLUMP_READS(
-        BBMERGE.out
-    )
+    // CLUMP_READS(
+    //     BBMERGE.out
+    // )
 
     emit:
-    CLUMP_READS.out
+    MERGE_READ_PAIRS.out
 }
