@@ -5,7 +5,6 @@ process SORT_AND_COMPRESS_TO_FASTA {
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
-    array 1000
 	cpus 3
 
     input:
@@ -54,7 +53,6 @@ process FIND_COMPLETE_AMPLICONS {
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 	maxRetries 2
 
-    array 1000
 	cpus 3
 
     input:
