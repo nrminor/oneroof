@@ -151,9 +151,11 @@ process TRIM_ENDS_TO_PRIMERS {
     """
     FORWARD_PATTERN=\$(head -n 1 ${patterns_file})
     REVERSE_PATTERN=\$(tail -n 1 ${patterns_file})
+    FORWARD_LENGTH=\${#FORWARD_PATTERN}
+    REVERSE_LENGTH=\${#REVERSE_PATTERN}
 
     seqkit amplicon \
-    -f -r 1:-1 \
+    --region \${FORWARD_LENGTH}:-\${REVERSE_LENGTH} \
     --forward \$FORWARD_PATTERN \
     --reverse \$REVERSE_PATTERN \
     --max-mismatch ${params.max_mismatch} \
