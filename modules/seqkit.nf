@@ -16,7 +16,7 @@ process SORT_AND_COMPRESS_TO_FASTA {
     script:
 	barcode = file(reads).getSimpleName()
     """
-    set -eou pipefile
+    set -eou pipefail
 
     mkdir -p tmp
 
