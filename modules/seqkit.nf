@@ -166,3 +166,22 @@ process TRIM_ENDS_TO_PRIMERS {
     """
 
 }
+
+process FASTQ_TO_FASTA{
+
+    tag "${barcode}"
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
+
+    input:
+    tuple val(barcode), path("${barcode}*.trimmed.fastq.gz")
+
+    output:
+    tuple val(barcode), path("${barcode}*.trimmed.fasta.gz")
+
+    script:
+    """
+    seqkit fq2fa "${barcode}*.trimmed.fastq.gz" -o "${barcode}*.trimmed.fasta.gz"
+    """
+}
