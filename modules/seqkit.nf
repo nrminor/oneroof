@@ -167,7 +167,7 @@ process TRIM_ENDS_TO_PRIMERS {
 
 }
 
-process FASTQ_TO_FASTA{
+process COMPRESS_TO_SORTED_FASTA{
 
     tag "${barcode}"
 
@@ -175,13 +175,15 @@ process FASTQ_TO_FASTA{
     maxRetries 2
 
     input:
-    tuple val(barcode), path("${barcode}*.trimmed.fastq.gz")
+    tuple val(barcode), path(fastq_reads)
 
     output:
-    tuple val(barcode), path("${barcode}*.trimmed.fasta.gz")
+    tuple val(barcode), path("${barcode}.fasta.gz")
 
     script:
     """
-    seqkit fq2fa "${barcode}*.trimmed.fastq.gz" -o "${barcode}*.trimmed.fasta.gz"
+    seqkit fq2fa ${fastq_reads} \
+    | seqkit seq --only-id \
+    | seqkit sort --two-pass -o "${barcode}.fasta.gz"
     """
 }

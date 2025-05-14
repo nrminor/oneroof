@@ -1,5 +1,5 @@
 include { CORRECT_WITH_FASTP } from "../modules/fastp"
-include { FASTQ_TO_FASTA } from "../modules/seqkit"
+include { COMPRESS_TO_SORTED_FASTA } from "../modules/seqkit"
 
 workflow ILLUMINA_CORRECTION {
     take:
@@ -10,10 +10,10 @@ workflow ILLUMINA_CORRECTION {
         ch_uncorrected_reads
     )
 
-    FASTQ_TO_FASTA(
+    COMPRESS_TO_SORTED_FASTA(
         CORRECT_WITH_FASTP.out
     )
 
     emit:
-    FASTQ_TO_FASTA.out
+    COMPRESS_TO_SORTED_FASTA.out
 }
