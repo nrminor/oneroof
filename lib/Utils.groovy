@@ -146,4 +146,18 @@ class Utils {
                 .stripIndent()
     }
 
+    public static String reverseComplement(String seq) {
+        def complementMap = [
+            'A': 'T', 'T': 'A',
+            'C': 'G', 'G': 'C',
+            'a': 't', 't': 'a',
+            'c': 'g', 'g': 'c',
+            'N': 'N', 'n': 'n',
+            'U': 'A', 'u': 'a',
+        ]
+        return seq.reverse().collect { base ->
+            complementMap.get(base, 'N')  // default to 'N' if unknown base
+        }.join()
+    }
+
 }

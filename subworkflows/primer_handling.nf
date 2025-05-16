@@ -6,9 +6,10 @@ include { GET_PRIMER_PATTERNS      } from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS          } from "../modules/bedtools"
 include { FAIDX                    } from "../modules/samtools"
 include { ORIENT_READS             } from "../modules/vsearch"
+include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
 include {
     FIND_COMPLETE_AMPLICONS ;
-    TRIM_ENDS_TO_PRIMERS ;
+    PER_AMPLICON_FILTERS ;
     MERGE_BY_SAMPLE ;
     AMPLICON_STATS
 } from "../modules/seqkit"
@@ -51,7 +52,7 @@ workflow PRIMER_HANDLING {
 
     ORIENT_READS(
         ch_basecalls
-            .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFastq()) }
+            .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFasta()) }
             .filter { it[2] > 100 }
             .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) },
         ch_refseq,
@@ -67,14 +68,14 @@ workflow PRIMER_HANDLING {
 
     FILTER_WITH_CHOPPER(
         TRIM_ENDS_TO_PRIMERS.out
-            .map { id, fastq -> tuple(id, fastq, file(fastq).countFastq()) }
+            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
             .filter { it[2] > 0 }
             .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
     FAIDX(
         FILTER_WITH_CHOPPER.out
-        .map { id, fastq -> tuple(id, fastq, file(fastq).countFastq()) }
+        .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
         .filter { it[2] > 0 }
         .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
