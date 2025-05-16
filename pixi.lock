@@ -41,6 +41,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/deacon-0.2.0-h4349ce8_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/devider-0.0.1-ha6fb395_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/dnaio-1.2.2-py312hf67a6ed_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/duckdb-1.2.2-hca7485f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/expat-2.6.2-h59595ed_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/fastp-0.24.0-h125f33a_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/fastqc-0.12.1-hdfd78af_0.tar.bz2
@@ -57,6 +58,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gcc_impl_linux-64-13.2.0-h9eb54c0_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/giflib-5.2.2-hd590300_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/graphite2-1.3.13-h59595ed_1003.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/grepq-1.4.8-ha6fb395_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gsl-2.7-he838d99_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-8.5.0-hfac3d4d_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/htslib-1.20-h5efdd21_1.tar.bz2
@@ -153,6 +155,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha2e5f31_6.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.12.3-hab00c5b_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/python-duckdb-1.2.2-py312h2ec8cdc_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-isal-1.7.1-py312h66e93f0_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-tzdata-2025.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-zlib-ng-0.5.1-py312h27ca174_0.conda
@@ -281,6 +284,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/osx-64/deacon-0.2.0-h00cbfe0_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/devider-0.0.1-hdc87acc_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/dnaio-1.2.2-py310h341b679_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/duckdb-1.2.2-hca7485f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/expat-2.6.2-h73e2aa4_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-64/fastp-0.24.0-h1d47e6f_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/fastqc-0.12.1-hdfd78af_0.tar.bz2
@@ -289,6 +293,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-64/fonttools-4.56.0-py310h8e2f543_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/freetype-2.12.1-h60636b9_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/future-1.0.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/bioconda/osx-64/grepq-1.4.8-hdc87acc_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/gsl-2.7-h93259b0_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/htslib-1.20-hec81eee_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/humanfriendly-10.0-pyhd8ed1ab_6.conda
@@ -369,6 +374,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha2e5f31_6.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-3.10.14-h00d2728_0_cpython.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-64/python-duckdb-1.2.2-py310h6954a95_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-isal-1.7.2-py310hbb8c376_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-tzdata-2025.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-zlib-ng-0.5.1-py310hb703aec_0.conda
@@ -1328,6 +1334,16 @@ packages:
   - pkg:pypi/dnaio?source=hash-mapping
   size: 111524
   timestamp: 1728031832325
+- conda: https://conda.anaconda.org/conda-forge/noarch/duckdb-1.2.2-hca7485f_0.conda
+  sha256: a491c8872a7ed94d2ea4959ff9c1b476588fc8f5f383f4a12c8707995b485403
+  md5: 39e3be092236c8c95d5cddd466a0a490
+  depends:
+  - python-duckdb >=1.2.2,<1.2.3.0a0
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 8221
+  timestamp: 1744974386396
 - pypi: https://files.pythonhosted.org/packages/2b/43/1de8579820800f8c144eba2e8f0fa622e0d7b24a88b99f7871ea18996b27/edlib-1.3.9.post1-cp310-cp310-macosx_10_9_x86_64.whl
   name: edlib
   version: 1.3.9.post1
@@ -1724,6 +1740,29 @@ packages:
   - objgraph ; extra == 'test'
   - psutil ; extra == 'test'
   requires_python: '>=3.7'
+- conda: https://conda.anaconda.org/bioconda/linux-64/grepq-1.4.8-ha6fb395_0.tar.bz2
+  sha256: 4baf1a1b5e798f0e50b0cf55403adcbdf6e33a3f4a53f059dedca70bcbbabe90
+  md5: b7e0fb64bf83d1c8b31ab0b69ce84287
+  depends:
+  - libgcc >=13
+  - libstdcxx >=13
+  constrains:
+  - __glibc >=2.17
+  license: MIT
+  purls: []
+  size: 2757560
+  timestamp: 1740201594951
+- conda: https://conda.anaconda.org/bioconda/osx-64/grepq-1.4.8-hdc87acc_0.tar.bz2
+  sha256: c8261f7adb1b989e90c20479c888bf93c40028a0514a8e03cca85eaacbca6a24
+  md5: e3a82f244b70cf09aa9dca277eff8c1e
+  depends:
+  - libcxx >=18
+  constrains:
+  - __osx >=10.13
+  license: MIT
+  purls: []
+  size: 2642573
+  timestamp: 1740202781441
 - conda: https://conda.anaconda.org/conda-forge/linux-64/gsl-2.7-he838d99_0.tar.bz2
   sha256: 132a918b676dd1f533d7c6f95e567abf7081a6ea3251c3280de35ef600e0da87
   md5: fec079ba39c9cca093bf4c00001825de
@@ -3423,7 +3462,7 @@ packages:
 - pypi: .
   name: oneroof
   version: 1.0.0
-  sha256: 1011d61080338b6ad3840b3fae4dc91e2863005f43f21af3a60722044c0e7cd2
+  sha256: 737e0e622a429d8e6c6eb7ed71f52831948d4aae01a2f6cec2c5b5a04a534d38
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
@@ -4176,6 +4215,35 @@ packages:
   - pkg:pypi/python-dateutil
   size: 222742
   timestamp: 1709299922152
+- conda: https://conda.anaconda.org/conda-forge/linux-64/python-duckdb-1.2.2-py312h2ec8cdc_0.conda
+  sha256: c2a793dbea3723fc668446f885998097cc250adffd39a83eb0f855066270a40b
+  md5: 58898f8968f4493475d46ea49a87333d
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=13
+  - libstdcxx >=13
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/duckdb?source=hash-mapping
+  size: 23812415
+  timestamp: 1744974009724
+- conda: https://conda.anaconda.org/conda-forge/osx-64/python-duckdb-1.2.2-py310h6954a95_0.conda
+  sha256: fba885427b259a5c61e89c93a43878514e141c205ce602d1451c04331148bc97
+  md5: ffd809303942908a802cc19e470eafbd
+  depends:
+  - __osx >=10.13
+  - libcxx >=18
+  - python >=3.10,<3.11.0a0
+  - python_abi 3.10.* *_cp310
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/duckdb?source=hash-mapping
+  size: 21475768
+  timestamp: 1744973621632
 - conda: https://conda.anaconda.org/conda-forge/linux-64/python-isal-1.7.1-py312h66e93f0_0.conda
   sha256: 4374f20a906e55468cd7f7cc3ba6929858c8c71f8c4dbf4a15e5e2244ad30e60
   md5: 841c6a8be59c8e0a9a3988374f58abaf

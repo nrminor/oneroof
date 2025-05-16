@@ -94,6 +94,8 @@ deacon = ">=0.2.0,<0.3"
 sylph = ">=0.8.1,<0.9"
 sylph-tax = ">=1.2.0,<2"
 fastp = ">=0.24.0,<0.25"
+grepq = ">=1.4.8,<2"
+duckdb = ">=1.2.2,<2"
 
 [tool.uv]
 dev-dependencies = [
