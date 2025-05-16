@@ -1,5 +1,3 @@
-#!/usr/bin/env nextflow
-
 include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
 include { ILLUMINA_CORRECTION } from "../subworkflows/illumina_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"

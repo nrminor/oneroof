@@ -1,6 +1,7 @@
 process CALL_VARIANTS {
 
     tag "${barcode}"
+    label "big_mem"
     publishDir params.ivar, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
@@ -28,6 +29,7 @@ process CALL_VARIANTS {
 process CALL_CONSENSUS {
 
     tag "${barcode}"
+    label "big_mem"
     publishDir params.consensus, mode: 'copy', overwrite: true
 
 	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }

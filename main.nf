@@ -86,7 +86,7 @@ workflow {
             ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
-            ch_metagenomics_ref,
+            ch_metagenomics_ref
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -95,7 +95,9 @@ workflow {
             ch_primer_bed,
             ch_refseq,
             ch_ref_gbk,
+            ch_contam_fasta,
             ch_snpeff_config,
+            ch_metagenomics_ref
         )
 
     } else {

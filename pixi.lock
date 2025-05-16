@@ -42,6 +42,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/linux-64/devider-0.0.1-ha6fb395_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/linux-64/dnaio-1.2.2-py312hf67a6ed_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/expat-2.6.2-h59595ed_0.conda
+      - conda: https://conda.anaconda.org/bioconda/linux-64/fastp-0.24.0-h125f33a_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/fastqc-0.12.1-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/font-ttf-inconsolata-3.000-h77eed37_0.tar.bz2
@@ -281,6 +282,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/osx-64/devider-0.0.1-hdc87acc_2.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/dnaio-1.2.2-py310h341b679_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/expat-2.6.2-h73e2aa4_0.conda
+      - conda: https://conda.anaconda.org/bioconda/osx-64/fastp-0.24.0-h1d47e6f_0.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/fastqc-0.12.1-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/fontconfig-2.14.2-h5bb23bf_0.conda
@@ -1392,6 +1394,31 @@ packages:
   - pandas>=1.4.4 ; extra == 'pandas'
   - polars>=0.16.14 ; extra == 'polars'
   requires_python: '>=3.8'
+- conda: https://conda.anaconda.org/bioconda/linux-64/fastp-0.24.0-h125f33a_0.tar.bz2
+  sha256: 59a651e1fe534ae95a5fde7a01aef06968943b25bfdedaaeb730fb48d4b3642f
+  md5: 3757da6c9eba9a82cfca11b73c8b7aca
+  depends:
+  - isa-l >=2.31.0,<3.0a0
+  - libdeflate >=1.20,<1.24.0a0
+  - libgcc >=12
+  - libstdcxx >=12
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 3194482
+  timestamp: 1731050153214
+- conda: https://conda.anaconda.org/bioconda/osx-64/fastp-0.24.0-h1d47e6f_0.tar.bz2
+  sha256: 8622a449b6725674e4287392ef12eb94cdb0f28a4b90385795275f89bd292b5a
+  md5: 7f1504b3618a2b15e21804a398a3170a
+  depends:
+  - isa-l >=2.31.0,<3.0a0
+  - libcxx >=16
+  - libdeflate >=1.20,<1.24.0a0
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 240857
+  timestamp: 1731050845650
 - conda: https://conda.anaconda.org/bioconda/noarch/fastqc-0.12.1-hdfd78af_0.tar.bz2
   sha256: 7cc26225d590540ae95cd24940ff42f2da7479dd4cd22ae9ab9298665d06790c
   md5: c9f6a4b12229f7331f79c9a00dd6e240
@@ -3396,7 +3423,7 @@ packages:
 - pypi: .
   name: oneroof
   version: 1.0.0
-  sha256: 46c33c4dc1b5615442d4b288f1f18969d237c5eb4fde13092f6a27fd7db0c095
+  sha256: 1011d61080338b6ad3840b3fae4dc91e2863005f43f21af3a60722044c0e7cd2
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
