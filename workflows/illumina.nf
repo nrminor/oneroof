@@ -2,7 +2,6 @@ include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
 include { ILLUMINA_CORRECTION } from "../subworkflows/illumina_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
-include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
@@ -28,7 +27,8 @@ workflow ILLUMINA {
         GATHER_ILLUMINA ( )
 
         ILLUMINA_CORRECTION (
-            GATHER_ILLUMINA.out
+            GATHER_ILLUMINA.out,
+            ch_contam_fasta
         )
 
         if ( params.primer_bed ) {
@@ -39,25 +39,15 @@ workflow ILLUMINA {
                 ch_refseq
             )
 
-            QUALITY_CONTROL (
-                PRIMER_HANDLING.out,
-                ch_contam_fasta
-            )
-
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
         } else {
 
-            QUALITY_CONTROL (
-                ILLUMINA_CORRECTION.out,
-                ch_contam_fasta
-            )
-
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
@@ -65,7 +55,7 @@ workflow ILLUMINA {
 
         METAGENOMICS(
             ch_metagenome_ref,
-            QUALITY_CONTROL.out,
+            PRIMER_HANDLING.out,
             Channel.empty()
         )
 
