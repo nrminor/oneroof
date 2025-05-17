@@ -162,6 +162,8 @@ process MERGE_BY_SAMPLE {
 	seqkit scat \
 	--find-only \
 	--threads ${task.cpus} \
+    --in-format fasta \
+    --out-format fasta \
 	fastas/ \
 	| bgzip -o ${barcode}.amplicons.fasta.gz
 	"""
