@@ -105,7 +105,6 @@ process PER_AMPLICON_FILTERS {
     seqkit seq \
     --max-len ${params.max_len} \
     --min-len ${params.min_len} \
-    --min-qual ${params.min_qual} \
     --threads ${task.cpus} \
     -o ${new_id}.filtered.fasta.gz
     ${fasta}
