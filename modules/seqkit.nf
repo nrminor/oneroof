@@ -134,7 +134,7 @@ process AMPLICON_STATS {
     seqkit stats \
 	--threads ${task.cpus} \
 	--all --basename --tabular \
-	amplicons/*.fastq.gz > ${barcode}.per_amplicon_stats.tsv
+	amplicons/*.fasta.gz > ${barcode}.per_amplicon_stats.tsv
     """
 
 }
