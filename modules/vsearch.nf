@@ -13,7 +13,7 @@ process MERGE_READ_PAIRS {
 	tuple val(sample_id), path(reads1), path(reads2)
 
 	output:
-	tuple val(sample_id), path("${sample_id}.merged.preclump.fastq.gz")
+	tuple val(sample_id), path("${sample_id}.merged.fastq.gz")
 
 	script:
 	"""
@@ -27,7 +27,7 @@ process MERGE_READ_PAIRS {
 	--threads ${task.cpus} \
 	--eeout \
 	--fastqout - \
-	| gzip -c - > ${sample_id}.merged.preclump.fastq.gz
+	| gzip -c - > ${sample_id}.merged.fastq.gz
 	"""
 
 }
@@ -44,15 +44,15 @@ process ORIENT_READS {
     each path(refseq)
 
     output:
-    tuple val(barcode), path("${barcode}.oriented.fastq.gz")
+    tuple val(barcode), path("${barcode}.oriented.fasta.gz")
 
     script:
     """
     vsearch \
 	--orient ${reads} \
     --db ${refseq} \
-    --fastqout - \
-	gzip -c > ${barcode}.oriented.fastq.gz
+    --fastaout - \
+	| gzip -c > ${barcode}.oriented.fasta.gz
     """
 
 }

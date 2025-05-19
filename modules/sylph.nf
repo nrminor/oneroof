@@ -24,15 +24,6 @@ process SKETCH_DATABASE_KMERS {
 	"""
 }
 
-    // SKETCH_SAMPLE_KMERS(ch_sample_reads)
-
-    // PROFILE_SAMPLE(
-    //     SKETCH_SAMPLE_KMERS.out.combine(ch_sylph_db_queue)
-    // )
-
-    // OVERLAY_TAXONOMY(
-
-
 process SKETCH_SAMPLE_KMERS {
 
 	/*
@@ -52,6 +43,9 @@ process SKETCH_SAMPLE_KMERS {
 
 	output:
 	tuple val(sample_id), path("${sample_id}*.sylsp")
+
+	when:
+    params.sylph_db
 
 	script:
 	"""

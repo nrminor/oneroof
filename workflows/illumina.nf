@@ -28,7 +28,8 @@ workflow ILLUMINA {
         GATHER_ILLUMINA ( )
 
         ILLUMINA_CORRECTION (
-            GATHER_ILLUMINA.out
+            GATHER_ILLUMINA.out,
+            ch_contam_fasta
         )
 
         if ( params.primer_bed ) {
@@ -39,25 +40,25 @@ workflow ILLUMINA {
                 ch_refseq
             )
 
-            QUALITY_CONTROL (
-                PRIMER_HANDLING.out,
-                ch_contam_fasta
-            )
+            // QUALITY_CONTROL (
+            //     PRIMER_HANDLING.out,
+            //     ch_contam_fasta
+            // )
 
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
         } else {
 
-            QUALITY_CONTROL (
-                ILLUMINA_CORRECTION.out,
-                ch_contam_fasta
-            )
+            // QUALITY_CONTROL (
+            //     ILLUMINA_CORRECTION.out,
+            //     ch_contam_fasta
+            // )
 
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                ILLUMINA_CORRECTION.out,
                 ch_refseq
             )
 
@@ -65,7 +66,7 @@ workflow ILLUMINA {
 
         METAGENOMICS(
             ch_metagenome_ref,
-            QUALITY_CONTROL.out,
+            PRIMER_HANDLING.out,
             Channel.empty()
         )
 
@@ -86,3 +87,4 @@ workflow ILLUMINA {
         )
 
 }
+

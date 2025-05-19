@@ -1,23 +1,50 @@
-process COMPRESS_TO_SORTED_FASTA {
+process SORT_AND_COMPRESS_TO_FASTA {
 
-    tag "${barcode}"
+    /* */
 
-    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-    maxRetries 2
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 3
 
     input:
-    tuple val(barcode), path(fastq_reads)
+	tuple path(reads), path(patterns)
 
     output:
-    tuple val(barcode), path("${barcode}.fasta.gz")
+    tuple val(barcode), path(patterns), path("${barcode}_amplicons.fasta.gz")
 
     script:
+	barcode = file(reads).getSimpleName()
     """
-    seqkit fq2fa ${fastq_reads} \
-    | seqkit seq --only-id \
-    | seqkit sort --two-pass -o "${barcode}.fasta.gz"
+    set -eou pipefail
+
+    mkdir -p tmp
+
+    cleanup() {
+        echo "Performing cleanup..."
+        rm -rf tmp
+    }
+    trap cleanup EXIT
+
+    seqkit fq2fa \
+    --threads ${task.cpus} \
+    --out-file tmp/1.fasta \
+    ${reads}
+
+    seqkit faidx tmp/1.fasta
+
+    seqkit sort \
+    --by-seq \
+    --two-pass \
+    --threads ${task.cpus} \
+    --out-file ${barcode}_amplicons.fasta.gz \
+    tmp/1.fasta
+
+    # Explicit sync to help ensure file is flushed before cleanup
+    sync
     """
 }
+
 
 process FIND_COMPLETE_AMPLICONS {
 
@@ -46,6 +73,64 @@ process FIND_COMPLETE_AMPLICONS {
 	-o ${barcode}_amplicons.fasta.gz
     """
 
+}
+
+process AMPLICON_STATS {
+
+    /* */
+
+	tag "${barcode}"
+	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 3
+
+	input:
+	tuple val(barcode), path("amplicons/*")
+
+    output:
+    path "${barcode}.per_amplicon_stats.tsv"
+
+    script:
+    """
+    seqkit stats \
+	--threads ${task.cpus} \
+	--all --basename --tabular \
+	amplicons/*.fasta.gz > ${barcode}.per_amplicon_stats.tsv
+    """
+
+}
+
+process MERGE_BY_SAMPLE {
+
+    /* */
+
+	tag "${barcode}"
+	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 3
+
+	input:
+	tuple val(barcode), path("fastas/*")
+
+	output:
+	tuple val(barcode), path("${barcode}.amplicons.fasta.gz")
+
+	script:
+	"""
+	seqkit scat \
+	--find-only \
+	--threads ${task.cpus} \
+    --in-format fasta \
+    --out-format fasta \
+	fastas/ \
+	| bgzip -o ${barcode}.amplicons.fasta.gz
+	"""
 }
 
 process TRIM_ENDS_TO_PRIMERS {
@@ -106,63 +191,29 @@ process PER_AMPLICON_FILTERS {
     --max-len ${params.max_len} \
     --min-len ${params.min_len} \
     --threads ${task.cpus} \
-    -o ${new_id}.filtered.fasta.gz
-    ${fasta}
+    ${fasta} \
+    | bgzip -c > ${new_id}.filtered.fasta.gz
     """
 }
 
-process AMPLICON_STATS {
+process COMPRESS_TO_SORTED_FASTA{
 
-    /* */
+    tag "${barcode}"
 
-	tag "${barcode}"
-	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-	cpus 3
-
-	input:
-	tuple val(barcode), path("amplicons/*")
+    input:
+    tuple val(barcode), path(fastq_reads)
 
     output:
-    path "${barcode}.per_amplicon_stats.tsv"
+    tuple val(barcode), path("${barcode}.fasta.gz")
 
     script:
     """
-    seqkit stats \
-	--threads ${task.cpus} \
-	--all --basename --tabular \
-	amplicons/*.fastq.gz > ${barcode}.per_amplicon_stats.tsv
+    seqkit fq2fa ${fastq_reads} \
+    | seqkit seq --only-id \
+    | seqkit sort --two-pass -o "${barcode}.fasta.gz"
     """
-
 }
 
-process MERGE_BY_SAMPLE {
-
-    /* */
-
-	tag "${barcode}"
-	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
-
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-	cpus 3
-
-	input:
-	tuple val(barcode), path("fastas/*")
-
-	output:
-	tuple val(barcode), path("${barcode}.amplicons.fasta.gz")
-
-	script:
-	"""
-	seqkit scat \
-	--find-only \
-	--threads ${task.cpus} \
-	fastas/ \
-	| bgzip -o ${barcode}.amplicons.fasta.gz
-	"""
-}
