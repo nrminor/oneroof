@@ -2,6 +2,7 @@ include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
 include { ILLUMINA_CORRECTION } from "../subworkflows/illumina_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
+include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
@@ -39,6 +40,11 @@ workflow ILLUMINA {
                 ch_refseq
             )
 
+            // QUALITY_CONTROL (
+            //     PRIMER_HANDLING.out,
+            //     ch_contam_fasta
+            // )
+
             ALIGNMENT (
                 PRIMER_HANDLING.out,
                 ch_refseq
@@ -46,8 +52,13 @@ workflow ILLUMINA {
 
         } else {
 
+            // QUALITY_CONTROL (
+            //     ILLUMINA_CORRECTION.out,
+            //     ch_contam_fasta
+            // )
+
             ALIGNMENT (
-                PRIMER_HANDLING.out,
+                ILLUMINA_CORRECTION.out,
                 ch_refseq
             )
 
@@ -76,3 +87,4 @@ workflow ILLUMINA {
         )
 
 }
+

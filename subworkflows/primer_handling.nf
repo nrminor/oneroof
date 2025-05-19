@@ -9,6 +9,7 @@ include { ORIENT_READS             } from "../modules/vsearch"
 include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
 include {
     FIND_COMPLETE_AMPLICONS ;
+    // TRIM_ENDS_TO_PRIMERS ;
     PER_AMPLICON_FILTERS ;
     MERGE_BY_SAMPLE ;
     AMPLICON_STATS
@@ -66,7 +67,7 @@ workflow PRIMER_HANDLING {
         FIND_COMPLETE_AMPLICONS.out
     )
 
-    FILTER_WITH_CHOPPER(
+    PER_AMPLICON_FILTERS(
         TRIM_ENDS_TO_PRIMERS.out
             .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
             .filter { it[2] > 0 }
@@ -74,10 +75,10 @@ workflow PRIMER_HANDLING {
     )
 
     FAIDX(
-        FILTER_WITH_CHOPPER.out
-        .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
-        .filter { it[2] > 0 }
-        .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
+        PER_AMPLICON_FILTERS.out
+            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
+            .filter { it[2] > 0 }
+            .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
     RASUSA_READ_DOWNSAMPLING(
@@ -95,3 +96,4 @@ workflow PRIMER_HANDLING {
     emit:
     MERGE_BY_SAMPLE.out
 }
+
