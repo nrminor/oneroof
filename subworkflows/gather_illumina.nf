@@ -2,8 +2,11 @@
 
 include { PUBLISH_COMMAND   } from "../modules/reporting"
 include { VALIDATE_ILLUMINA } from "../modules/validate"
-include { MERGE_READ_PAIRS } from "../modules/vsearch.nf"
-// include { BBMERGE ; CLUMP_READS } from "../modules/bbmap"
+include { MERGE_READ_PAIRS  } from "../modules/vsearch.nf"
+include { FAIDX             } from "../modules/samtools"
+include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
+
+
 
 workflow GATHER_ILLUMINA {
     main:
@@ -20,10 +23,17 @@ workflow GATHER_ILLUMINA {
         VALIDATE_ILLUMINA.out.map { id, reads1, reads2, _report -> tuple(id, file(reads1), file(reads2)) }
     )
 
-    // CLUMP_READS(
-    //     BBMERGE.out
-    // )
+    FAIDX(
+        MERGE_READ_PAIRS.out
+            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
+            .filter { it[2] > 0 }
+            .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
+    )
+
+    EARLY_RASUSA_READ_DOWNSAMPLING(
+        FAIDX.out
+    )
 
     emit:
-    MERGE_READ_PAIRS.out
+    EARLY_RASUSA_READ_DOWNSAMPLING.out
 }
