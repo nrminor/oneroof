@@ -16,21 +16,7 @@ process BUILD_DB {
     script:
     config_dir = "genome/ref_genome"
 
-    if(params.snpEff_gff)
-        """
-        #
-        mkdir -p ${config_dir}/
-
-        #
-        cp ${params.snpEff_gff} ${config_dir}/genes.gbk
-
-        #
-        cp ${snpeff_config} local.config
-
-        #
-        snpEff build -c local.config -dataDir genome/ -gff3 -v ref_genome
-        """
-    else
+    if(genbank.endsWith(".gbk"))
         """
         #
         mkdir -p ${config_dir}/
@@ -43,6 +29,21 @@ process BUILD_DB {
 
         #
         snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
+        """
+
+    else if(genbank.endsWith(".gff") | genbank.endsWith(".gff3") )
+        """
+        #
+        mkdir -p ${config_dir}/
+
+        #
+        cp ${genbank} ${config_dir}/genes.gbk
+
+        #
+        cp ${snpeff_config} local.config
+
+        #
+        snpEff build -c local.config -dataDir genome/ -gff3 -v ref_genome
         """
 
 }
