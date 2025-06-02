@@ -3,6 +3,8 @@ include { FASTQC  } from "../modules/fastqc"
 include { INDEX_CONTAMINANTS; DECONTAMINATE } from "../modules/deacon"
 include { MULTIQC } from "../modules/multiqc"
 include { COMPRESS_TO_SORTED_FASTA } from "../modules/seqkit"
+include { FAIDX             } from "../modules/samtools"
+include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 
 workflow ILLUMINA_CORRECTION {
     take:
@@ -39,6 +41,17 @@ workflow ILLUMINA_CORRECTION {
         CORRECT_WITH_FASTP.out
     )
 
+    FAIDX(
+        COMPRESS_TO_SORTED_FASTA.out
+            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
+            .filter { it[2] > 0 }
+            .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
+    )
+
+    EARLY_RASUSA_READ_DOWNSAMPLING(
+        FAIDX.out
+    )
+
     emit:
-    COMPRESS_TO_SORTED_FASTA.out
+    EARLY_RASUSA_READ_DOWNSAMPLING.out
 }

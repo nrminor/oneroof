@@ -213,7 +213,8 @@ process COMPRESS_TO_SORTED_FASTA{
     """
     seqkit fq2fa ${fastq_reads} \
     | seqkit seq --only-id \
-    | seqkit sort --two-pass -o "${barcode}.fasta.gz"
+    | seqkit sort --two-pass \
+    | bgzip -c > "${barcode}.fasta.gz"
     """
 }
 
