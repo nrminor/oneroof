@@ -64,11 +64,14 @@ workflow ILLUMINA {
 
         }
 
-        METAGENOMICS(
-            ch_metagenome_ref,
-            PRIMER_HANDLING.out,
-            Channel.empty()
+        if ( params.primer_bed ) {
+            
+            METAGENOMICS(
+                ch_metagenome_ref,
+                PRIMER_HANDLING.out,
+                Channel.empty()
         )
+        }
 
         CONSENSUS (
             ALIGNMENT.out
