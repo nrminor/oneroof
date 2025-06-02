@@ -1,6 +1,6 @@
 process BUILD_DB {
 
-    storeDir params.snpeff_cache
+    // storeDir params.snpeff_cache
 
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     maxRetries 2
@@ -14,20 +14,41 @@ process BUILD_DB {
     path "genome"
 
     script:
+
     config_dir = "genome/ref_genome"
-    """
-    #
-    mkdir -p ${config_dir}/
 
-    #
-    cp ${genbank} ${config_dir}/genes.gbk
+    if(genbank.name.endsWith(".gbk"))
+        """
+        #
+        mkdir -p ${config_dir}
 
-    #
-    cp ${snpeff_config} local.config
+        #
+        cp ${genbank} ${config_dir}/genes.gbk
 
-    #
-    snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
-    """
+        #
+        cp ${snpeff_config} local.config
+
+        #
+        snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
+        """
+
+    else if (genbank.name.endsWith(".gff") | genbank.name.endsWith(".gff3") )
+        """
+        #
+        mkdir -p ${config_dir}
+
+        #
+        cp ${genbank} ${config_dir}/genes.gff
+        cp ${refseq} ${config_dir}/sequences.fa
+   
+
+        #
+        cp ${snpeff_config} local.config
+
+        #
+        snpEff build -c local.config -dataDir genome/ -gff3 -v -noCheckCds -noCheckProtein ref_genome 
+
+        """
 
 }
 

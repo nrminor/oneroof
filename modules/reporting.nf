@@ -18,7 +18,7 @@ process REPORT_REFERENCES {
         mkdir -p !{params.results}/reference_assets
     fi
 
-    find . -name '*.fa*' -o -name '*.bed' -o -name '*.gb*' > ref_files.txt
+    find . -name '*.fa*' -o -name '*.bed' -o -name '*.g*' > ref_files.txt
 
     for file in "$(cat ref_files.txt)"; do
         cp `realpath ${file}` !{params.results}/reference_assets/

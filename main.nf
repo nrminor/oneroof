@@ -109,6 +109,38 @@ workflow {
 
     }
 
+    workflow.onComplete {
+        def scriptPath = 'modules/slack_alerts.py'
+        def experiment_num = "$launchDir".split("/")[-1]
+        def coverage_tsv = 'result2.txt'
+        def min_coverage_depth =params.min_coverage_depth
+
+        // Build the command
+        def command = [
+        'python3', scriptPath,
+        '--exp_num', experiment_num,
+        '--input_tsv', coverage_tsv,
+        '--depth', min_coverage_depth
+    ]
+
+        println "Running: ${command.join(' ')}"
+
+        def proc = new ProcessBuilder(command)
+            .directory(new File(workflow.launchDir.toString()))  // Sets cwd if needed
+            .redirectErrorStream(true)
+            .start()
+
+        // def output = proc.inputStream.text
+        // println "Python script output:\n$output"
+
+        // Wait for completion and check exit status
+        def exitCode = proc.waitFor()
+        if (exitCode != 0) {
+            println "Python script failed with exit code: $exitCode"
+
+    }
+    }
+
     if ( params.email ) {
     workflow.onComplete {
 
