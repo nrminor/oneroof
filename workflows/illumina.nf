@@ -45,6 +45,12 @@ workflow ILLUMINA {
             //     ch_contam_fasta
             // )
 
+            METAGENOMICS(
+                ch_metagenome_ref,
+                PRIMER_HANDLING.out,
+                Channel.empty()
+            )
+
             ALIGNMENT (
                 PRIMER_HANDLING.out,
                 ch_refseq
@@ -52,25 +58,17 @@ workflow ILLUMINA {
 
         } else {
 
-            // QUALITY_CONTROL (
-            //     ILLUMINA_CORRECTION.out,
-            //     ch_contam_fasta
-            // )
+            METAGENOMICS(
+                ch_metagenome_ref,
+                ILLUMINA_CORRECTION.out,
+                Channel.empty()
+            )
 
             ALIGNMENT (
                 ILLUMINA_CORRECTION.out,
                 ch_refseq
             )
 
-        }
-
-        if ( params.primer_bed ) {
-            
-            METAGENOMICS(
-                ch_metagenome_ref,
-                PRIMER_HANDLING.out,
-                Channel.empty()
-        )
         }
 
         CONSENSUS (
