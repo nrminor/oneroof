@@ -77,6 +77,10 @@ workflow {
         Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
 
+    ch_primer_tsv = params.primer_tsv ?
+        Channel.fromPath ( params.primer_tsv ) :
+        Channel.empty()
+
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
@@ -86,7 +90,8 @@ workflow {
             ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
-            ch_metagenomics_ref
+            ch_metagenomics_ref,
+            ch_primer_tsv
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -97,7 +102,8 @@ workflow {
             ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
-            ch_metagenomics_ref
+            ch_metagenomics_ref,
+            ch_primer_tsv
         )
 
     } else {
@@ -107,38 +113,6 @@ workflow {
         Nanopore data with the keyword 'ont' and Illumina data with the keyword 'illumina'.
         """
 
-    }
-
-    workflow.onComplete {
-        def scriptPath = 'modules/slack_alerts.py'
-        def experiment_num = "$launchDir".split("/")[-1]
-        def coverage_tsv = 'result2.txt'
-        def min_coverage_depth =params.min_coverage_depth
-
-        // Build the command
-        def command = [
-        'python3', scriptPath,
-        '--exp_num', experiment_num,
-        '--input_tsv', coverage_tsv,
-        '--depth', min_coverage_depth
-    ]
-
-        println "Running: ${command.join(' ')}"
-
-        def proc = new ProcessBuilder(command)
-            .directory(new File(workflow.launchDir.toString()))  // Sets cwd if needed
-            .redirectErrorStream(true)
-            .start()
-
-        // def output = proc.inputStream.text
-        // println "Python script output:\n$output"
-
-        // Wait for completion and check exit status
-        def exitCode = proc.waitFor()
-        if (exitCode != 0) {
-            println "Python script failed with exit code: $exitCode"
-
-    }
     }
 
     if ( params.email ) {

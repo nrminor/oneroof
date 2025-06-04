@@ -72,7 +72,7 @@ process COVERAGE_SUMMARY {
 
     script:
     """
-    awk -F"\t" 'BEGIN {print "sample id\tproportion ≥ specified depth"} \$1!="sample id"{print \$1, \$4;}' *.tsv > coverage_summary.tsv
+    awk -F"\t" 'BEGIN {print "sample id\tproportion ≥ specified depth"} \$1!="sample id"{print \$1 "\t" \$4;}' *.tsv > coverage_summary.tsv
     """
 
 }

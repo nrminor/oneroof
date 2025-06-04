@@ -21,6 +21,7 @@ workflow NANOPORE {
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
+        ch_primer_tsv
 
     main:
         assert params.platform == "ont"
@@ -32,7 +33,8 @@ workflow NANOPORE {
             PRIMER_HANDLING (
                 GATHER_NANOPORE.out,
                 ch_primer_bed,
-                ch_refseq
+                ch_refseq,
+                ch_primer_tsv
             )
 
             QUALITY_CONTROL (

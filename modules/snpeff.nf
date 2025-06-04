@@ -37,7 +37,7 @@ process BUILD_DB {
         #
         mkdir -p ${config_dir}
 
-        #
+        
         cp ${genbank} ${config_dir}/genes.gff
         cp ${refseq} ${config_dir}/sequences.fa
    

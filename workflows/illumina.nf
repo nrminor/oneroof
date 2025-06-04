@@ -17,6 +17,7 @@ workflow ILLUMINA {
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
+        ch_primer_tsv
 
     main:
         assert params.platform == "illumina"
@@ -32,18 +33,25 @@ workflow ILLUMINA {
             ch_contam_fasta
         )
 
-        if ( params.primer_bed ) {
+        if ( params.primer_bed || params.primer_tsv ) {
 
             PRIMER_HANDLING (
                 ILLUMINA_CORRECTION.out,
                 ch_primer_bed,
-                ch_refseq
+                ch_refseq,
+                ch_primer_tsv
             )
 
             // QUALITY_CONTROL (
             //     PRIMER_HANDLING.out,
             //     ch_contam_fasta
             // )
+
+            METAGENOMICS(
+                ch_metagenome_ref,
+                PRIMER_HANDLING.out,
+                Channel.empty()
+            )
 
             ALIGNMENT (
                 PRIMER_HANDLING.out,
@@ -52,10 +60,11 @@ workflow ILLUMINA {
 
         } else {
 
-            // QUALITY_CONTROL (
-            //     ILLUMINA_CORRECTION.out,
-            //     ch_contam_fasta
-            // )
+            METAGENOMICS(
+                ch_metagenome_ref,
+                ILLUMINA_CORRECTION.out,
+                Channel.empty()
+            )
 
             ALIGNMENT (
                 ILLUMINA_CORRECTION.out,
@@ -63,12 +72,6 @@ workflow ILLUMINA {
             )
 
         }
-
-        METAGENOMICS(
-            ch_metagenome_ref,
-            PRIMER_HANDLING.out,
-            Channel.empty()
-        )
 
         CONSENSUS (
             ALIGNMENT.out
@@ -87,4 +90,3 @@ workflow ILLUMINA {
         )
 
 }
-
