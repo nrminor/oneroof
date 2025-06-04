@@ -14,7 +14,7 @@ def parse_command_line_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input_tsv",
+        "--input_tsv_dir",
         type=Path,
         required=True,
         help="Depth of coverage TSV file",
@@ -34,6 +34,14 @@ def parse_command_line_args() -> argparse.Namespace:
         type=Path,
         required=True,
         help="experiment number",
+    )
+    parser.add_argument(
+        # depth of 20 for default
+        "--platform",
+        "-p",
+        type=Path,
+        required=True,
+        help="platform",
     )
     return parser.parse_args()
 
@@ -129,8 +137,22 @@ def main():
     args = parse_command_line_args()
     # get from launch dir
     experiment_number = args.exp_num
-    coverage_tsv = args.input_tsv
+    coverage_tsv_dir_path = args.input_tsv_dir
     coverage_depth = args.depth
+    platform = args.platform
+
+    coverage_tsv_dir = str(coverage_tsv_dir_path)
+    platform = str(platform)
+
+    if platform == "ont":
+        coverage_tsv = coverage_tsv_dir + "/nanopore/03_alignments/coverage_summary.tsv"
+    else:
+        coverage_tsv = (
+            coverage_tsv_dir
+            + "/"
+            + platform
+            + "/nanopore/03_alignments/coverage_summary.tsv"
+        )
 
     send_slack_notification(experiment_number, coverage_tsv, coverage_depth)
 

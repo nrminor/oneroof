@@ -6,5 +6,6 @@ workflow SLACK_ALERT {
 
     main:
     CALL_SLACK_ALERT(
+        alignment
     )
 } 

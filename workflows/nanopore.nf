@@ -9,6 +9,7 @@ include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
+include { SLACK_ALERT } from "../subworkflows/slack_alert"
 
 workflow NANOPORE {
 
@@ -28,7 +29,7 @@ workflow NANOPORE {
 
         GATHER_NANOPORE ( )
 
-        if ( params.primer_bed && params.primer_bed != "" ) {
+        if ( params.primer_bed && params.primer_bed != "" || params.primer_tsv && params.primer_tsv != "" ) {
 
             PRIMER_HANDLING (
                 GATHER_NANOPORE.out,
@@ -37,35 +38,42 @@ workflow NANOPORE {
                 ch_primer_tsv
             )
 
-            QUALITY_CONTROL (
+            // QUALITY_CONTROL (
+            //     PRIMER_HANDLING.out,
+            //     ch_contam_fasta
+            // )
+
+            METAGENOMICS(
+                ch_metagenome_ref,
                 PRIMER_HANDLING.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
         } else {
 
-            QUALITY_CONTROL (
+            METAGENOMICS(
+                ch_metagenome_ref,
                 GATHER_NANOPORE.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
             ALIGNMENT (
-                QUALITY_CONTROL.out,
+                GATHER_NANOPORE.out,
                 ch_refseq
             )
 
         }
 
-        METAGENOMICS(
-            ch_metagenome_ref,
-            QUALITY_CONTROL.out,
-            Channel.empty()
-        )
+        // METAGENOMICS(
+        //     ch_metagenome_ref,
+        //     QUALITY_CONTROL.out,
+        //     Channel.empty()
+        // )
 
         CONSENSUS (
             ALIGNMENT.out
@@ -89,6 +97,10 @@ workflow NANOPORE {
         }
 
         PHYLO (
+            CONSENSUS.out
+        )
+
+        SLACK_ALERT(
             CONSENSUS.out
         )
 
