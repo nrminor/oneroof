@@ -7,15 +7,6 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-# SLACK_WEBHOOK_URL = (
-#     "https://hooks.slack.com/services/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"
-# )
-
-# list of all users webhook url's
-SLACK_WEBHOOK_URLS = [
-    "https://hooks.slack.com/services/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",
-]
-
 
 def parse_command_line_args() -> argparse.Namespace:
     """
