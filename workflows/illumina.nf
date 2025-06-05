@@ -7,6 +7,7 @@ include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
+include { SLACK_ALERT } from "../subworkflows/slack_alert"
 
 workflow ILLUMINA {
 
@@ -17,6 +18,7 @@ workflow ILLUMINA {
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
+        ch_primer_tsv
 
     main:
         assert params.platform == "illumina"
@@ -32,12 +34,13 @@ workflow ILLUMINA {
             ch_contam_fasta
         )
 
-        if ( params.primer_bed ) {
+        if ( params.primer_bed || params.primer_tsv ) {
 
             PRIMER_HANDLING (
                 ILLUMINA_CORRECTION.out,
                 ch_primer_bed,
-                ch_refseq
+                ch_refseq,
+                ch_primer_tsv
             )
 
             // QUALITY_CONTROL (
@@ -87,5 +90,8 @@ workflow ILLUMINA {
             CONSENSUS.out
         )
 
-}
+        SLACK_ALERT(
+            ALIGNMENT.out
+        )
 
+}
