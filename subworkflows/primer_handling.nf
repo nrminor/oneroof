@@ -16,7 +16,7 @@ include {
 } from "../modules/seqkit"
 include { FILTER_WITH_CHOPPER      } from "../modules/chopper"
 include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
-include { READ_PRIMER_TSV } from "../modules/read_primer_tsv"
+include { WRITE_PRIMER_FASTA } from "../modules/write_primer_fasta"
 
 
 workflow PRIMER_HANDLING {
@@ -36,7 +36,7 @@ workflow PRIMER_HANDLING {
         ch_refseq,
     )
   
-    if(params.primer_bed && params.primer_bed  != "") {
+    if (params.primer_bed && params.primer_bed  != "") {
         
         VALIDATE_PRIMER_BED(
             ch_primer_bed
@@ -63,29 +63,32 @@ workflow PRIMER_HANDLING {
             GET_PRIMER_SEQS.out
         )
 
-    } else if (params.primer_tsv  && params.primer_tsv != "") {
-        READ_PRIMER_TSV(
-            ch_primer_tsv
-                .splitCsv(header:true, sep:'\t')
-                .filter { row ->
-                    row.amplicon_name && row.fwd_sequence && row.reverse_sequence
-                }
-                .map { row ->
-                    def name = row.amplicon_name
-                    def fwd = row.fwd_sequence
-                    def rev = row.reverse_sequence
+    } else if (params.primer_tsv && params.primer_tsv != "") {
+        ch_tsv_to_fasta = ch_primer_tsv
+            .splitCsv(header:true, sep:'\t', strip: true)
+            .filter { row -> !row.startsWith("#")}
+            .filter { row ->
+                row.amplicon_name && row.fwd_sequence && row.reverse_sequence
+            }
+            .map { row ->
+                def name = row.amplicon_name
+                def fwd = row.fwd_sequence
+                def rev = row.reverse_sequence
 
-                    def header1 = ">${name}:0-${fwd.size() - 1}"
-                    def header2 = ">${name}:${fwd.size()}-${fwd.size() + rev.size() - 1}"
+                def header1 = ">${name}:0-${fwd.size() - 1}"
+                def header2 = ">${name}:${fwd.size()}-${fwd.size() + rev.size() - 1}"
 
-                    def fasta = "${header1}\n${fwd}\n${header2}\n${rev}"
+                def fasta = "${header1}\n${fwd}\n${header2}\n${rev}"
 
-                    tuple(name, fasta)
-                  }
+                tuple(name, fasta)
+          }
+    
+        WRITE_PRIMER_FASTA(
+            ch_tsv_to_fasta
         )
 
          GET_PRIMER_PATTERNS(
-            READ_PRIMER_TSV.out
+            WRITE_PRIMER_FASTA.out
         )
     }
 

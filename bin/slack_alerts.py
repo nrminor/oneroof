@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import argparse
 import os
@@ -6,6 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+from loguru import logger
 
 
 def parse_command_line_args() -> argparse.Namespace:
@@ -27,8 +29,8 @@ def parse_command_line_args() -> argparse.Namespace:
         required=True,
         help="minimum depth of coverage",
     )
+    # TODO(@akalweit5): Replace with run label str
     parser.add_argument(
-        # depth of 20 for default
         "--exp_num",
         "-e",
         type=Path,
@@ -46,7 +48,7 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def passing_samples(df, coverage_threshold):
+def passing_samples(df: pd.DataFrame, coverage_threshold: int) -> tuple[str, int]:
     # seeing what samples are above or equal to the coverage threshhold, also returning a count to find total number of samples passing
     passing_message = ""
     count = 0
@@ -61,7 +63,7 @@ def passing_samples(df, coverage_threshold):
     return (passing_message, count)
 
 
-def failing_samples(df, coverage_threshold):
+def failing_samples(df: pd.DataFrame, coverage_threshold: int) -> str:
     # seeing what samples are below the coverage threshhold
     failing_message = ""
     for i in range(len(df.iloc[:, 1])):
@@ -79,11 +81,7 @@ def get_webhook_paths() -> list[str]:
     # Check ONEROOF_SLACK_HOOKS environment variable
     path_str = os.environ.get("ONEROOF_SLACK_HOOKS")
 
-    if path_str is None:
-        # Fallback to default path
-        path = Path.home() / ".oneroof" / "slack.webhooks"
-    else:
-        path = Path(path_str)
+    path = Path.home() / ".oneroof" / "slack.webhooks" if not path_str else Path(path_str)
 
     # If the file doesn't exist or is empty, return empty list
     if not path.exists() or not path.is_file():
@@ -94,24 +92,24 @@ def get_webhook_paths() -> list[str]:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 
-def send_slack_notification(exp_num, stats_tsv, coverage_threshold):
+def send_slack_notification(run_label: str, stats_tsv: Path | str, coverage_threshold: int) -> None:
     # the webhook url
     # reading the tsv
-    df = pd.read_csv(stats_tsv, sep="\t")
+    stats_df = pd.read_csv(stats_tsv, sep="\t")
 
     # getting the webhooks
     webhook_urls = get_webhook_paths()
 
     if not webhook_urls:
-        print("No webhook URLs found. Exiting.")
+        logger.error("No webhook URLs found. Exiting.")
         return
 
     # finding passing and failing
-    passing, count_passing = passing_samples(df, coverage_threshold)
-    failing = failing_samples(df, coverage_threshold)
+    passing, count_passing = passing_samples(stats_df, coverage_threshold)
+    failing = failing_samples(stats_df, coverage_threshold)
 
     # getting exp num
-    exp_number = str(exp_num).split("/")[-1]
+    exp_number = run_label.split("/")[-1]
 
     # creating the return message
     message = (
@@ -125,15 +123,17 @@ def send_slack_notification(exp_num, stats_tsv, coverage_threshold):
     complete_message = f"{message}\n```{results}```"
 
     payload = {"text": complete_message}
-    for SLACK_WEBHOOK_URL in webhook_urls:
-        r = requests.post(SLACK_WEBHOOK_URL, json=payload)
-        if (r.status_code) != 200:
-            raise Exception(
-                f"Error sending slack automation, response code: {r.status_code}",
-            )
+    for slack_webhook_url in webhook_urls:
+        # TODO(@akalweit5): Add reasonable timeout and consider retry strategy
+        r = requests.post(slack_webhook_url, json=payload)
+        if (r.status_code) != 200:  # noqa: PLR2004
+            msg = f"Error sending slack automation, response code: {r.status_code}"
+            # TODO(@akalweit5): Find a better exception here. What actually is the error we're expecting? And could we just use
+            # an assert somewhere to crash early?
+            raise Exception(msg)
 
 
-def main():
+def main() -> None:
     args = parse_command_line_args()
     # get from launch dir
     experiment_number = args.exp_num
@@ -145,14 +145,12 @@ def main():
     platform = str(platform)
 
     if platform == "ont":
+        # TODO(@akalweit5): Make these pathlib Path objects instead of strings for concatenation
+        # TODO(@akalweit5): Make these files an input channel included in the process input block instead of paths, and give them
+        # to the script through argparse
         coverage_tsv = coverage_tsv_dir + "/nanopore/03_alignments/coverage_summary.tsv"
     else:
-        coverage_tsv = (
-            coverage_tsv_dir
-            + "/"
-            + platform
-            + "/nanopore/03_alignments/coverage_summary.tsv"
-        )
+        coverage_tsv = coverage_tsv_dir + "/" + platform + "/03_alignments/coverage_summary.tsv"
 
     send_slack_notification(experiment_number, coverage_tsv, coverage_depth)
 

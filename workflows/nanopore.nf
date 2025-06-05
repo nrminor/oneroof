@@ -19,7 +19,7 @@ workflow NANOPORE {
         ch_primer_bed
         ch_refseq
         ch_refgbk
-        ch_contam_fasta
+        _ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
         ch_primer_tsv

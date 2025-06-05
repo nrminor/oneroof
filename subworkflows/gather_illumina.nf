@@ -4,12 +4,10 @@ include { PUBLISH_COMMAND   } from "../modules/reporting"
 include { VALIDATE_ILLUMINA } from "../modules/validate"
 include { MERGE_READ_PAIRS  } from "../modules/vsearch.nf"
 
-
-
-
 workflow GATHER_ILLUMINA {
     main:
-    ch_prepped = Channel.fromFilePairs("${params.illumina_fastq_dir}/*{R1,R2}*.fastq.gz", flat: true, maxDepth: 1)
+    ch_prepped = Channel
+        .fromFilePairs("${params.illumina_fastq_dir}/*{R1,R2}*.fastq.gz", flat: true, maxDepth: 1)
 
 
     PUBLISH_COMMAND()

@@ -1,14 +1,13 @@
-process READ_PRIMER_TSV{
-input:
+process WRITE_PRIMER_FASTA {
+    input:
     tuple val(name), val(sequences)
 
-output:
+    output:
     path "${name}.fasta"
 
-script:
-"""
+    script:
+    """
     echo -e "${sequences}" > ${name}.fasta
     
-"""
-
+    """
 }

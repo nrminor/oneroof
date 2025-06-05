@@ -17,7 +17,7 @@ process BUILD_DB {
 
     config_dir = "genome/ref_genome"
 
-    if(genbank.name.endsWith(".gbk"))
+    if (genbank.name.endsWith(".gbk"))
         """
         #
         mkdir -p ${config_dir}
@@ -32,7 +32,7 @@ process BUILD_DB {
         snpEff build -c local.config -dataDir genome/ -genbank -v ref_genome
         """
 
-    else if (genbank.name.endsWith(".gff") | genbank.name.endsWith(".gff3") )
+    else if (genbank.name.endsWith(".gff") || genbank.name.endsWith(".gff3"))
         """
         #
         mkdir -p ${config_dir}
@@ -48,6 +48,11 @@ process BUILD_DB {
         #
         snpEff build -c local.config -dataDir genome/ -gff3 -v -noCheckCds -noCheckProtein ref_genome 
 
+        """
+    else
+        error """
+        File provided for snpEff database construction does not have the right extension. Please double
+        check that it ends with '.gff', '.gbk', or '.gff3'.
         """
 
 }
