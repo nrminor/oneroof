@@ -100,8 +100,8 @@ workflow NANOPORE {
             CONSENSUS.out
         )
 
-        SLACK_ALERT(
-            CONSENSUS.out
-        )
+        // SLACK_ALERT(
+        //     CONSENSUS.out
+        // )
 
 }

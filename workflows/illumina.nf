@@ -90,8 +90,8 @@ workflow ILLUMINA {
             CONSENSUS.out
         )
 
-        SLACK_ALERT(
-            ALIGNMENT.out
-        )
+        // SLACK_ALERT(
+        //     ALIGNMENT.out
+        // )
 
 }
