@@ -94,7 +94,7 @@ workflow ILLUMINA {
 
         SLACK_ALERT(
             alignment_outputs.coverage_summary,
-            CONSENSUS.out,
+            CONSENSUS.out.collect(),
             variant_outputs.merge_vcf_files
         )
 
