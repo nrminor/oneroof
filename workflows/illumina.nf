@@ -74,7 +74,6 @@ workflow ILLUMINA {
 
         }
 
-
         CONSENSUS (
             alignment_outputs.index
         )
