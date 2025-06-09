@@ -4,9 +4,13 @@ workflow SLACK_ALERT {
     // TODO: add coverage TSVs as a channel here with the collect operator or whatever is needed
     take:
     alignment
+    consensus
+    variants
 
     main:
     CALL_SLACK_ALERT(
-        alignment
+        alignment,
+        consensus,
+        variants
     )
 } 

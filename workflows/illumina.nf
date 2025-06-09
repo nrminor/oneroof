@@ -54,7 +54,7 @@ workflow ILLUMINA {
                 Channel.empty()
             )
 
-            ALIGNMENT (
+            alignment_outputs = ALIGNMENT (
                 PRIMER_HANDLING.out,
                 ch_refseq
             )
@@ -67,19 +67,20 @@ workflow ILLUMINA {
                 Channel.empty()
             )
 
-            ALIGNMENT (
+            alignment_outputs = ALIGNMENT (
                 ILLUMINA_CORRECTION.out,
                 ch_refseq
             )
 
         }
 
+
         CONSENSUS (
-            ALIGNMENT.out
+            alignment_outputs.index
         )
 
-        VARIANTS (
-            ALIGNMENT.out,
+        variant_outputs = VARIANTS (
+            alignment_outputs.index,
             ch_refseq,
             ch_ref_gbk,
 
@@ -89,9 +90,12 @@ workflow ILLUMINA {
         PHYLO (
             CONSENSUS.out
         )
+        
 
         SLACK_ALERT(
-            ALIGNMENT.out
+            alignment_outputs.coverage_summary,
+            CONSENSUS.out,
+            variant_outputs.merge_vcf_files
         )
 
 }
