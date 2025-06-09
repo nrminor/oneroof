@@ -38,18 +38,13 @@ workflow NANOPORE {
                 ch_primer_tsv
             )
 
-            // QUALITY_CONTROL (
-            //     PRIMER_HANDLING.out,
-            //     ch_contam_fasta
-            // )
-
             METAGENOMICS(
                 ch_metagenome_ref,
                 PRIMER_HANDLING.out,
                 Channel.empty()
             )
 
-            ALIGNMENT (
+            alignment_outputs = ALIGNMENT (
                 PRIMER_HANDLING.out,
                 ch_refseq
             )
@@ -62,25 +57,19 @@ workflow NANOPORE {
                 Channel.empty()
             )
 
-            ALIGNMENT (
+            alignment_outputs = ALIGNMENT (
                 GATHER_NANOPORE.out,
                 ch_refseq
             )
 
         }
 
-        // METAGENOMICS(
-        //     ch_metagenome_ref,
-        //     QUALITY_CONTROL.out,
-        //     Channel.empty()
-        // )
-
         CONSENSUS (
-            ALIGNMENT.out
+            alignment_outputs.index
         )
 
-        VARIANTS (
-            ALIGNMENT.out,
+        variant_outputs = VARIANTS (
+            alignment_outputs.index,
             ch_refseq,
             ch_refgbk,
             ch_snpeff_config
@@ -89,8 +78,8 @@ workflow NANOPORE {
         if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
 
             HAPLOTYPING (
-                ALIGNMENT.out,
-                VARIANTS.out,
+                alignment_outputs.index,
+                variant_outputs.annotate,
                 ch_refseq
             )
 
@@ -100,8 +89,11 @@ workflow NANOPORE {
             CONSENSUS.out
         )
 
-        // SLACK_ALERT(
-        //     CONSENSUS.out
-        // )
+        SLACK_ALERT(
+            alignment_outputs.coverage_summary,
+            CONSENSUS.out,
+            variant_outputs.merge_vcf_files
+        )
+
 
 }
