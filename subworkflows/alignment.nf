@@ -57,5 +57,6 @@ workflow ALIGNMENT {
     )
 
     emit:
-    INDEX.out
+    index = INDEX.out
+    coverage_summary = COVERAGE_SUMMARY.out
 }
