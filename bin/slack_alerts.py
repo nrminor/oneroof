@@ -31,24 +31,17 @@ def parse_command_line_args() -> argparse.Namespace:
     )
     # TODO(@akalweit5): Replace with run label str
     parser.add_argument(
-        "--exp_num",
-        "-e",
-        type=Path,
+        "--run_label",
+        "-r",
+        type=str,
         required=True,
         help="experiment number",
     )
-    parser.add_argument(
-        # depth of 20 for default
-        "--platform",
-        "-p",
-        type=Path,
-        required=True,
-        help="platform",
-    )
+
     return parser.parse_args()
 
 
-def passing_samples(df: pd.DataFrame, coverage_threshold: int) -> tuple[str, int]:
+def passing_samples(df: pd.DataFrame, coverage_threshold) -> tuple[str, int]:
     # seeing what samples are above or equal to the coverage threshhold, also returning a count to find total number of samples passing
     passing_message = ""
     count = 0
@@ -63,7 +56,7 @@ def passing_samples(df: pd.DataFrame, coverage_threshold: int) -> tuple[str, int
     return (passing_message, count)
 
 
-def failing_samples(df: pd.DataFrame, coverage_threshold: int) -> str:
+def failing_samples(df: pd.DataFrame, coverage_threshold) -> str:
     # seeing what samples are below the coverage threshhold
     failing_message = ""
     for i in range(len(df.iloc[:, 1])):
@@ -81,7 +74,9 @@ def get_webhook_paths() -> list[str]:
     # Check ONEROOF_SLACK_HOOKS environment variable
     path_str = os.environ.get("ONEROOF_SLACK_HOOKS")
 
-    path = Path.home() / ".oneroof" / "slack.webhooks" if not path_str else Path(path_str)
+    path = (
+        Path.home() / ".oneroof" / "slack.webhooks" if not path_str else Path(path_str)
+    )
 
     # If the file doesn't exist or is empty, return empty list
     if not path.exists() or not path.is_file():
@@ -92,9 +87,14 @@ def get_webhook_paths() -> list[str]:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 
-def send_slack_notification(run_label: str, stats_tsv: Path | str, coverage_threshold: int) -> None:
+def send_slack_notification(
+    run_label: str,
+    stats_tsv: Path | str,
+    coverage_threshold: int,
+) -> None:
     # the webhook url
     # reading the tsv
+    # print(stats_tsv)
     stats_df = pd.read_csv(stats_tsv, sep="\t")
 
     # getting the webhooks
@@ -108,12 +108,9 @@ def send_slack_notification(run_label: str, stats_tsv: Path | str, coverage_thre
     passing, count_passing = passing_samples(stats_df, coverage_threshold)
     failing = failing_samples(stats_df, coverage_threshold)
 
-    # getting exp num
-    exp_number = run_label.split("/")[-1]
-
     # creating the return message
     message = (
-        f"Oneroof has finished successfully for experiment {exp_number}, "
+        f"Oneroof has finished successfully for experiment {run_label}, "
         f"with {count_passing} samples passing. Below is a breakdown of "
         f"which samples had greater than or equal to {coverage_threshold}X coverage."
     )
@@ -136,23 +133,11 @@ def send_slack_notification(run_label: str, stats_tsv: Path | str, coverage_thre
 def main() -> None:
     args = parse_command_line_args()
     # get from launch dir
-    experiment_number = args.exp_num
+    run_label = args.run_label
     coverage_tsv_dir_path = args.input_tsv_dir
     coverage_depth = args.depth
-    platform = args.platform
 
-    coverage_tsv_dir = str(coverage_tsv_dir_path)
-    platform = str(platform)
-
-    if platform == "ont":
-        # TODO(@akalweit5): Make these pathlib Path objects instead of strings for concatenation
-        # TODO(@akalweit5): Make these files an input channel included in the process input block instead of paths, and give them
-        # to the script through argparse
-        coverage_tsv = coverage_tsv_dir + "/nanopore/03_alignments/coverage_summary.tsv"
-    else:
-        coverage_tsv = coverage_tsv_dir + "/" + platform + "/03_alignments/coverage_summary.tsv"
-
-    send_slack_notification(experiment_number, coverage_tsv, coverage_depth)
+    send_slack_notification(run_label, coverage_tsv_dir_path, coverage_depth)
 
 
 if __name__ == "__main__":
