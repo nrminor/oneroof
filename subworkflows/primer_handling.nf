@@ -17,6 +17,8 @@ include {
 include { FILTER_WITH_CHOPPER      } from "../modules/chopper"
 include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 include { WRITE_PRIMER_FASTA } from "../modules/write_primer_fasta"
+include { CREATE_PRIMER_TSV } from "../modules/output_primer_tsv"
+include { COLLECT_PRIMER_TSV } from "../modules/output_primer_tsv"
 
 
 workflow PRIMER_HANDLING {
@@ -57,6 +59,14 @@ workflow PRIMER_HANDLING {
         GET_PRIMER_SEQS(
             SPLIT_PRIMER_COMBOS.out.flatten(),
             ch_refseq,
+        )
+
+        CREATE_PRIMER_TSV(
+            GET_PRIMER_SEQS.out
+        )
+
+        COLLECT_PRIMER_TSV(
+            CREATE_PRIMER_TSV.out.primer_pair.collect()
         )
 
         GET_PRIMER_PATTERNS(
