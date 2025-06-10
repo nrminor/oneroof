@@ -52,5 +52,6 @@ workflow VARIANTS {
     )
 
     emit:
-    ANNOTATE_VCF.out
+    annotate = ANNOTATE_VCF.out
+    merge_vcf_files = MERGE_VCF_FILES.out
 }

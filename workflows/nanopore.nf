@@ -9,6 +9,7 @@ include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
+include { SLACK_ALERT } from "../subworkflows/slack_alert"
 
 workflow NANOPORE {
 
@@ -18,59 +19,57 @@ workflow NANOPORE {
         ch_primer_bed
         ch_refseq
         ch_refgbk
-        ch_contam_fasta
+        _ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
+        ch_primer_tsv
 
     main:
         assert params.platform == "ont"
 
         GATHER_NANOPORE ( )
 
-        if ( params.primer_bed && params.primer_bed != "" ) {
+        if ( params.primer_bed && params.primer_bed != "" || params.primer_tsv && params.primer_tsv != "" ) {
 
             PRIMER_HANDLING (
                 GATHER_NANOPORE.out,
                 ch_primer_bed,
-                ch_refseq
+                ch_refseq,
+                ch_primer_tsv
             )
 
-            QUALITY_CONTROL (
+            METAGENOMICS(
+                ch_metagenome_ref,
                 PRIMER_HANDLING.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
-            ALIGNMENT (
-                QUALITY_CONTROL.out,
+            alignment_outputs = ALIGNMENT (
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
         } else {
 
-            QUALITY_CONTROL (
+            METAGENOMICS(
+                ch_metagenome_ref,
                 GATHER_NANOPORE.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
-            ALIGNMENT (
-                QUALITY_CONTROL.out,
+            alignment_outputs = ALIGNMENT (
+                GATHER_NANOPORE.out,
                 ch_refseq
             )
 
         }
 
-        METAGENOMICS(
-            ch_metagenome_ref,
-            QUALITY_CONTROL.out,
-            Channel.empty()
-        )
-
         CONSENSUS (
-            ALIGNMENT.out
+            alignment_outputs.index
         )
 
-        VARIANTS (
-            ALIGNMENT.out,
+        variant_outputs = VARIANTS (
+            alignment_outputs.index,
             ch_refseq,
             ch_refgbk,
             ch_snpeff_config
@@ -79,8 +78,8 @@ workflow NANOPORE {
         if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
 
             HAPLOTYPING (
-                ALIGNMENT.out,
-                VARIANTS.out,
+                alignment_outputs.index,
+                variant_outputs.annotate,
                 ch_refseq
             )
 
@@ -89,5 +88,12 @@ workflow NANOPORE {
         PHYLO (
             CONSENSUS.out
         )
+
+        SLACK_ALERT(
+            alignment_outputs.coverage_summary,
+            CONSENSUS.out.collect(),
+            variant_outputs.merge_vcf_files
+        )
+
 
 }

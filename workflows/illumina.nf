@@ -7,6 +7,7 @@ include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
+include { SLACK_ALERT } from "../subworkflows/slack_alert"
 
 workflow ILLUMINA {
 
@@ -17,6 +18,7 @@ workflow ILLUMINA {
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
+        ch_primer_tsv
 
     main:
         assert params.platform == "illumina"
@@ -28,53 +30,56 @@ workflow ILLUMINA {
         GATHER_ILLUMINA ( )
 
         ILLUMINA_CORRECTION (
-            GATHER_ILLUMINA.out
+            GATHER_ILLUMINA.out,
+            ch_contam_fasta
         )
 
-        if ( params.primer_bed ) {
+        if ( params.primer_bed || params.primer_tsv ) {
 
             PRIMER_HANDLING (
                 ILLUMINA_CORRECTION.out,
                 ch_primer_bed,
-                ch_refseq
+                ch_refseq,
+                ch_primer_tsv
             )
 
-            QUALITY_CONTROL (
+            // QUALITY_CONTROL (
+            //     PRIMER_HANDLING.out,
+            //     ch_contam_fasta
+            // )
+
+            METAGENOMICS(
+                ch_metagenome_ref,
                 PRIMER_HANDLING.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
-            ALIGNMENT (
-                QUALITY_CONTROL.out,
+            alignment_outputs = ALIGNMENT (
+                PRIMER_HANDLING.out,
                 ch_refseq
             )
 
         } else {
 
-            QUALITY_CONTROL (
+            METAGENOMICS(
+                ch_metagenome_ref,
                 ILLUMINA_CORRECTION.out,
-                ch_contam_fasta
+                Channel.empty()
             )
 
-            ALIGNMENT (
-                QUALITY_CONTROL.out,
+            alignment_outputs = ALIGNMENT (
+                ILLUMINA_CORRECTION.out,
                 ch_refseq
             )
 
         }
 
-        METAGENOMICS(
-            ch_metagenome_ref,
-            QUALITY_CONTROL.out,
-            Channel.empty()
-        )
-
         CONSENSUS (
-            ALIGNMENT.out
+            alignment_outputs.index
         )
 
-        VARIANTS (
-            ALIGNMENT.out,
+        variant_outputs = VARIANTS (
+            alignment_outputs.index,
             ch_refseq,
             ch_ref_gbk,
 
@@ -83,6 +88,13 @@ workflow ILLUMINA {
 
         PHYLO (
             CONSENSUS.out
+        )
+        
+
+        SLACK_ALERT(
+            alignment_outputs.coverage_summary,
+            CONSENSUS.out.collect(),
+            variant_outputs.merge_vcf_files
         )
 
 }

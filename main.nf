@@ -77,6 +77,10 @@ workflow {
         Channel.fromPath( params.snpEff_config ) :
         Channel.empty()
 
+    ch_primer_tsv = params.primer_tsv ?
+        Channel.fromPath ( params.primer_tsv ) :
+        Channel.empty()
+
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
@@ -86,7 +90,8 @@ workflow {
             ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
-            ch_metagenomics_ref
+            ch_metagenomics_ref,
+            ch_primer_tsv
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -97,7 +102,8 @@ workflow {
             ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
-            ch_metagenomics_ref
+            ch_metagenomics_ref,
+            ch_primer_tsv
         )
 
     } else {

@@ -14,13 +14,13 @@ process RASUSA_READ_DOWNSAMPLING {
 	tuple val(barcode), path(amplicons), path(faidx)
 
 	output:
-	tuple val(barcode), path("${barcode}*.fastq.gz")
+	tuple val(barcode), path("${barcode}*.fasta.gz")
 
     script:
-    basename = file(amplicons).getName().replace(".fastq.gz", "")
+    basename = file(amplicons).getName().replace(".fasta.gz", "")
     if ( params.downsample_to == 0 )
         """
-        cp ${amplicons} ${basename}.no_downsampling.fastq.gz
+        cp ${amplicons} ${basename}.no_downsampling.fasta.gz
         """
     else
         """
@@ -29,7 +29,44 @@ process RASUSA_READ_DOWNSAMPLING {
         --genome-size ${faidx} \
         --seed 14 \
         --output-type g \
-        --output ${basename}.${params.downsample_to}x.fastq.gz \
+        --output ${basename}.${params.downsample_to}x.fasta.gz \
+        ${amplicons}
+        """
+
+}
+
+process EARLY_RASUSA_READ_DOWNSAMPLING {
+
+	/* */
+
+	tag "${barcode}"
+	publishDir params.complete_amplicons, mode: 'copy', overwrite: true
+
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 3
+
+	input:
+	tuple val(barcode), path(amplicons), path(faidx)
+
+	output:
+	tuple val(barcode), path("${barcode}*.fasta.gz")
+
+    script:
+    basename = file(amplicons).getName().replace(".fasta.gz", "")
+    if ( params.early_downsample_to == 0 )
+        """
+        cp ${amplicons} ${basename}.no_early_downsampling.fasta.gz
+        """
+    else
+        """
+        rasusa reads \
+        --coverage ${params.early_downsample_to} \
+        --genome-size ${faidx} \
+        --seed 14 \
+        --output-type g \
+        --output ${basename}.${params.early_downsample_to}x.fasta.gz \
         ${amplicons}
         """
 
