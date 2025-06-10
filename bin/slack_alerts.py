@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-from loguru import logger
 
 
 def parse_command_line_args() -> argparse.Namespace:
@@ -48,7 +47,7 @@ def passing_samples(df: pd.DataFrame, coverage_threshold) -> tuple[str, int]:
     for i in range(len(df.iloc[:, 1])):
         proportion = df.iloc[i, 1]
         sample_id = df.iloc[i, 0]
-        threshold = 1 / coverage_threshold
+        threshold = 1 - (1 / coverage_threshold)
         if proportion >= threshold:
             count += 1
             passing_line = f"{sample_id}: {proportion}\n"
@@ -62,20 +61,20 @@ def failing_samples(df: pd.DataFrame, coverage_threshold) -> str:
     for i in range(len(df.iloc[:, 1])):
         proportion = df.iloc[i, 1]
         sample_id = df.iloc[i, 0]
-        threshold = 1 / coverage_threshold
+        threshold = 1 - (1 / coverage_threshold)
         if proportion < threshold:
             failing_line = f"{sample_id}: {proportion}\n"
             failing_message += failing_line
     return failing_message
 
 
-def get_webhook_paths() -> list[str]:
+def get_user_ids() -> list[str]:
     """Resolve list of webhook URLs from env or default file."""
     # Check ONEROOF_SLACK_HOOKS environment variable
-    path_str = os.environ.get("ONEROOF_SLACK_HOOKS")
+    path_str = os.environ.get("ONEROOF_SLACK_USER_IDS")
 
     path = (
-        Path.home() / ".oneroof" / "slack.webhooks" if not path_str else Path(path_str)
+        Path.home() / ".oneroof" / "slack.user_ids" if not path_str else Path(path_str)
     )
 
     # If the file doesn't exist or is empty, return empty list
@@ -87,22 +86,28 @@ def get_webhook_paths() -> list[str]:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 
+def get_slack_token() -> str:
+    path_str = os.environ.get("ONEROOF_SLACK_TOKEN")
+
+    path = Path.home() / ".oneroof" / "slack.token" if not path_str else Path(path_str)
+
+    if not path.exists() or not path.is_file():
+        return ""
+
+    # Return the first non-empty line, stripped
+    with path.open() as f:
+        for line in f:
+            if line.strip():
+                return line.strip()
+    return ""  # In case the file is empty
+
+
 def send_slack_notification(
     run_label: str,
     stats_tsv: Path | str,
     coverage_threshold: int,
 ) -> None:
-    # the webhook url
-    # reading the tsv
-    # print(stats_tsv)
     stats_df = pd.read_csv(stats_tsv, sep="\t")
-
-    # getting the webhooks
-    webhook_urls = get_webhook_paths()
-
-    if not webhook_urls:
-        logger.error("No webhook URLs found. Exiting.")
-        return
 
     # finding passing and failing
     passing, count_passing = passing_samples(stats_df, coverage_threshold)
@@ -119,15 +124,25 @@ def send_slack_notification(
 
     complete_message = f"{message}\n```{results}```"
 
-    payload = {"text": complete_message}
-    for slack_webhook_url in webhook_urls:
-        # TODO(@akalweit5): Add reasonable timeout and consider retry strategy
-        r = requests.post(slack_webhook_url, json=payload)
-        if (r.status_code) != 200:  # noqa: PLR2004
-            msg = f"Error sending slack automation, response code: {r.status_code}"
-            # TODO(@akalweit5): Find a better exception here. What actually is the error we're expecting? And could we just use
-            # an assert somewhere to crash early?
-            raise Exception(msg)
+    user_id_list = get_user_ids()
+    slack_token = get_slack_token()
+
+    for user_id in user_id_list:
+        resp = requests.post(
+            "https://slack.com/api/conversations.open",
+            headers={"Authorization": f"Bearer {slack_token}"},
+            json={"users": user_id},
+        )
+        channel_id = resp.json().get("channel", {}).get("id")
+        if not channel_id:
+            raise RuntimeError("Failed to open conversation.")
+
+        # Send the message
+        msg_resp = requests.post(
+            "https://slack.com/api/chat.postMessage",
+            headers={"Authorization": f"Bearer {slack_token}"},
+            json={"channel": channel_id, "text": complete_message},
+        )
 
 
 def main() -> None:
