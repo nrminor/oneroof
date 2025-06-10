@@ -69,7 +69,6 @@ def failing_samples(df: pd.DataFrame, coverage_threshold) -> str:
 
 
 def get_user_ids() -> list[str]:
-    """Resolve list of webhook URLs from env or default file."""
     # Check ONEROOF_SLACK_HOOKS environment variable
     path_str = os.environ.get("ONEROOF_SLACK_USER_IDS")
 
