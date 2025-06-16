@@ -53,29 +53,6 @@ process SKETCH_SAMPLE_KMERS {
 	"""
 }
 
-// process CLASSIFY_SAMPLE {
-
-// 	publishDir "${params.results}/sylph_results", mode: 'copy'
-
-//     tag "${sample_id}"
-
-//     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-//     maxRetries 1
-
-//     input:
-//     tuple val(sample_id), path(sample_sketches), path(syldb)
-
-//     output:
-//     tuple val(sample_id), path("${sample_id}_sylph_results.tsv")
-
-//    script:
-// 	"""
-// 	mkdir -p sylph_results
-// 	sylph profile \
-// 	-t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 --read-seq-id 0.80 \
-// 	${syldb} ${sample_sketches} -o ${sample_id}_sylph_results.tsv
-// 	"""
-// }
 process CLASSIFY_SAMPLE {
 
     publishDir params.metagenomics, mode: 'copy'
@@ -106,9 +83,8 @@ process SYLPH_TAX_DOWNLOAD {
 
 	// errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
 	// maxRetries 1
-
-	input: 
-	tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
+    input: 
+	val(reads)
 
 	output:
 	val "ready"
@@ -127,9 +103,7 @@ process OVERLAY_TAXONOMY {
     tag "${sample_id}"
     
     input:
-    tuple val(sample_id), path(tsv_path)
-    path(input_db)
-    val "ready"
+    tuple val(sample_id), path(tsv_path), val ("ready"), path(input_db)
     
     output:
     tuple val(sample_id), path("sylph_tax_results/${sample_id}*.sylphmpa")
@@ -137,7 +111,14 @@ process OVERLAY_TAXONOMY {
     script:
     """
     mkdir -p sylph_tax_results
-    sylph-tax taxprof ${tsv_path} -t ${input_db} -o "sylph_tax_results/${sample_id}"
+
+conflict_file=\$(find sylph_tax_results -type f -name '${sample_id}*.sylphmpa')
+if [[ -n "\$conflict_file" ]]; then
+  echo "Removing conflicting file: \$conflict_file"
+  rm -f "\$conflict_file"
+fi
+
+sylph-tax taxprof ${sample_id}_sylph_results.tsv -t IMGVR_4.1 --add-folder-information -o sylph_tax_results/${sample_id}
     """
 }
 
@@ -154,6 +135,9 @@ process MERGE_TAXONOMY {
 
     input:
     tuple val(sample_id), path(input_dir)
+
+	output:
+	path "merged_taxonomy.tsv"
 
     script:
     """

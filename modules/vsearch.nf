@@ -63,10 +63,10 @@ process IDENTIFY_HAPLOTYPES {
     */
 
 	tag "${sample_id}"
-	publishDir "${params.haplo}/${sample_id}", mode: 'copy', overwrite: true
+	publishDir  params.haplotyping, mode: 'copy'
 
-	errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
-	maxRetries 2
+	// errorStrategy { task.attempt < 3 ? 'retry' : params.errorMode }
+	// maxRetries 2
 
 	cpus 1
 
