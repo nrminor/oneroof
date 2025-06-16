@@ -107,9 +107,6 @@ process SYLPH_TAX_DOWNLOAD {
 	// errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
 	// maxRetries 1
 
-	input: 
-	tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
-
 	output:
 	val "ready"
 
@@ -127,9 +124,7 @@ process OVERLAY_TAXONOMY {
     tag "${sample_id}"
     
     input:
-    tuple val(sample_id), path(tsv_path)
-    path(input_db)
-    val "ready"
+    tuple val(sample_id), path(tsv_path), val ("ready"), path(input_db)
     
     output:
     tuple val(sample_id), path("sylph_tax_results/${sample_id}*.sylphmpa")
@@ -154,6 +149,9 @@ process MERGE_TAXONOMY {
 
     input:
     tuple val(sample_id), path(input_dir)
+
+	output:
+	path "merged_taxonomy.tsv"
 
     script:
     """

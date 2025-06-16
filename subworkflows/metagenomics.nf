@@ -37,14 +37,10 @@ workflow METAGENOMICS {
     if(params.sylph_tax_db){
 
         SYLPH_TAX_DOWNLOAD(
-            CLASSIFY_SAMPLE.out
         )
 
         OVERLAY_TAXONOMY(
-            // CLASSIFY_SAMPLE.out.combine(ch_taxonomy_files)            
-            CLASSIFY_SAMPLE.out,
-            ch_sylph_tax_db,
-            SYLPH_TAX_DOWNLOAD.out
+            CLASSIFY_SAMPLE.out.combine(SYLPH_TAX_DOWNLOAD.out).combine(ch_sylph_tax_db)
         )
 
         MERGE_TAXONOMY(
