@@ -171,6 +171,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-70.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/simplejson-3.19.3-py312h66e93f0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/slack-sdk-3.35.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/slack_sdk-3.35.0-hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.2-hdfd78af_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snpsift-5.2-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/spectra-0.0.11-py_1.tar.bz2
@@ -252,7 +254,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a7/ea/53d1fe468e63e092cf16e2c18d16f50c29851242f9dd12d6a66e0d7f0d02/XlsxWriter-3.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fe/42/f8dbc2b9ad59e927940325a22d6d3931d630c3644dae7e2369ef5d9ba230/zope.event-5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/96/08/2103587ebc989b455cf05e858e7fbdfeedfc3373358320e9c513428290b1/zope.interface-7.2-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: .
+      - pypi: ./
       osx-64:
       - conda: https://conda.anaconda.org/bioconda/osx-64/bbmap-39.01-hd5a9a93_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/osx-64/bcftools-1.16-h83fc8ca_1.tar.bz2
@@ -387,6 +389,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/setuptools-70.0.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/simplejson-3.20.1-py310hbb8c376_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/slack-sdk-3.35.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/slack_sdk-3.35.0-hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.2-hdfd78af_1.tar.bz2
       - conda: https://conda.anaconda.org/bioconda/noarch/snpsift-5.2-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/spectra-0.0.11-py_1.tar.bz2
@@ -451,7 +455,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/a7/ea/53d1fe468e63e092cf16e2c18d16f50c29851242f9dd12d6a66e0d7f0d02/XlsxWriter-3.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fe/42/f8dbc2b9ad59e927940325a22d6d3931d630c3644dae7e2369ef5d9ba230/zope.event-5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/76/71/e6177f390e8daa7e75378505c5ab974e0bf59c1d3b19155638c7afbf4b2d/zope.interface-7.2-cp310-cp310-macosx_10_9_x86_64.whl
-      - pypi: .
+      - pypi: ./
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
   sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
@@ -3420,10 +3424,10 @@ packages:
   - pkg:pypi/numpy?source=hash-mapping
   size: 7106389
   timestamp: 1742255472062
-- pypi: .
+- pypi: ./
   name: oneroof
   version: 1.0.0
-  sha256: 1011d61080338b6ad3840b3fae4dc91e2863005f43f21af3a60722044c0e7cd2
+  sha256: 3a1915d0823ea3f0c4a02dbb5f4e087ad52e5385926659ffbbd19401283f6f40
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
@@ -4620,6 +4624,28 @@ packages:
   - pkg:pypi/six
   size: 14259
   timestamp: 1620240338595
+- conda: https://conda.anaconda.org/conda-forge/noarch/slack-sdk-3.35.0-pyhd8ed1ab_0.conda
+  sha256: 8cdb5bf2a79316c59085a374a43274c0c68b73fc979eac287310c8b6b5ddd6fc
+  md5: c8955a896e3562a93fe899700951f5af
+  depends:
+  - python >=3.9
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/slack-sdk?source=hash-mapping
+  size: 149405
+  timestamp: 1742233646996
+- conda: https://conda.anaconda.org/conda-forge/noarch/slack_sdk-3.35.0-hd8ed1ab_0.conda
+  noarch: python
+  sha256: ae9f8702e331fde4d226768492c0699dea9c8a14a807b2b62ae67c769ff97a53
+  md5: 61be145f841e293c2b0cea5a36e525cc
+  depends:
+  - slack-sdk 3.35.0 pyhd8ed1ab_0
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 6765
+  timestamp: 1742233648285
 - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.2-hdfd78af_1.tar.bz2
   sha256: 1f72c9354e144ec8095fdda76793ef50d282071c2cd3da66e416a5942c2f57a8
   md5: 302ea5c9337b9aea6cc7582df04f180e

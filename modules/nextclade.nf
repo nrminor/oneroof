@@ -8,7 +8,7 @@ process CHECK_DATASET {
     when:
     params.nextclade_dataset
 
-    shell:
+    script:
     '''
     dataset_options=$(nextclade dataset list)
 
@@ -31,7 +31,7 @@ process DOWNLOAD_DATASET {
     val valid_dataset
 
     output:
-    path "dataset_label/"
+    path dataset_label
 
     script:
     dataset_label = params.nextclade_dataset.split("/")[-1]

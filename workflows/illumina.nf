@@ -19,6 +19,7 @@ workflow ILLUMINA {
         ch_snpeff_config
         ch_metagenome_ref
         ch_primer_tsv
+        ch_sylph_tax_db
 
     main:
         assert params.platform == "illumina"
@@ -50,6 +51,7 @@ workflow ILLUMINA {
 
             METAGENOMICS(
                 ch_metagenome_ref,
+                ch_sylph_tax_db,
                 PRIMER_HANDLING.out,
                 Channel.empty()
             )
@@ -63,6 +65,7 @@ workflow ILLUMINA {
 
             METAGENOMICS(
                 ch_metagenome_ref,
+                ch_sylph_tax_db, 
                 ILLUMINA_CORRECTION.out,
                 Channel.empty()
             )

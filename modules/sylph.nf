@@ -16,7 +16,7 @@ process SKETCH_DATABASE_KMERS {
 	path "*.syldb"
 
 	when:
-    params.sylph_db
+    params.meta_ref
 
 	script:
 	"""
@@ -45,7 +45,7 @@ process SKETCH_SAMPLE_KMERS {
 	tuple val(sample_id), path("${sample_id}*.sylsp")
 
 	when:
-    params.sylph_db
+    params.meta_ref
 
 	script:
 	"""
@@ -53,60 +53,113 @@ process SKETCH_SAMPLE_KMERS {
 	"""
 }
 
+// process CLASSIFY_SAMPLE {
+
+// 	publishDir "${params.results}/sylph_results", mode: 'copy'
+
+//     tag "${sample_id}"
+
+//     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+//     maxRetries 1
+
+//     input:
+//     tuple val(sample_id), path(sample_sketches), path(syldb)
+
+//     output:
+//     tuple val(sample_id), path("${sample_id}_sylph_results.tsv")
+
+//    script:
+// 	"""
+// 	mkdir -p sylph_results
+// 	sylph profile \
+// 	-t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 --read-seq-id 0.80 \
+// 	${syldb} ${sample_sketches} -o ${sample_id}_sylph_results.tsv
+// 	"""
+// }
 process CLASSIFY_SAMPLE {
 
-	/* */
+    publishDir params.metagenomics, mode: 'copy'
 
-	tag "${sample_id}"
+    tag "${sample_id}"
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
 
-	input:
-	tuple val(sample_id), path(sample_sketches), path(syldb)
+    input:
+    tuple val(sample_id), path(sample_sketches), path(syldb)
 
-	output:
-	tuple val(sample_id), path("${sample_id}*.tsv")
+    output:
+    tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
 
-	script:
-	"""
+    script:
+    """
+	mkdir -p sylph_results
 	sylph profile \
 	-t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 --read-seq-id 0.80 \
-	${sample_sketches} ${syldb} > ${sample_id}_sylph_results.tsv
-	"""
+	${sample_sketches} ${syldb} > sylph_results/${sample_id}_sylph_results.tsv
+    """
 }
+
+
 
 process SYLPH_TAX_DOWNLOAD {
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+	// errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+	// maxRetries 1
+
+	input: 
+	tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
 
 	output:
 	val "ready"
 
 	script:
+	results = params.results
 	"""
-	if [ ! -d ${params.sylph_tax_dir} ]; then
-		mkdir -p ${params.sylph_tax_dir}
-	fi
-	sylph-tax download --download-to ${params.sylph_tax_dir}
+	cd ${results}
+	mkdir -p sylph_tax_databases
+	sylph-tax download --download-to sylph_tax_databases
 	"""
 }
 
 process OVERLAY_TAXONOMY {
-
-	/* */
-
-	tag "${sample_id}"
-
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
-
-	input:
-	tuple val(sample_id), path(tsv_dir), val(ready)
-
-	script:
-	"""
-	sylph-tax taxprof sylph_results/*.tsv -t ${params.sylph_taxonomy} -o ${sample_id}
-	"""
+    publishDir params.metagenomics, mode: 'copy'
+    tag "${sample_id}"
+    
+    input:
+    tuple val(sample_id), path(tsv_path)
+    path(input_db)
+    val "ready"
+    
+    output:
+    tuple val(sample_id), path("sylph_tax_results/${sample_id}*.sylphmpa")
+    
+    script:
+    """
+    mkdir -p sylph_tax_results
+    sylph-tax taxprof ${tsv_path} -t ${input_db} -o "sylph_tax_results/${sample_id}"
+    """
 }
+
+
+
+process MERGE_TAXONOMY {
+
+    publishDir params.metagenomics, mode: 'copy'
+
+    tag "merge"
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    input:
+    tuple val(sample_id), path(input_dir)
+
+    script:
+    """
+	sylph-tax merge ${input_dir} --column relative_abundance -o merged_taxonomy.tsv
+
+    """
+}
+
+
