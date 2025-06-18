@@ -95,6 +95,9 @@ Command line argument     | Default value | Explanation
 `--secondary`             | None          | Whether to turn on secondary alignments for each amplicon. Secondary alignments can increase depth at the cost of more reads potentially mapping to the wrong locations. By default, secondary alignments are off.
 `--min_consensus_freq`    | 0.5            | The minimum required frequency of a variant base to be included in a consensu sequence.
 `--min_depth_coverage`    | 20            | Minimum required depth of coverage to call a variant.
+`--meta_ref`              | None          |  Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases.
+`--sylph_tax_db`          | None          | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here.
+`--nextclade_dataset`     | None          | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`.
 `--results`               | results/      | Where to place results.
 `--cleanup`               | false         | Whether to cleanup work directory after a successful run.
 
