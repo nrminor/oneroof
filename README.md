@@ -1,19 +1,13 @@
----
-title: "OneRoof: A Pipeline Prototype for Base-, Variant-, and Consensus-calling under One Proverbial Roof"
-toc: true
-format:
-    html:
-        embed-resources: true
-        keep-ipynb: false
-    typst: default
-    gfm:
-        wrap: none
-editor: source
-engine: knitr
-execute:
-    echo: false
-    eval: false
----
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Detailed Setup Instructions](#detailed-setup-instructions)
+  - [Configuration](#configuration)
+  - [Developer Setup](#developer-setup)
+- [Contributing](#contributing)
+- [Is it any good?](#is-it-any-good)
+- [Citation](#citation)
 
 ## Overview
 
