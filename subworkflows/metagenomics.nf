@@ -37,6 +37,7 @@ workflow METAGENOMICS {
     if(params.sylph_tax_db){
 
         SYLPH_TAX_DOWNLOAD(
+            CLASSIFY_SAMPLE.out
         )
 
         OVERLAY_TAXONOMY(

@@ -130,8 +130,8 @@ process FASTQ_CONVERSION {
 
     tag "${barcode}"
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+	// errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	// maxRetries 2
 
     input:
     tuple val(barcode), path(bam)
@@ -145,7 +145,6 @@ process FASTQ_CONVERSION {
     """
 
 }
-
 process FAIDX {
 
     tag "${barcode}"
@@ -180,7 +179,7 @@ process SPLIT_SEGMENTS {
     tuple val(sample_id), path(bam), path(index)
 
     output:
-    tuple val(sample_id), path("${sample_id}_*.bam")
+    tuple val(sample_id), path ("${sample_id}_*.bam"), path("${sample_id}_*.bam.bai")
 
     shell:
     '''
@@ -193,6 +192,7 @@ process SPLIT_SEGMENTS {
         output_bam="!{sample_id}_${contig}.bam"
         (
             samtools view -b "!{bam}" "$contig" > "$output_bam"
+            samtools index "$output_bam" 
             echo "Created $output_bam"
         ) &
     done
