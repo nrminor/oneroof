@@ -1,27 +1,27 @@
 include { SPLIT_SEGMENTS ; FASTQ_CONVERSION } from "../modules/samtools"
 include { IDENTIFY_HAPLOTYPES      } from "../modules/vsearch"
 include { PHASE_READS_WITH_DEVIDER } from "../modules/devider"
-include { PROCESS_VCF   } from "../modules/bcftools"
-include { PROCESS_REF   } from "../modules/bcftools"
+// include { PROCESS_VCF   } from "../modules/bcftools"
+// include { PROCESS_REF   } from "../modules/bcftools"
 
 workflow HAPLOTYPING {
     take:
     ch_bams
-    ch_vcfs
-    ch_ref
+    _ch_vcfs
+    _ch_ref
 
     main:
     SPLIT_SEGMENTS(
         ch_bams
     )
 
-    PROCESS_VCF(
-        ch_vcfs
-    )
+    // PROCESS_VCF(
+    //     ch_vcfs
+    // )
 
-    PHASE_READS_WITH_DEVIDER(
-       SPLIT_SEGMENTS.out.join(PROCESS_VCF.out).combine(ch_ref)
-    )
+    // PHASE_READS_WITH_DEVIDER(
+    //    SPLIT_SEGMENTS.out.join(PROCESS_VCF.out).combine(ch_ref)
+    // )
 
     FASTQ_CONVERSION(
     SPLIT_SEGMENTS.out.flatten()
