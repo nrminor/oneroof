@@ -33,7 +33,7 @@ render-data-mgmt:
 compress_html:
     @gzip -f docs/index.html
     @gzip -f docs/developer.html
-    @gzip -f docs/data_management.html
+    # @gzip -f docs/_management.html
 
 # Render the main docs and the developer docs.
 qmd: render render-dev render-data-mgmt
@@ -73,7 +73,7 @@ py-sort-imports:
     ruff check . -n --select=I --fix
 
 # Run all Python recipes in sequence.
-python: py-lints py-format py-sort-imports # py-freeze
+python: py-lints py-format py-sort-imports
 
 # Run all recipes in sequence with one another.
 all: docs setup-env python docker

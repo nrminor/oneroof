@@ -16,7 +16,7 @@ process SKETCH_DATABASE_KMERS {
 	path "*.syldb"
 
 	when:
-    params.sylph_db
+    params.meta_ref
 
 	script:
 	"""
@@ -45,7 +45,7 @@ process SKETCH_SAMPLE_KMERS {
 	tuple val(sample_id), path("${sample_id}*.sylsp")
 
 	when:
-    params.sylph_db
+    params.meta_ref
 
 	script:
 	"""
@@ -55,58 +55,95 @@ process SKETCH_SAMPLE_KMERS {
 
 process CLASSIFY_SAMPLE {
 
-	/* */
+    publishDir params.metagenomics, mode: 'copy'
 
-	tag "${sample_id}"
+    tag "${sample_id}"
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
 
-	input:
-	tuple val(sample_id), path(sample_sketches), path(syldb)
+    input:
+    tuple val(sample_id), path(sample_sketches), path(syldb)
 
-	output:
-	tuple val(sample_id), path("${sample_id}*.tsv")
+    output:
+    tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
 
-	script:
-	"""
+    script:
+    """
+	mkdir -p sylph_results
 	sylph profile \
 	-t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 --read-seq-id 0.80 \
-	${sample_sketches} ${syldb} > ${sample_id}_sylph_results.tsv
-	"""
+	${sample_sketches} ${syldb} > sylph_results/${sample_id}_sylph_results.tsv
+    """
 }
+
+
 
 process SYLPH_TAX_DOWNLOAD {
 
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
+	// errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+	// maxRetries 1
+    input: 
+	val(reads)
 
 	output:
 	val "ready"
 
 	script:
+	results = params.results
 	"""
-	if [ ! -d ${params.sylph_tax_dir} ]; then
-		mkdir -p ${params.sylph_tax_dir}
-	fi
-	sylph-tax download --download-to ${params.sylph_tax_dir}
+	cd ${results}
+	mkdir -p sylph_tax_databases
+	sylph-tax download --download-to sylph_tax_databases
 	"""
 }
 
 process OVERLAY_TAXONOMY {
+    publishDir params.metagenomics, mode: 'copy'
+    tag "${sample_id}"
+    
+    input:
+    tuple val(sample_id), path(tsv_path), val ("ready"), path(input_db)
+    
+    output:
+    tuple val(sample_id), path("sylph_tax_results/${sample_id}*.sylphmpa")
+    
+    script:
+    """
+    mkdir -p sylph_tax_results
 
-	/* */
+conflict_file=\$(find sylph_tax_results -type f -name '${sample_id}*.sylphmpa')
+if [[ -n "\$conflict_file" ]]; then
+  echo "Removing conflicting file: \$conflict_file"
+  rm -f "\$conflict_file"
+fi
 
-	tag "${sample_id}"
-
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
-
-	input:
-	tuple val(sample_id), path(tsv_dir), val(ready)
-
-	script:
-	"""
-	sylph-tax taxprof sylph_results/*.tsv -t ${params.sylph_taxonomy} -o ${sample_id}
-	"""
+sylph-tax taxprof ${sample_id}_sylph_results.tsv -t IMGVR_4.1 --add-folder-information -o sylph_tax_results/${sample_id}
+    """
 }
+
+
+
+process MERGE_TAXONOMY {
+
+    publishDir params.metagenomics, mode: 'copy'
+
+    tag "merge"
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    input:
+    tuple val(sample_id), path(input_dir)
+
+	output:
+	path "merged_taxonomy.tsv"
+
+    script:
+    """
+	sylph-tax merge ${input_dir} --column relative_abundance -o merged_taxonomy.tsv
+
+    """
+}
+
+

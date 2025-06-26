@@ -81,6 +81,11 @@ workflow {
         Channel.fromPath ( params.primer_tsv ) :
         Channel.empty()
 
+    ch_sylph_tax_db = params.sylph_tax_db ?
+        Channel.fromPath ( params.sylph_tax_db ) :
+        Channel.empty()
+
+
     // decide whether to run the ont or the illumina workflow
     if ( params.platform == "ont" ) {
 
@@ -91,7 +96,8 @@ workflow {
             ch_contam_fasta,
             ch_snpeff_config,
             ch_metagenomics_ref,
-            ch_primer_tsv
+            ch_primer_tsv,
+            ch_sylph_tax_db
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -103,7 +109,8 @@ workflow {
             ch_contam_fasta,
             ch_snpeff_config,
             ch_metagenomics_ref,
-            ch_primer_tsv
+            ch_primer_tsv,
+            ch_sylph_tax_db
         )
 
     } else {

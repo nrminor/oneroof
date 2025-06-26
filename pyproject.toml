@@ -94,6 +94,7 @@ deacon = ">=0.2.0,<0.3"
 sylph = ">=0.8.1,<0.9"
 sylph-tax = ">=1.2.0,<2"
 fastp = ">=0.24.0,<0.25"
+slack_sdk = ">=3.35.0,<4"
 
 [tool.uv]
 dev-dependencies = [

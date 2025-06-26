@@ -93,8 +93,12 @@ Command line argument     | Default value | Explanation
 `--max_mismatch`          | 0             | The maximum number of mismatches to allow when finding primers
 `--downsample_to`         | 0             | Desired coverage to downsample to, with a special value of 0 to indicate 0 downsampling
 `--secondary`             | None          | Whether to turn on secondary alignments for each amplicon. Secondary alignments can increase depth at the cost of more reads potentially mapping to the wrong locations. By default, secondary alignments are off.
-`--min_consensus_freq`    | 0.5            | The minimum required frequency of a variant base to be included in a consensu sequence.
+`--min_consensus_freq`    | 0.5           | The minimum required frequency of a variant base to be included in a consensu sequence.
 `--min_depth_coverage`    | 20            | Minimum required depth of coverage to call a variant.
+`--min_variant_frequency` | 0.05 (illumina) or 0.10 (nanopore) | Minimum variant frequency to call a variant.
+`--meta_ref`              | None          |  Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases.
+`--sylph_tax_db`          | None          | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here.
+`--nextclade_dataset`     | None          | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`.
 `--results`               | results/      | Where to place results.
 `--cleanup`               | false         | Whether to cleanup work directory after a successful run.
 
@@ -152,4 +156,40 @@ Contributions, feature requests, improvement suggestions, and bug reports via Gi
 
 ## Citation
 
-Coming soon!
+> Lail, Andrew J., William C. Vuyk, Heather Machkovech, Nicholas R. Minor, Nura R. Hassan, Rhea Dalvie, Isla E. Emmen et al. "Amplicon sequencing of pasteurized retail dairy enables genomic surveillance of H5N1 avian influenza virus in United States cattle." PloS one 20, no. 6 (2025): <https://doi.org/10.1371/journal.pone.0325203>.
+
+```bibtex
+@article{Lail2025-xf,
+  title = "Amplicon sequencing of pasteurized retail dairy enables genomic surveillance of {H5N1} avian influenza virus in United States cattle",
+  author = "Lail, Andrew J and Vuyk, William C and Machkovech, Heather and Minor, Nicholas R and Hassan, Nura R and Dalvie, Rhea and Emmen, Isla E and Wolf, Sydney and Kalweit, Annabelle and Wilson, Nancy and Newman, Christina M and Tiburcio, Patrick Barros and Weiler, Andrea and Friedrich, Thomas C and O'Connor, David H",
+  journal = "PLoS One",
+  publisher = "Public Library of Science (PLoS)",
+  volume =  20,
+  number =  6,
+  pages = "e0325203",
+  month =  jun,
+  year =  2025,
+  copyright = "http://creativecommons.org/licenses/by/4.0/",
+  language = "en"
+}
+```
+
+> Kwon, Taeyong, Jessie D. Trujillo, Mariano Carossino, Heather M. Machkovech, Konner Cool, Eu Lim Lyoo, Gagandeep Singh et al. "Pathogenicity and transmissibility of bovine-derived HPAI H5N1 B3. 13 virus in pigs." Emerging Microbes & Infections just-accepted (2025): <https://doi.org/10.1080/22221751.2025.2509742>.
+
+```bibtex
+@ARTICLE{Kwon2025-yq,
+  title = "Pathogenicity and transmissibility of bovine-derived {HPAI} {H5N1} B3.13 virus in pigs",
+  author = "Kwon, Taeyong and Trujillo, Jessie D and Carossino, Mariano and Machkovech, Heather M and Cool, Konner and Lyoo, Eu Lim and Singh, Gagandeep and Kafle, Sujan and Elango, Shanmugasundaram and Vediyappan, Govindsamy and Wei, Wanting and Minor, Nicholas and Matias-Ferreyra, Franco S and Morozov, Igor and Gaudreault, Natasha N and Balasuriya, Udeni B R and Hensley, Lisa E and Diel, Diego G and Ma, Wenjun and Friedrich, Thomas C and Richt, Juergen A",
+  journal = "Emerg. Microbes Infect.",
+  publisher = "Informa UK Limited",
+  volume =  14,
+  number =  1,
+  pages = "2509742",
+  month =  dec,
+  year =  2025,
+  keywords = "Cattle; H5N1 genotype B3.13; highly pathogenic avian influenza; mammalian-like mutation; pathogenicity; pig; transmissibility",
+  copyright = "http://creativecommons.org/licenses/by-nc/4.0/",
+  language = "en"
+}
+
+```
