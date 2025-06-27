@@ -76,7 +76,6 @@ workflow PRIMER_HANDLING {
     } else if (params.primer_tsv && params.primer_tsv != "") {
         ch_tsv_to_fasta = ch_primer_tsv
             .splitCsv(header:true, sep:'\t', strip: true)
-            .filter { row -> !row.startsWith("#")}
             .filter { row ->
                 row.amplicon_name && row.fwd_sequence && row.reverse_sequence
             }

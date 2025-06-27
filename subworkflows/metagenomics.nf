@@ -2,13 +2,16 @@ include {
     SKETCH_DATABASE_KMERS ;
     SKETCH_SAMPLE_KMERS ;
     CLASSIFY_SAMPLE ;
-    OVERLAY_TAXONOMY
+    OVERLAY_TAXONOMY ;
+    SYLPH_TAX_DOWNLOAD ;
+    MERGE_TAXONOMY
 } from "../modules/sylph"
 
 workflow METAGENOMICS {
 
     take:
     ch_ref
+    ch_sylph_tax_db
     ch_sample_reads
     ch_taxonomy_files
 
@@ -31,10 +34,19 @@ workflow METAGENOMICS {
         SKETCH_SAMPLE_KMERS.out.combine(ch_sylph_db_queue)
     )
 
-    OVERLAY_TAXONOMY(
-        CLASSIFY_SAMPLE.out.combine(ch_taxonomy_files)
-    )
+    if(params.sylph_tax_db){
 
-    // emit:
+        SYLPH_TAX_DOWNLOAD(
+            CLASSIFY_SAMPLE.out
+        )
+
+        OVERLAY_TAXONOMY(
+            CLASSIFY_SAMPLE.out.combine(SYLPH_TAX_DOWNLOAD.out).combine(ch_sylph_tax_db)
+        )
+
+        MERGE_TAXONOMY(
+            OVERLAY_TAXONOMY.out
+        )
+    }
 
 }

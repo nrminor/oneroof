@@ -46,6 +46,8 @@
 # bin of executable scripts
 !/bin/
 !/bin/*.py
+!/bin/*.ts
+!/bin/*.js
 !/bin/*.R
 !/bin/*.r
 !/bin/*.pl

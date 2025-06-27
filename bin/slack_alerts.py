@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import requests
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 
 def parse_command_line_args() -> argparse.Namespace:
@@ -52,6 +53,8 @@ def passing_samples(df: pd.DataFrame, coverage_threshold) -> tuple[str, int]:
             count += 1
             passing_line = f"{sample_id}: {proportion}\n"
             passing_message += passing_line
+    if passing_message == "":
+        passing_message = "No passing samples."
     return (passing_message, count)
 
 
@@ -65,6 +68,8 @@ def failing_samples(df: pd.DataFrame, coverage_threshold) -> str:
         if proportion < threshold:
             failing_line = f"{sample_id}: {proportion}\n"
             failing_message += failing_line
+    if failing_message == "":
+        failing_message = "No failing samples."
     return failing_message
 
 
@@ -112,36 +117,44 @@ def send_slack_notification(
     passing, count_passing = passing_samples(stats_df, coverage_threshold)
     failing = failing_samples(stats_df, coverage_threshold)
 
-    # creating the return message
-    message = (
-        f"Oneroof has finished successfully for experiment {run_label}, "
-        f"with {count_passing} samples passing. Below is a breakdown of "
-        f"which samples had greater than or equal to {coverage_threshold}X coverage."
-    )
-
-    results = f"PASSING\n-------\n{passing}\n\nFAILING\n-------\n{failing}"
-
-    complete_message = f"{message}\n```{results}```"
-
     user_id_list = get_user_ids()
     slack_token = get_slack_token()
 
-    for user_id in user_id_list:
-        resp = requests.post(
-            "https://slack.com/api/conversations.open",
-            headers={"Authorization": f"Bearer {slack_token}"},
-            json={"users": user_id},
-        )
-        channel_id = resp.json().get("channel", {}).get("id")
-        if not channel_id:
-            raise RuntimeError("Failed to open conversation.")
+    block = [
+        {
+            "type": "section",
+            "text": {
+                "type": "plain_text",
+                "text": f"Oneroof has finished successfully for experiment {run_label}, with {count_passing} samples passing. Below is a breakdown of which samples had greater than or equal to {coverage_threshold}X coverage.",
+                "emoji": True,
+            },
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": f"*PASSING* \n ----------- \n {passing}  ",
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": f"*FAILING* \n ----------- \n {failing}",
+                },
+            ],
+        },
+    ]
 
-        # Send the message
-        msg_resp = requests.post(
-            "https://slack.com/api/chat.postMessage",
-            headers={"Authorization": f"Bearer {slack_token}"},
-            json={"channel": channel_id, "text": complete_message},
-        )
+    for user_id in user_id_list:
+        try:
+            client = WebClient(token=slack_token)
+            # Send the message to a channel
+            response = client.chat_postMessage(
+                channel=user_id,  # or a user ID like "U12345678"
+                blocks=block,
+            )
+            print("Message sent successfully!")
+        except SlackApiError as e:
+            print(f"Error sending message: {e.response['error']}")
 
 
 def main() -> None:
@@ -151,7 +164,11 @@ def main() -> None:
     coverage_tsv_dir_path = args.input_tsv_dir
     coverage_depth = args.depth
 
-    send_slack_notification(run_label, coverage_tsv_dir_path, coverage_depth)
+    send_slack_notification(
+        run_label,
+        coverage_tsv_dir_path,
+        coverage_depth,
+    )
 
 
 if __name__ == "__main__":

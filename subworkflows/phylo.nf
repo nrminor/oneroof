@@ -17,4 +17,6 @@ workflow PHYLO {
         ch_consensus,
         DOWNLOAD_DATASET.out,
     )
+
+    // emit: DOWNLOAD_DATASET.out
 }

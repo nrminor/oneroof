@@ -20,3 +20,22 @@ process MERGE_VCF_FILES {
     """
 
 }
+
+process PROCESS_VCF {
+
+    // errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+	// maxRetries 1
+
+    input:
+    tuple val(sample_id), path (vcf)
+
+    output: 
+    tuple val(sample_id), path ("${vcf}.gz"), path("${vcf}.gz.tbi")
+
+    script:
+    """
+    bgzip -c "${vcf}" > "${vcf}.gz"
+    tabix -p vcf "${vcf}.gz"
+    
+    """
+}
