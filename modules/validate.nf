@@ -18,7 +18,10 @@ process VALIDATE_NANOPORE {
     script:
     if ( file(seq_file).getName().endsWith(".fastq.gz") )
         """
-        seqkit seq --validate-seq ${seq_file} -o ${label}.validated.fastq.gz
+        fq lint \
+        --lint-mode panic \
+        --single-read-validation-level high \
+        ${seq_file} && cp \$(realpath ${seq_file}) ${label}.validated.fastq.gz
         """
     else if ( file(seq_file).getName().endsWith(".bam") )
         """
@@ -49,7 +52,6 @@ process VALIDATE_ILLUMINA {
 
     script:
     """
-    seqfu check --deep --verbose --thousands \
     fq lint \
     --lint-mode panic \
     --single-read-validation-level high \
