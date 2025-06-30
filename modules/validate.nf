@@ -50,6 +50,10 @@ process VALIDATE_ILLUMINA {
     script:
     """
     seqfu check --deep --verbose --thousands \
+    fq lint \
+    --lint-mode panic \
+    --single-read-validation-level high \
+    --paired-read-validation-level high \
     ${reads1} ${reads2} \
     > ${label}.report.txt
     """
