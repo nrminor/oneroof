@@ -50,6 +50,9 @@ dependencies = [
     "lxml>=5.3.0",
     "pyyaml",
     "pytz>=2025.1",
+    "pydantic>=2.10.6",
+    "typer>=0.16.0",
+    "rich>=14.0.0",
 ]
 
 [build-system]
