@@ -28,7 +28,7 @@ workflow VARIANTS {
     )
 
     CONVERT_TO_VCF(
-        CALL_VARIANTS.out
+        CALL_VARIANTS.out.filter { _id, tsv -> file(tsv).countLines() > 1 }
     )
 
     BUILD_DB(
@@ -53,5 +53,5 @@ workflow VARIANTS {
 
     emit:
     annotate = ANNOTATE_VCF.out
-    merge_vcf_files = MERGE_VCF_FILES.out
+    merge_vcf_files = MERGE_VCF_FILES.out.collect()
 }
