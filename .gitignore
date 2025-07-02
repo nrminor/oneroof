@@ -19,6 +19,7 @@
 !.gitattributes
 !main.nf
 !nextflow.config
+!CLAUDE.md
 
 # github action workflows
 !/.github

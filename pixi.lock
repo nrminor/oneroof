@@ -3572,7 +3572,7 @@ packages:
 - pypi: .
   name: oneroof
   version: 1.0.0
-  sha256: d78538a5a43b88c711c950f8244db51b64d79d37807c083ab88134d3d90ab893
+  sha256: e7d74ee7c02294cf9292d9559920c4a66cd64f6d8fc7fb80d8e338a597832b96
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
