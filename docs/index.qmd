@@ -96,7 +96,7 @@ Command line argument     | Default value | Explanation
 `--min_consensus_freq`    | 0.5           | The minimum required frequency of a variant base to be included in a consensu sequence.
 `--min_depth_coverage`    | 20            | Minimum required depth of coverage to call a variant.
 `--min_variant_frequency` | 0.05 (illumina) or 0.10 (nanopore) | Minimum variant frequency to call a variant.
-`--meta_ref`              | None          |  Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases.
+`--meta_ref`              | None          |  Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: [Pre-built Sylph Databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases).
 `--sylph_tax_db`          | None          | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here.
 `--nextclade_dataset`     | None          | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`.
 `--results`               | results/      | Where to place results.
@@ -145,6 +145,57 @@ nextflow run . \
 Especially on Apple Silicon Macs, this will reduce the overhead of using the Docker Virtual Machine and allow the pipeline to invoke tools installed directly within the local project environment.
 
 Note also that more information on the repo's files is available in our [developer guide](docs/developer.md).
+
+## Testing
+
+OneRoof includes a comprehensive test suite built with [nf-test](https://www.nf-test.com/), the official testing framework for Nextflow pipelines. The test suite validates pipeline functionality through module, workflow, and end-to-end tests.
+
+### Running Tests
+
+Before contributing or deploying changes, ensure all tests pass:
+
+```bash
+# Ensure you're in the Pixi environment (includes nf-test)
+pixi shell --frozen
+
+# Run all tests
+just test
+
+# Run tests with verbose output
+just test-verbose
+
+# Run specific test categories
+just test-modules      # Test individual processes
+just test-workflows    # Test platform workflows
+just test-pipeline     # Test end-to-end functionality
+
+# Run a specific test file
+just test-file tests/modules/minimap2_align.nf.test
+
+# Update test snapshots after intentional changes
+just test-update
+```
+
+### Test Structure
+
+Tests are organized in the `tests/` directory:
+- `tests/modules/` - Unit tests for individual processes
+- `tests/workflows/` - Integration tests for platform-specific workflows
+- `tests/pipelines/` - End-to-end pipeline tests
+- `tests/data/` - Minimal test datasets
+
+The test suite uses minimal synthetic data to ensure fast execution while still exercising all key pipeline features. Tests are automatically run in CI/CD on all pull requests and pushes to main branches.
+
+For more details on the testing framework and how to write new tests, see the [test suite documentation](tests/README.md).
+
+## Further Documentation
+
+For more detailed information about specific aspects of the OneRoof pipeline, please refer to the following documentation:
+
+- **[Developer Guide](developer.qmd)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
+- **[Pipeline Architecture](pipeline_architecture.qmd)** - Detailed technical documentation of the pipeline's architecture, including workflow diagrams, module descriptions, and data flow
+- **[Globus Integration](../globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
+- **[Test Suite Documentation](../tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
 
 ## Contributing
 

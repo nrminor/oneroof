@@ -10,9 +10,14 @@ OneRoof is a Nextflow-based bioinformatics pipeline for base-calling, variant-ca
 
 ### Development Environment Setup
 ```bash
-# Install pixi and/or set up environment
+# For environments with conda dependencies (full pipeline)
 pixi install --frozen
 pixi shell --frozen
+
+# For PyPI-only environments (Python development)
+uv venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+uv sync
 ```
 
 ### Running the Pipeline
@@ -42,15 +47,18 @@ nextflow run . -profile containerless [options]
 ruff check . --exit-zero --fix --unsafe-fixes
 ruff format .
 
+# Run Python tests (using uv for speed)
+uv run pytest bin/test_*.py
+# Or run tests with tox for multiple environments
+tox
+
 # Build documentation
-just docs  # or: quarto render docs/index.qmd
+just docs
 
 # Docker operations
 just docker-build
 just docker-push
 ```
-
-Note: A test suite is planned but not yet implemented.
 
 ## Architecture
 
@@ -59,7 +67,7 @@ Note: A test suite is planned but not yet implemented.
 - `workflows/` - Platform-specific workflows (nanopore.nf, illumina.nf)
 - `subworkflows/` - Reusable workflow components (alignment, variant_calling, primer_handling, etc.)
 - `modules/` - Individual process definitions for tools (dorado, minimap2, ivar, etc.)
-- `bin/` - Python utility scripts for data processing and analysis
+- `bin/` - Python utility scripts with PEP 723 inline dependencies (fully portable with uv)
 - `conf/` - Configuration files for different platforms and tools
 
 ### Key Workflow Components
@@ -74,7 +82,7 @@ Note: A test suite is planned but not yet implemented.
 ### Technology Stack
 - **Workflow Engine**: Nextflow DSL2
 - **Container Support**: Docker, Singularity/Apptainer
-- **Environment Management**: Pixi (combines conda and PyPI dependencies)
+- **Environment Management**: Pixi (combines conda and PyPI dependencies), UV (fast Python package management)
 - **Languages**: Nextflow (Groovy), Python 3.10+
 - **Key Tools**: Dorado (basecalling), minimap2 (alignment), ivar/bcftools (variants), FastQC/MultiQC (QC)
 
@@ -90,9 +98,40 @@ Note: A test suite is planned but not yet implemented.
 - `--downsample_to`: Manages computational resources by limiting coverage depth
 - `--model`: Nanopore basecalling model (defaults to sup@latest)
 
+## Dependency Management
+
+### Python Package Management
+- **Always use `uv` instead of `pip`** for any Python package installation - it's significantly faster and more reliable
+- **Use `uv` for PyPI-only environments**: When working with Python scripts that only need PyPI dependencies
+- **Use `pixi` for mixed environments**: When conda dependencies are required (e.g., for the full pipeline)
+- **Script execution**: Always use `uv run` instead of `python3` to execute Python scripts
+  ```bash
+  # Good - uses inline dependencies from PEP 723 headers
+  uv run bin/some_script.py
+
+  # Avoid - doesn't guarantee dependencies
+  python3 bin/some_script.py
+  ```
+- **Portable scripts**: All scripts in `bin/` include PEP 723 inline dependencies, making them fully portable with uv
+- **Benefits**: This approach eliminates dependency hell in Python by ensuring consistent, reproducible environments
+
+### Testing Infrastructure
+- **Comprehensive test coverage**: Python scripts in `bin/` have extensive test coverage using pytest
+- **Test execution**: Tests can be run quickly with UV for PyPI-only environments
+  ```bash
+  # Run all tests
+  uv run pytest bin/test_*.py
+
+  # Run specific test
+  uv run pytest bin/test_specific_module.py
+  ```
+- **CI/CD**: The continuous integration pipeline uses UV instead of pip for improved speed and reliability
+- **Test organization**: Test files follow the pattern `test_*.py` and are colocated with the scripts they test
+
 ## Development Notes
 
-1. **Testing Considerations**: The project prioritizes modularity to facilitate future test implementation
+1. **Testing**: Python scripts have comprehensive test coverage; Nextflow workflow tests are planned for future implementation
 2. **GPU Requirements**: Nanopore basecalling requires CUDA-capable GPUs
 3. **Memory Management**: Use `--low_memory` flag for resource-constrained environments
 4. **Slack Integration**: Optional alerts can be configured for pipeline completion
+5. **Dependency Management**: Always use `uv` for Python operations to ensure fast, reliable dependency resolution

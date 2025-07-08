@@ -1,0 +1,96 @@
+# OneRoof
+
+> A Nextflow-based bioinformatics pipeline for base-calling, variant-calling, and consensus-calling of amplicon sequencing data, supporting both Nanopore and Illumina platforms with a focus on viral genomic surveillance (SARS-CoV-2, H5N1 influenza).
+
+## Quick Links
+
+- Repository: https://github.com/nrminor/oneroof
+- Main Documentation: README.md
+- AI Assistant Guidelines: CLAUDE.md
+- Pipeline Architecture: docs/pipeline_architecture.md
+- Developer Guide: docs/developer.md
+
+## Project Structure
+
+### Core Files
+- `main.nf` - Main Nextflow workflow entry point
+- `nextflow.config` - Pipeline configuration
+- `pyproject.toml` - Python dependencies and project metadata
+- `justfile` - Common development commands
+
+### Workflows
+- `workflows/nanopore.nf` - Nanopore data processing workflow
+- `workflows/illumina.nf` - Illumina data processing workflow
+- `subworkflows/` - Reusable workflow components (alignment, variant calling, etc.)
+
+### Code
+- `modules/` - Individual Nextflow process definitions
+- `bin/` - Python utility scripts with PEP 723 inline dependencies
+- `lib/Utils.groovy` - Shared Groovy utilities
+
+### Documentation
+- `README.md` - Main documentation and usage guide
+- `CLAUDE.md` - Guidelines for AI assistants working with this codebase
+- `docs/` - Additional documentation (architecture, development, data management)
+- `tests/README.md` - Test suite documentation
+
+### Configuration
+- `conf/nanopore.config` - Nanopore-specific parameters
+- `conf/illumina.config` - Illumina-specific parameters
+- `conf/file_watcher.template.yml` - Remote file monitoring configuration
+
+## Key Features
+
+- Multi-platform support (Nanopore pod5/BAM/FASTQ, Illumina paired-end FASTQ)
+- GPU-accelerated basecalling with Dorado
+- Real-time remote file monitoring and processing
+- Primer-aware read selection and trimming
+- Platform-specific variant calling and consensus generation
+- Optional metagenomics (Sylph) and phylogenetics (Nextclade)
+- Modern dependency management (uv for Python, pixi for conda)
+- Comprehensive test suite with nf-test
+
+## Usage Examples
+
+### Nanopore
+```bash
+nextflow run . \
+  --pod5_dir my_pod5_dir \
+  --primer_bed my_primers.bed \
+  --refseq my_ref.fasta \
+  --ref_gbk my_ref.gbk \
+  --kit "SQK-NBD114-24"
+```
+
+### Illumina
+```bash
+nextflow run . \
+  --illumina_fastq_dir my_illumina_reads/ \
+  --primer_bed my_primers.bed \
+  --refseq my_ref.fasta \
+  --ref_gbk my_ref.gbk
+```
+
+## Development
+
+### Setup
+```bash
+pixi install --frozen
+pixi shell --frozen
+```
+
+### Testing
+```bash
+just test              # Run all tests
+just test-modules      # Test individual processes
+just test-workflows    # Test platform workflows
+just test-pipeline     # Test end-to-end functionality
+```
+
+### Common Commands
+```bash
+just docs              # Build documentation
+just docker-build      # Build Docker image
+ruff check . --fix     # Lint Python code
+ruff format .          # Format Python code
+```
