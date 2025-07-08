@@ -176,10 +176,10 @@ For more details on the testing framework and how to write new tests, see the [t
 
 For more detailed information about specific aspects of the OneRoof pipeline, please refer to the following documentation:
 
-- **[Developer Guide](developer.qmd)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
-- **[Pipeline Architecture](pipeline_architecture.qmd)** - Detailed technical documentation of the pipeline’s architecture, including workflow diagrams, module descriptions, and data flow
-- **[Globus Integration](../globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
-- **[Test Suite Documentation](../tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
+- **[Developer Guide](docs/developer.md)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
+- **[Pipeline Architecture](docs/pipeline_architecture.md)** - Detailed technical documentation of the pipeline’s architecture, including workflow diagrams, module descriptions, and data flow
+- **[Globus Integration](globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
+- **[Test Suite Documentation](tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
 
 ## Contributing
 
