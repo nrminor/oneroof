@@ -11,15 +11,39 @@ alias dev := setup-env
 alias all_docker := docker
 alias container_prep := docker
 alias py := python
-alias doit := all
 
 # Render the main quarto document `docs/index.qmd`
 render:
     quarto render docs/index.qmd
 
-# Convert the resulting markdown file from `docs/index.qmd` to `README.md` in the project root.
+# Convert the resulting markdown file from `docs/index.qmd` to `README.md` in the project root and fix badge placement.
 make-readme:
-    @mv docs/index.md ./README.md
+    #!/usr/bin/env python3
+    import re
+    import shutil
+
+    # First move the file
+    shutil.move('docs/index.md', 'README.md')
+
+    # Read the README
+    with open('README.md', 'r') as f:
+        content = f.read()
+
+    # Find the badge line (starts with [![Nextflow])
+    badge_pattern = r'^(\[\!\[Nextflow\].*?)$'
+    match = re.search(badge_pattern, content, re.MULTILINE)
+
+    if match:
+        badge_line = match.group(1)
+        # Remove badge from current position (and any trailing newlines)
+        content = re.sub(badge_pattern + r'\n+', '', content, flags=re.MULTILINE)
+        # Split into lines
+        lines = content.split('\n')
+        # Insert badge after title (line 1)
+        lines.insert(1, badge_line)
+        # Write back
+        with open('README.md', 'w') as f:
+            f.write('\n'.join(lines))
 
 # Render the developer documentation in docs/developer.qmd.
 render-dev:
@@ -97,7 +121,7 @@ py-test-cov:
 
 # Run Python tests for a specific module
 py-test-module MODULE:
-    pytest bin/test_{{MODULE}}.py -v
+    pytest bin/test_{{ MODULE }}.py -v
 
 # Run Python tests across all supported Python versions
 py-test-tox:
@@ -115,8 +139,10 @@ py-test-clean:
     rm -rf .tox/
     find bin -name "__pycache__" -type d -exec rm -rf {} +
 
-# Run all recipes in sequence with one another.
-all: docs setup-env python docker
+# 🎵 Do the D.A.N.C.E.
+ice:
+    @echo "🕺 1, 2, 3, 4, fight! 🕺"
+    @open "https://www.youtube.com/watch?v=sy1dYFGkPUE" || xdg-open "https://www.youtube.com/watch?v=sy1dYFGkPUE" || echo "Please open: https://www.youtube.com/watch?v=sy1dYFGkPUE"
 
 # === Testing Commands ===
 
@@ -142,7 +168,7 @@ test-pipeline:
 
 # Run a specific test file
 test-file FILE:
-    nf-test test {{FILE}} --profile test,docker
+    nf-test test {{ FILE }} --profile test,docker
 
 # Update test snapshots after intentional changes
 test-update:
@@ -187,20 +213,20 @@ globus-register: globus-setup
 globus-test-nanopore flow_id="" input="/test/pod5" primers="/test/primers.bed" ref="/test/ref.fasta" gbk="/test/ref.gbk" output="/test/output":
     #!/usr/bin/env bash
     cd globus/scripts
-    if [ -n "{{flow_id}}" ]; then
-        ./test_flow.py --flow-id {{flow_id}} --platform nanopore --input-data {{input}} --primer-bed {{primers}} --refseq {{ref}} --ref-gbk {{gbk}} --output-path {{output}}
+    if [ -n "{{ flow_id }}" ]; then
+        ./test_flow.py --flow-id {{ flow_id }} --platform nanopore --input-data {{ input }} --primer-bed {{ primers }} --refseq {{ ref }} --ref-gbk {{ gbk }} --output-path {{ output }}
     else
-        ./test_flow.py --platform nanopore --input-data {{input}} --primer-bed {{primers}} --refseq {{ref}} --ref-gbk {{gbk}} --output-path {{output}}
+        ./test_flow.py --platform nanopore --input-data {{ input }} --primer-bed {{ primers }} --refseq {{ ref }} --ref-gbk {{ gbk }} --output-path {{ output }}
     fi
 
 # Test the Globus flow with sample Illumina data
 globus-test-illumina flow_id="" input="/test/fastq" primers="/test/primers.bed" ref="/test/ref.fasta" gbk="/test/ref.gbk" output="/test/output":
     #!/usr/bin/env bash
     cd globus/scripts
-    if [ -n "{{flow_id}}" ]; then
-        ./test_flow.py --flow-id {{flow_id}} --platform illumina --input-data {{input}} --primer-bed {{primers}} --refseq {{ref}} --ref-gbk {{gbk}} --output-path {{output}}
+    if [ -n "{{ flow_id }}" ]; then
+        ./test_flow.py --flow-id {{ flow_id }} --platform illumina --input-data {{ input }} --primer-bed {{ primers }} --refseq {{ ref }} --ref-gbk {{ gbk }} --output-path {{ output }}
     else
-        ./test_flow.py --platform illumina --input-data {{input}} --primer-bed {{primers}} --refseq {{ref}} --ref-gbk {{gbk}} --output-path {{output}}
+        ./test_flow.py --platform illumina --input-data {{ input }} --primer-bed {{ primers }} --refseq {{ ref }} --ref-gbk {{ gbk }} --output-path {{ output }}
     fi
 
 # Check status of Globus action provider

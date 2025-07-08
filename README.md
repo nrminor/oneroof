@@ -1,5 +1,5 @@
 # OneRoof: A Pipeline Prototype for Base-, Variant-, and Consensus-calling under One Proverbial Roof
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker.png)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
 
 
 - [Overview](#overview)
@@ -36,19 +36,23 @@ Though many excellent pipelines currently exist, e.g. `nf-core/viralrecon`, `ep
 
 Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by [`pixi`](https://prefix.dev/). To run it on your own Nanopore pod5s with Docker containers, simply run something like:
 
-    nextflow run nrminor/oneroof \
-    --pod5_dir my_pod5_dir \
-    --primer_bed my_primers.bed \
-    --refseq my_ref.fasta \
-    --ref_gbk my_ref.gbk \
-    --kit "SQK-NBD114-24"
+``` bash
+nextflow run nrminor/oneroof \
+--pod5_dir my_pod5_dir \
+--primer_bed my_primers.bed \
+--refseq my_ref.fasta \
+--ref_gbk my_ref.gbk \
+--kit "SQK-NBD114-24"
+```
 
 These are the core elements required to run on Nanopore data: a directory of pod5 files, a BED file of primer coordinates, a reference sequence in FASTA and Genbank format, and the Nanopore barcoding kit used.
 
 And for Illumina paired-end reads, it’s even simpler:
 
-    nextflow run nrminor/oneroof \
-    --illumina_fastq_dir my_illumina_reads/
+``` bash
+nextflow run nrminor/oneroof \
+--illumina_fastq_dir my_illumina_reads/
+```
 
 If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don’t want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline’s dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
 
@@ -110,25 +114,33 @@ Note that `oneroof` checks for how to gather data in a particular order for Nano
 
 To reproduce the environment required by this pipeline, make sure you are on a Mac, a linux machine, or a Windows machine using Windows Subsystem for Linux. Then, to reproduce the environment, install pixi with:
 
-    PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
+``` bash
+PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
+```
 
 Download the pipeline with:
 
-    git clone https://github.com/nrminor/oneroof.git && cd oneroof
+``` bash
+git clone https://github.com/nrminor/oneroof.git && cd oneroof
+```
 
 And then open a `pixi` subshell within your terminal with:
 
-    pixi shell --frozen
+``` bash
+pixi shell --frozen
+```
 
 As long as you are using a supported system, the pipeline should run within that subshell. You can also run the pipeline within that subshell without containers using the “containerless” profile:
 
-    nextflow run . \
-    -profile containerless \
-    --pod5_dir my_pod5_dir \
-    --primer_bed my_primers.bed \
-    --refseq my_ref.fasta \
-    --ref_gbk my_ref.gbk \
-    --kit "SQK-NBD114-24"
+``` bash
+nextflow run . \
+-profile containerless \
+--pod5_dir my_pod5_dir \
+--primer_bed my_primers.bed \
+--refseq my_ref.fasta \
+--ref_gbk my_ref.gbk \
+--kit "SQK-NBD114-24"
+```
 
 Especially on Apple Silicon Macs, this will reduce the overhead of using the Docker Virtual Machine and allow the pipeline to invoke tools installed directly within the local project environment.
 
@@ -178,6 +190,7 @@ For more detailed information about specific aspects of the OneRoof pipeline, pl
 
 - **[Developer Guide](docs/developer.md)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
 - **[Pipeline Architecture](docs/pipeline_architecture.md)** - Detailed technical documentation of the pipeline’s architecture, including workflow diagrams, module descriptions, and data flow
+- **[File Reference Guide](docs/whats-that-file.md)** - Complete listing of all files in the repository with descriptions of their purpose and functionality
 - **[Globus Integration](globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
 - **[Test Suite Documentation](tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
 

@@ -89,8 +89,14 @@ just test-pipeline     # Test end-to-end functionality
 
 ### Common Commands
 ```bash
-just docs              # Build documentation
+just docs              # Build documentation (including README)
 just docker-build      # Build Docker image
 ruff check . --fix     # Lint Python code
 ruff format .          # Format Python code
 ```
+
+### Important: README Modification
+The README.md in the project root is generated from docs/index.qmd. To modify the README:
+1. Edit `docs/index.qmd` (NOT README.md directly)
+2. Run `just make-readme` or `just docs` to regenerate
+3. The README.md will be updated with GitHub-flavored markdown

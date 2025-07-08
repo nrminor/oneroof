@@ -55,6 +55,12 @@ tox
 # Build documentation
 just docs
 
+# IMPORTANT: Modifying README.md
+# The README.md in the project root is generated from docs/index.qmd
+# NEVER edit README.md directly - it will be overwritten
+# Always edit docs/index.qmd and re-render:
+just make-readme  # or: just docs
+
 # Docker operations
 just docker-build
 just docker-push

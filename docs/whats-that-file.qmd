@@ -13,6 +13,8 @@ format:
     documentclass: article
     geometry:
       - margin=1in
+  gfm:
+      wrap: none
 ---
 
 ## Overview

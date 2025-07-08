@@ -15,6 +15,8 @@ execute:
     eval: false
 ---
 
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A522.10.1-23aa62.svg)](https://www.nextflow.io/) [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/) [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/) [![Docker CI](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml/badge.svg)](https://github.com/nrminor/oneroof/actions/workflows/docker-image.yaml)
+
 ## Overview
 
 `oneroof` is a pipeline designed to take a common series of bioinformatic tasks (see below) and put them under "one roof". We mean this quite literally: the pipeline will perform at its best when run on networked devices in the same building.
@@ -36,7 +38,7 @@ Though many excellent pipelines currently exist, e.g. `nf-core/viralrecon`, `epi
 
 Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by [`pixi`](https://prefix.dev/). To run it on your own Nanopore pod5s with Docker containers, simply run something like:
 
-```
+```bash
 nextflow run nrminor/oneroof \
 --pod5_dir my_pod5_dir \
 --primer_bed my_primers.bed \
@@ -49,7 +51,7 @@ These are the core elements required to run on Nanopore data: a directory of pod
 
 And for Illumina paired-end reads, it's even simpler:
 
-```
+```bash
 nextflow run nrminor/oneroof \
 --illumina_fastq_dir my_illumina_reads/
 ```
@@ -114,25 +116,25 @@ Note that `oneroof` checks for how to gather data in a particular order for Nano
 
 To reproduce the environment required by this pipeline, make sure you are on a Mac, a linux machine, or a Windows machine using Windows Subsystem for Linux. Then, to reproduce the environment, install pixi with:
 
-```
+```bash
 PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
 Download the pipeline with:
 
-```
+```bash
 git clone https://github.com/nrminor/oneroof.git && cd oneroof
 ```
 
 And then open a `pixi` subshell within your terminal with:
 
-```
+```bash
 pixi shell --frozen
 ```
 
 As long as you are using a supported system, the pipeline should run within that subshell. You can also run the pipeline within that subshell without containers using the "containerless" profile:
 
-```
+```bash
 nextflow run . \
 -profile containerless \
 --pod5_dir my_pod5_dir \
@@ -192,10 +194,11 @@ For more details on the testing framework and how to write new tests, see the [t
 
 For more detailed information about specific aspects of the OneRoof pipeline, please refer to the following documentation:
 
-- **[Developer Guide](developer.qmd)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
-- **[Pipeline Architecture](pipeline_architecture.qmd)** - Detailed technical documentation of the pipeline's architecture, including workflow diagrams, module descriptions, and data flow
-- **[Globus Integration](../globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
-- **[Test Suite Documentation](../tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
+- **[Developer Guide](docs/developer.md)** - Comprehensive guide for developers working with the codebase, including project structure, coding standards, and development workflows
+- **[Pipeline Architecture](docs/pipeline_architecture.md)** - Detailed technical documentation of the pipeline's architecture, including workflow diagrams, module descriptions, and data flow
+- **[File Reference Guide](docs/whats-that-file.md)** - Complete listing of all files in the repository with descriptions of their purpose and functionality
+- **[Globus Integration](globus/README.md)** - Instructions for setting up and using Globus integration for automated data transfer and remote workflow execution
+- **[Test Suite Documentation](tests/README.md)** - Guide to the testing framework, including how to write and run tests, test data organization, and CI/CD integration
 
 ## Contributing
 
