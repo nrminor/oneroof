@@ -7,9 +7,17 @@ repos:
     -   id: check-toml
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.9.6"
+# -   repo: https://github.com/astral-sh/ruff-pre-commit
+#     rev: "v0.9.6"
+#     hooks:
+#         - id: ruff
+#           args: ["--fix"]
+#         - id: ruff-format
+-   repo: local
     hooks:
-        - id: ruff
-          args: ["--fix"]
-        - id: ruff-format
+    -   id: no-env-files
+        name: Block .env files
+        entry: .env files must not be committed
+        language: fail
+        files: '\.env$'
+        description: 'Prevents accidental commit of .env files containing sensitive configuration'

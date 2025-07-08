@@ -29,7 +29,14 @@ import polars as pl
 import typer
 from Bio import SeqIO
 from loguru import logger
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -170,7 +177,9 @@ class ConversionConfig(BaseModel):
 # ===== Pure Functions for Data Transformation =====
 
 
-def calculate_strand_bias_pvalue(ref_dp: int, ref_rv: int, alt_dp: int, alt_rv: int) -> float:
+def calculate_strand_bias_pvalue(
+    ref_dp: int, ref_rv: int, alt_dp: int, alt_rv: int
+) -> float:
     """Calculate p-value for strand bias using Fisher's exact test.
 
     Args:
@@ -280,7 +289,9 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
 
     # iVar PASS filter
     filters.append(
-        pl.when(pl.col("PASS")).then(pl.lit("")).otherwise(pl.lit(FilterType.FAIL_TEST.value)),
+        pl.when(pl.col("PASS"))
+        .then(pl.lit(""))
+        .otherwise(pl.lit(FilterType.FAIL_TEST.value)),
     )
 
     # Quality filter
@@ -305,7 +316,9 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
         .list.drop_nulls()
         .list.join(";")
         .fill_null("")
-        .map_elements(lambda x: FilterType.PASS.value if x == "" else x, return_dtype=pl.Utf8)
+        .map_elements(
+            lambda x: FilterType.PASS.value if x == "" else x, return_dtype=pl.Utf8
+        )
     )
 
 
@@ -331,7 +344,9 @@ def create_sample_info_expr() -> pl.Expr:
     )
 
 
-def transform_ivar_to_vcf(ivar_lf: pl.LazyFrame, config: ConversionConfig) -> pl.LazyFrame:
+def transform_ivar_to_vcf(
+    ivar_lf: pl.LazyFrame, config: ConversionConfig
+) -> pl.LazyFrame:
     """Transform iVar data to VCF format using pure expressions.
 
     Args:
@@ -366,7 +381,9 @@ def transform_ivar_to_vcf(ivar_lf: pl.LazyFrame, config: ConversionConfig) -> pl
                     determine_variant_type_expr(),
                 ],
             ).alias("INFO"),
-            pl.lit("GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ").alias("FORMAT"),
+            pl.lit(
+                "GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ"
+            ).alias("FORMAT"),
             create_sample_info_expr().alias("SAMPLE"),
         ],
     )
@@ -382,7 +399,9 @@ def find_consecutive_variants_expr() -> pl.Expr:
     return (pos_diff <= 1) | (pos_diff.shift(-1) <= 1)
 
 
-def process_consecutive_snps(ivar_lf: pl.LazyFrame, config: ConversionConfig) -> pl.LazyFrame:
+def process_consecutive_snps(
+    ivar_lf: pl.LazyFrame, config: ConversionConfig
+) -> pl.LazyFrame:
     """Process consecutive SNPs for potential merging.
 
     Args:
@@ -546,11 +565,14 @@ def process_ivar_file(config: ConversionConfig) -> None:
         # Write all haplotypes output
         progress.update(task, description="[green]Writing all haplotypes VCF...")
         all_hap_path = (
-            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent
+            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         write_vcf_file(result_df, all_hap_path, headers, sample_name)
 
-        progress.update(task, description="[bold green]✓ Conversion complete!", completed=True)
+        progress.update(
+            task, description="[bold green]✓ Conversion complete!", completed=True
+        )
 
 
 # ===== Typer CLI Commands =====
@@ -735,11 +757,16 @@ def convert(  # noqa: PLR0913
         process_ivar_file(config)
 
         # Success message
-        console.print(f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}")
-        all_hap_path = (
-            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+        console.print(
+            f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}"
         )
-        console.print(f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}")
+        all_hap_path = (
+            config.file_out.parent
+            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+        )
+        console.print(
+            f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}"
+        )
 
     except Exception as e:  # noqa: BLE001
         console.print(f"\n[bold red]✗ Error:[/bold red] {e}")
@@ -799,11 +826,23 @@ def validate(
         console.print(f"  • Columns: {len(ivar_df.columns)}")
 
         # Check for required columns
-        required_cols = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO", "FORMAT"]
+        required_cols = [
+            "#CHROM",
+            "POS",
+            "ID",
+            "REF",
+            "ALT",
+            "QUAL",
+            "FILTER",
+            "INFO",
+            "FORMAT",
+        ]
         missing_cols = [col for col in required_cols if col not in ivar_df.columns]
 
         if missing_cols:
-            console.print(f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}")
+            console.print(
+                f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}"
+            )
         else:
             console.print("\n[green]✓ All required VCF columns present[/green]")
 

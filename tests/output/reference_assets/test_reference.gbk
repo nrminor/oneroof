@@ -1,0 +1,88 @@
+LOCUS       test_virus_genome        1500 bp    DNA     linear   VRL 08-JUL-2025
+DEFINITION  Test virus genome for OneRoof pipeline testing.
+ACCESSION   TEST001
+VERSION     TEST001.1
+KEYWORDS    .
+SOURCE      Test virus
+  ORGANISM  Test virus
+            Viruses; Test viruses.
+FEATURES             Location/Qualifiers
+     source          1..1500
+                     /organism="Test virus"
+                     /mol_type="genomic DNA"
+                     /isolate="test_isolate"
+     gene            1..360
+                     /gene="gene1"
+                     /locus_tag="TEST_001"
+     CDS             1..360
+                     /gene="gene1"
+                     /locus_tag="TEST_001"
+                     /codon_start=1
+                     /product="test protein 1"
+                     /protein_id="TEST_001"
+                     /translation="MATMATMATMATMATMATMATMATMATMATMATMATMATMATMAT
+                     MATMATMATMATMATMATMATMATMATMATMATMATMATMATMATMATMATMATMATM
+                     ATMATMATMATMAT"
+     gene            361..720
+                     /gene="gene2"
+                     /locus_tag="TEST_002"
+     CDS             361..720
+                     /gene="gene2"
+                     /locus_tag="TEST_002"
+                     /codon_start=1
+                     /product="test protein 2"
+                     /protein_id="TEST_002"
+                     /translation="RRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRS
+                     RRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSRRSR
+                     RSRRSRRSRRSRRS"
+     gene            721..1080
+                     /gene="gene3"
+                     /locus_tag="TEST_003"
+     CDS             721..1080
+                     /gene="gene3"
+                     /locus_tag="TEST_003"
+                     /codon_start=1
+                     /product="test protein 3"
+                     /protein_id="TEST_003"
+                     /translation="LGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSL
+                     GSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGSSLGS
+                     SLGSSLGSSLGSS"
+     gene            1081..1440
+                     /gene="gene4"
+                     /locus_tag="TEST_004"
+     CDS             1081..1440
+                     /gene="gene4"
+                     /locus_tag="TEST_004"
+                     /codon_start=1
+                     /product="test protein 4"
+                     /protein_id="TEST_004"
+                     /translation="NRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRL
+                     NRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLNRLN
+                     RLNRLNRLNRLNR"
+ORIGIN
+        1 atggcaacta tggcaactat ggcaactatg gcaactatgg caactatggc aactatggca
+       61 actatggcaa ctatggcaac tatggcaact atggcaacta tggcaactat ggcaactatg
+      121 gcaactatgg caactatggc aactatggca actatggcaa ctatggcaac tatggcaact
+      181 atggcaacta tggcaactat ggcaactatg gcaactatgg caactatggc aactatggca
+      241 actatggcaa ctatggcaac tatggcaact atggcaacta tggcaactat ggcaactatg
+      301 gcaactatgg caactatggc aactatggca actatggcaa ctatggcaac tatggcaact
+      361 cgacgctcga cgctcgacgc tcgacgctcg acgctcgacg ctcgacgctc gacgctcgac
+      421 gctcgacgct cgacgctcga cgctcgacgc tcgacgctcg acgctcgacg ctcgacgctc
+      481 gacgctcgac gctcgacgct cgacgctcga cgctcgacgc tcgacgctcg acgctcgacg
+      541 ctcgacgctc gacgctcgac gctcgacgct cgacgctcga cgctcgacgc tcgacgctcg
+      601 acgctcgacg ctcgacgctc gacgctcgac gctcgacgct cgacgctcga cgctcgacgc
+      661 tcgacgctcg acgctcgacg ctcgacgctc gacgctcgac gctcgacgct cgacgctcga
+      721 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+      781 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+      841 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+      901 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+      961 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+     1021 ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc ttaggattcc
+     1081 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1141 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1201 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1261 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1321 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1381 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+     1441 aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa aaccggttaa
+//

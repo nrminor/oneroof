@@ -1,0 +1,34 @@
+# Environment files - NEVER commit these
+.env
+config/.env
+
+# Flow IDs and local configuration
+config/flow_id.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Logs
+*.log
+
+# Temporary files
+temp_*.json
+temp_*.txt
+
+# Docker
+Dockerfile.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

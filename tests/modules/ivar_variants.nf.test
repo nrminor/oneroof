@@ -1,0 +1,273 @@
+nextflow_process {
+
+    name "Test CALL_VARIANTS process"
+    script "modules/ivar.nf"
+    process "CALL_VARIANTS"
+
+    tag "modules"
+    tag "ivar"
+    tag "variants"
+
+    test("CALL_VARIANTS - Basic variant calling") {
+
+        when {
+            params {
+                min_variant_frequency = 0.05
+                min_depth_coverage = 10
+                ivar = "${launchDir}/ivar"
+            }
+
+            process {
+                """
+                // Create test BAM and index files
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+                def refseq = file("${projectDir}/tests/data/test_reference.fasta")
+
+                input[0] = Channel.of(['sample1', testBam, testBai])
+                input[1] = refseq
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+
+            with(process.out[0]) {
+                assert it[0] == 'sample1'
+                assert it[1].name == 'sample1.tsv'
+                assert it[1].exists()
+                assert it[1].size() > 0
+
+                // Check TSV header
+                def tsvContent = it[1].text
+                assert tsvContent.contains('REGION')
+                assert tsvContent.contains('POS')
+                assert tsvContent.contains('REF')
+                assert tsvContent.contains('ALT')
+                assert tsvContent.contains('REF_DP')
+                assert tsvContent.contains('ALT_DP')
+                assert tsvContent.contains('ALT_FREQ')
+            }
+        }
+
+    }
+
+    test("CALL_VARIANTS - High frequency threshold") {
+
+        when {
+            params {
+                min_variant_frequency = 0.90
+                min_depth_coverage = 10
+                ivar = "${launchDir}/ivar"
+            }
+
+            process {
+                """
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+                def refseq = file("${projectDir}/tests/data/test_reference.fasta")
+
+                input[0] = Channel.of(['sample_high_freq', testBam, testBai])
+                input[1] = refseq
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'sample_high_freq'
+                assert it[1].name == 'sample_high_freq.tsv'
+                assert it[1].exists()
+
+                // With high frequency threshold, we expect fewer or no variants
+                def tsvContent = it[1].text
+                def lines = tsvContent.split('\n')
+                def variantLines = lines.findAll { line ->
+                    !line.startsWith('REGION') && line.trim() && line.split('\t').size() > 10
+                }
+                // All variants should have frequency >= 0.90
+                variantLines.each { line ->
+                    def fields = line.split('\t')
+                    if (fields.size() > 10) {
+                        def freq = fields[10] as Float
+                        assert freq >= 0.90
+                    }
+                }
+            }
+        }
+
+    }
+
+    test("CALL_VARIANTS - Low depth threshold") {
+
+        when {
+            params {
+                min_variant_frequency = 0.05
+                min_depth_coverage = 1
+                ivar = "${launchDir}/ivar"
+            }
+
+            process {
+                """
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+                def refseq = file("${projectDir}/tests/data/test_reference.fasta")
+
+                input[0] = Channel.of(['sample_low_depth', testBam, testBai])
+                input[1] = refseq
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'sample_low_depth'
+                assert it[1].name == 'sample_low_depth.tsv'
+                assert it[1].exists()
+
+                // With low depth threshold, we may get more variants
+                def tsvContent = it[1].text
+                assert tsvContent.contains('REGION')
+            }
+        }
+
+    }
+
+    test("CALL_VARIANTS - Empty BAM file") {
+
+        when {
+            params {
+                min_variant_frequency = 0.05
+                min_depth_coverage = 10
+                ivar = "${launchDir}/ivar"
+            }
+
+            process {
+                """
+                // Create a minimal valid BAM file with just headers
+                def emptyBam = file("${workDir}/empty.bam")
+                def emptyBai = file("${workDir}/empty.bam.bai")
+
+                // This would need actual BAM creation in real test
+                // For now, we'll simulate with test data
+                def testBam = file("${projectDir}/tests/data/empty_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/empty_alignment.bam.bai")
+                def refseq = file("${projectDir}/tests/data/test_reference.fasta")
+
+                input[0] = Channel.of(['empty_sample', testBam, testBai])
+                input[1] = refseq
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'empty_sample'
+                assert it[1].name == 'empty_sample.tsv'
+                assert it[1].exists()
+
+                // Empty BAM should produce TSV with only header
+                def tsvContent = it[1].text
+                assert tsvContent.contains('REGION')
+                def lines = tsvContent.split('\n')
+                def dataLines = lines.findAll { !it.startsWith('REGION') && it.trim() }
+                assert dataLines.size() == 0 || dataLines.size() == 1
+            }
+        }
+
+    }
+
+}
+
+nextflow_process {
+
+    name "Test CONVERT_TO_VCF process"
+    script "modules/ivar.nf"
+    process "CONVERT_TO_VCF"
+
+    tag "modules"
+    tag "ivar"
+    tag "vcf"
+
+    test("CONVERT_TO_VCF - Basic conversion") {
+
+        when {
+            process {
+                """
+                def ivarTsv = file("${projectDir}/tests/data/18-Gut-sample-16_S18_L001.tsv")
+
+                input[0] = Channel.of(['sample1', ivarTsv])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+
+            with(process.out[0]) {
+                assert it[0] == 'sample1'
+                assert it[1].name == 'sample1.vcf'
+                assert it[1].exists()
+                assert it[1].size() > 0
+
+                // Check VCF format
+                def vcfContent = it[1].text
+                assert vcfContent.contains('##fileformat=VCF')
+                assert vcfContent.contains('#CHROM')
+                assert vcfContent.contains('POS')
+                assert vcfContent.contains('ID')
+                assert vcfContent.contains('REF')
+                assert vcfContent.contains('ALT')
+                assert vcfContent.contains('QUAL')
+                assert vcfContent.contains('FILTER')
+                assert vcfContent.contains('INFO')
+            }
+        }
+
+    }
+
+    test("CONVERT_TO_VCF - Empty TSV") {
+
+        when {
+            process {
+                """
+                // Create empty TSV with just headers
+                def emptyTsv = file("${workDir}/empty.tsv")
+                emptyTsv.text = 'REGION\tPOS\tREF\tALT\tREF_DP\tREF_RV\tREF_QUAL\tALT_DP\tALT_RV\tALT_QUAL\tALT_FREQ\tTOTAL_DP\tPVAL\tPASS_FAIL\n'
+
+                input[0] = Channel.of(['empty_sample', emptyTsv])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'empty_sample'
+                assert it[1].name == 'empty_sample.vcf'
+                assert it[1].exists()
+
+                // Should produce valid VCF with headers but no variant lines
+                def vcfContent = it[1].text
+                assert vcfContent.contains('##fileformat=VCF')
+                assert vcfContent.contains('#CHROM')
+
+                def lines = vcfContent.split('\n')
+                def variantLines = lines.findAll { !it.startsWith('#') && it.trim() }
+                assert variantLines.size() == 0
+            }
+        }
+
+    }
+
+}

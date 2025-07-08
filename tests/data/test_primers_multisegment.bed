@@ -1,0 +1,4 @@
+segment1	50	70	amplicon1_LEFT	1	+
+segment1	350	370	amplicon1_RIGHT	1	-
+segment2	50	70	amplicon2_LEFT	2	+
+segment2	350	370	amplicon2_RIGHT	2	-

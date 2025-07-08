@@ -1,0 +1,110 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [main, dev, experimental]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install dependencies with UV
+        run: |
+          uv sync --dev --frozen
+
+      - name: Run Python tests with pytest
+        run: |
+          uv run pytest bin/ -v --cov=bin --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: python-${{ matrix.python-version }}
+          name: Python ${{ matrix.python-version }}
+        if: matrix.python-version == '3.12'
+
+  python-tests-tox:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install and run tox
+        run: |
+          uvx --from tox-uv tox -p auto
+
+      - name: Run linting with tox
+        run: |
+          uvx --from tox-uv tox -e lint
+
+  nextflow-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nextflow_version: ['23.10.0', 'latest']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: ${{ matrix.nextflow_version }}
+
+      - name: Set up nf-test
+        uses: nf-core/setup-nf-test@v1
+
+      - name: Run nf-test
+        run: |
+          nf-test test --verbose --profile test,docker
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nf-test-results-${{ matrix.nextflow_version }}
+          path: |
+            .nf-test/
+            tests/output/
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -rf work/
+          rm -rf .nextflow/
+          rm -rf .nf-test/

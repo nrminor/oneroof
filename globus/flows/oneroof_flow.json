@@ -1,0 +1,196 @@
+{
+  "Comment": "OneRoof Bioinformatics Pipeline Flow - Supports both Nanopore and Illumina sequencing data",
+  "Definition": {
+    "States": {
+      "ValidateInput": {
+        "Type": "Action",
+        "ActionUrl": "${ONEROOF_ACTION_URL}",
+        "ActionScope": "${ONEROOF_ACTION_SCOPE}",
+        "Parameters": {
+          "action": "validate",
+          "input_data.$": "$.input_data",
+          "platform.$": "$.platform",
+          "primer_bed.$": "$.primer_bed",
+          "refseq.$": "$.refseq",
+          "ref_gbk.$": "$.ref_gbk"
+        },
+        "ResultPath": "$.validation",
+        "Next": "PrepareWorkspace"
+      },
+      "PrepareWorkspace": {
+        "Type": "Action",
+        "ActionUrl": "${ONEROOF_ACTION_URL}",
+        "ActionScope": "${ONEROOF_ACTION_SCOPE}",
+        "Parameters": {
+          "action": "prepare_workspace",
+          "run_id.$": "$.run_id",
+          "work_dir.$": "$.work_dir"
+        },
+        "ResultPath": "$.workspace",
+        "Next": "TransferInput"
+      },
+      "TransferInput": {
+        "Type": "Action",
+        "ActionUrl": "https://actions.automate.globus.org/transfer/transfer",
+        "ActionScope": "https://auth.globus.org/scopes/actions.globus.org/transfer/transfer",
+        "Parameters": {
+          "source_endpoint_id.$": "$.source_endpoint_id",
+          "destination_endpoint_id.$": "$.compute_endpoint_id",
+          "transfer_items": [
+            {
+              "source_path.$": "$.input_data",
+              "destination_path.$": "$.workspace.input_path",
+              "recursive": true
+            },
+            {
+              "source_path.$": "$.primer_bed",
+              "destination_path.$": "$.workspace.primer_bed_path"
+            },
+            {
+              "source_path.$": "$.refseq",
+              "destination_path.$": "$.workspace.refseq_path"
+            },
+            {
+              "source_path.$": "$.ref_gbk",
+              "destination_path.$": "$.workspace.ref_gbk_path"
+            }
+          ],
+          "sync_level": 3,
+          "verify_checksum": true
+        },
+        "ResultPath": "$.transfer_result",
+        "Next": "RunPipeline"
+      },
+      "RunPipeline": {
+        "Type": "Action",
+        "ActionUrl": "${ONEROOF_ACTION_URL}",
+        "ActionScope": "${ONEROOF_ACTION_SCOPE}",
+        "Parameters": {
+          "action": "run_pipeline",
+          "platform.$": "$.platform",
+          "input_path.$": "$.workspace.input_path",
+          "primer_bed_path.$": "$.workspace.primer_bed_path",
+          "refseq_path.$": "$.workspace.refseq_path",
+          "ref_gbk_path.$": "$.workspace.ref_gbk_path",
+          "work_dir.$": "$.workspace.work_dir",
+          "nextflow_params.$": "$.nextflow_params",
+          "profile.$": "$.profile"
+        },
+        "ResultPath": "$.pipeline_result",
+        "Next": "CheckPipelineStatus"
+      },
+      "CheckPipelineStatus": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.pipeline_result.status",
+            "StringEquals": "success",
+            "Next": "TransferResults"
+          },
+          {
+            "Variable": "$.pipeline_result.status",
+            "StringEquals": "failed",
+            "Next": "HandleFailure"
+          }
+        ],
+        "Default": "HandleFailure"
+      },
+      "TransferResults": {
+        "Type": "Action",
+        "ActionUrl": "https://actions.automate.globus.org/transfer/transfer",
+        "ActionScope": "https://auth.globus.org/scopes/actions.globus.org/transfer/transfer",
+        "Parameters": {
+          "source_endpoint_id.$": "$.compute_endpoint_id",
+          "destination_endpoint_id.$": "$.destination_endpoint_id",
+          "transfer_items": [
+            {
+              "source_path.$": "$.pipeline_result.output_path",
+              "destination_path.$": "$.output_path",
+              "recursive": true
+            }
+          ],
+          "sync_level": 3,
+          "verify_checksum": true
+        },
+        "ResultPath": "$.output_transfer",
+        "Next": "CleanupWorkspace"
+      },
+      "HandleFailure": {
+        "Type": "Action",
+        "ActionUrl": "${ONEROOF_ACTION_URL}",
+        "ActionScope": "${ONEROOF_ACTION_SCOPE}",
+        "Parameters": {
+          "action": "collect_logs",
+          "work_dir.$": "$.workspace.work_dir",
+          "run_id.$": "$.run_id"
+        },
+        "ResultPath": "$.error_logs",
+        "Next": "NotifyFailure"
+      },
+      "NotifyFailure": {
+        "Type": "Action",
+        "ActionUrl": "https://actions.automate.globus.org/notification/notify",
+        "ActionScope": "https://auth.globus.org/scopes/actions.globus.org/notification/notify",
+        "Parameters": {
+          "body": {
+            "subject": "OneRoof Pipeline Failed",
+            "body.$": "$.error_logs.message",
+            "recipients.$": "$.notification_recipients"
+          }
+        },
+        "ResultPath": "$.notification",
+        "Next": "CleanupWorkspace"
+      },
+      "CleanupWorkspace": {
+        "Type": "Action",
+        "ActionUrl": "${ONEROOF_ACTION_URL}",
+        "ActionScope": "${ONEROOF_ACTION_SCOPE}",
+        "Parameters": {
+          "action": "cleanup",
+          "work_dir.$": "$.workspace.work_dir",
+          "keep_logs.$": "$.keep_logs"
+        },
+        "ResultPath": "$.cleanup",
+        "Next": "CompleteFlow"
+      },
+      "CompleteFlow": {
+        "Type": "Pass",
+        "Result": "Flow completed successfully",
+        "End": true
+      }
+    },
+    "StartAt": "ValidateInput"
+  },
+  "InputSchema": {
+    "type": "object",
+    "properties": {
+      "run_id": {"type": "string"},
+      "platform": {"type": "string", "enum": ["nanopore", "illumina"]},
+      "input_data": {"type": "string"},
+      "primer_bed": {"type": "string"},
+      "refseq": {"type": "string"},
+      "ref_gbk": {"type": "string"},
+      "source_endpoint_id": {"type": "string"},
+      "compute_endpoint_id": {"type": "string"},
+      "destination_endpoint_id": {"type": "string"},
+      "work_dir": {"type": "string"},
+      "output_path": {"type": "string"},
+      "nextflow_params": {"type": "object"},
+      "profile": {"type": "string", "default": "docker"},
+      "notification_recipients": {"type": "array", "items": {"type": "string"}},
+      "keep_logs": {"type": "boolean", "default": false}
+    },
+    "required": [
+      "run_id",
+      "platform",
+      "input_data",
+      "primer_bed",
+      "refseq",
+      "ref_gbk",
+      "source_endpoint_id",
+      "compute_endpoint_id",
+      "destination_endpoint_id",
+      "output_path"
+    ]
+  }
+}

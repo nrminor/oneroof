@@ -123,17 +123,17 @@ workflow {
     }
 
     if ( params.email ) {
-    workflow.onComplete {
+        workflow.onComplete {
 
-        def msg = """\
-            Oneroof has finished running with the following settings:
+            def msg = """\
+                Oneroof has finished running with the following settings:
 
-            ${Utils.workflowDisplay(params, workflow, log, nextflow)}
-            """
-            .stripIndent()
+                ${Utils.workflowDisplay(params, workflow, log, nextflow)}
+                """
+                .stripIndent()
 
-        sendMail(to: params.email, subject: 'Oneroof Execution Report', body: msg)
-    }
+            sendMail(to: params.email, subject: 'Oneroof Execution Report', body: msg)
+        }
     }
 
 }
