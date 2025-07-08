@@ -3,6 +3,7 @@ title: "OneRoof Pipeline File Reference"
 subtitle: "A comprehensive guide to every file in the repository"
 format:
   html:
+    embed-resources: true
     toc: true
     toc-depth: 3
     toc-location: left
@@ -53,6 +54,18 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 - Defines project structure, key commands, and development practices
 - Useful for maintaining consistency in AI-assisted development
 
+**llms.txt**
+
+- LLM context file
+- Contains project information for AI assistants
+- Helps maintain consistent AI interactions
+
+**LICENSE**
+
+- Software license file
+- Defines terms of use and distribution
+- Legal requirement for open source software
+
 **pyproject.toml**
 
 - Python package configuration and dependencies
@@ -67,9 +80,9 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 
 **justfile**
 
-- Task runner configuration (similar to Makefile)
+- Task runner configuration (similar to Makefile. but more modern, featureful, and [easier to learn](https://just.systems/man/en/))
 - Defines common development tasks like building Docker images and generating docs
-- Speeds up development workflow
+- Speeds up development workflow--just run `just` in the same directory as the file to see what it can do
 
 ### Environment and Container Files
 
@@ -82,18 +95,18 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 **flake.nix** & **flake.lock**
 
 - Nix package manager configuration files
-- Provides an alternative reproducible environment setup
+- Provides an reproducible environment setup
 - Useful for Nix users and HPC environments
 
 **uv.lock**
 
 - UV package manager lock file
-- Alternative Python dependency management
-- Ensures exact Python package versions
+- Extremely fast and robust Python dependency management
+- Ensures exact Python package versions across platforms, ensuring reproducibility
 
 ### Build and Configuration Files
 
-**_quarto.yml**
+**/_quarto.yml**
 
 - Quarto documentation system configuration
 - Controls documentation rendering settings
@@ -113,19 +126,6 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 **data_manifest.yml**
 
 - data manifest for [`scidataflow`](https://github.com/vsbuffalo/scidataflow), a supported alternative to `refman`
-
-**llms.txt**
-
-- LLM context file
-- Contains project information for AI assistants
-- Helps maintain consistent AI interactions
-
-**LICENSE**
-
-- Software license file
-- Defines terms of use and distribution
-- Legal requirement for open source software
-
 ## workflows/ Directory
 
 Platform-specific workflow definitions that orchestrate the entire analysis pipeline:
@@ -343,8 +343,9 @@ Individual process definitions for specific bioinformatics tools:
 **amplicon-tk.nf**
 
 - Amplicon analysis toolkit
-- May provide amplicon-specific utilities
+- Will provide amplicon-specific utilities
 - Supports targeted sequencing workflows
+- May be used for contamination detection
 
 ### Utility Modules
 
@@ -369,20 +370,20 @@ Individual process definitions for specific bioinformatics tools:
 **vsearch.nf**
 
 - Sequence clustering and searching
-- May be used for contamination detection
 - Supports sequence similarity analyses
 
 **duckdb.nf**
 
 - SQL database for data analysis
-- Likely used for aggregating results
 - Enables complex data queries
+- _currently not implemented in the pipeline_
 
 **grepq.nf**
 
 - Pattern matching in sequences
 - Quick sequence searching
 - Utility for sequence filtering
+- _currently not implemented in the pipeline_
 
 **bbmap.nf**
 
@@ -392,9 +393,8 @@ Individual process definitions for specific bioinformatics tools:
 
 **deacon.nf**
 
-- Purpose unclear from name alone
-- May be related to decontamination
-- Requires investigation of module content
+- customizable decontamination module
+- _currently not implemented in the pipeline_
 
 ### Pipeline-Specific Modules
 
@@ -583,66 +583,6 @@ Configuration files for various pipeline components:
 - Template for file watcher configuration
 - Defines monitoring parameters
 - Customizable for different setups
-
-## assets/ Directory
-
-Reference files and test data:
-
-### SARS-CoV-2 References
-
-**MN908947.3.fasta**
-
-- SARS-CoV-2 reference genome sequence
-- Wuhan-Hu-1 isolate standard reference
-- Used for alignment and variant calling
-
-**MN908947.3.gbk**
-
-- GenBank format with annotations
-- Contains gene and feature information
-- Used for variant annotation
-
-**MN908947.3_corrected_orf1.gff**
-
-- Corrected ORF1 annotations
-- Fixes known annotation issues
-- Improves variant interpretation
-
-### Custom References
-
-**custom_reference.fasta**
-
-- User-definable reference sequence
-- Supports non-standard organisms
-- Flexible pipeline application
-
-**annotation-custom.gbk**
-
-- Custom annotation file
-- Pairs with custom references
-- Enables diverse analyses
-
-### Primer Schemes
-
-**qiaseq_direct_boosted.bed**
-
-- QIAseq SARS-CoV-2 primer scheme
-- Commercial primer set definition
-- Supported primer option
-
-**final_truth_no_dashes.bed**
-
-- Validated primer scheme
-- May be a reference standard
-- Used for testing/validation
-
-### Other References
-
-**h5_cattle_genome_root_segments.fasta**
-
-- H5N1 influenza reference segments
-- Cattle-adapted strain reference
-- Supports influenza surveillance
 
 ## lib/ Directory
 

@@ -98,6 +98,7 @@
             pkgs.libffi
             pkgs.pixi
             pkgs.just
+            pkgs.just-lsp
             pkgs.pre-commit
             pkgs.cargo
             pkgs.rustc

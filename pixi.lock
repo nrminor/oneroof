@@ -250,7 +250,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b7/59/2056f61236782a2c86b33906c025d4f4a0b17be0161b63b70fd9e8775d36/referencing-0.35.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/82/a1/a45f3e30835b553379b3a56ea6c4eb622cf11e72008229af840e4596a8ea/rpds_py-0.22.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/8e/ee/8a26858ca517e9c64f84b4c7734b89bda8e63bec85c3d2f432d225bb1886/scipy-1.14.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fa/e1/60a652f18996a40a7410aeb7eb476c18da8a39792c7effe67f06883e9852/statsmodels-0.14.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a7/ea/53d1fe468e63e092cf16e2c18d16f50c29851242f9dd12d6a66e0d7f0d02/XlsxWriter-3.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fe/42/f8dbc2b9ad59e927940325a22d6d3931d630c3644dae7e2369ef5d9ba230/zope.event-5.0-py3-none-any.whl
@@ -457,7 +459,9 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b7/59/2056f61236782a2c86b33906c025d4f4a0b17be0161b63b70fd9e8775d36/referencing-0.35.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/42/2a/ead1d09e57449b99dcc190d8d2323e3a167421d8f8fdf0f217c6f6befe47/rpds_py-0.22.3-cp310-cp310-macosx_10_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/64/68/3bc0cfaf64ff507d82b1e5d5b64521df4c8bf7e22bc0b897827cbee9872c/scipy-1.14.1-cp310-cp310-macosx_10_13_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/2c/23bf5ad9e8a77c0c8d9750512bff89e32154dea91998114118e0e147ae67/statsmodels-0.14.4-cp310-cp310-macosx_10_9_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a7/ea/53d1fe468e63e092cf16e2c18d16f50c29851242f9dd12d6a66e0d7f0d02/XlsxWriter-3.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fe/42/f8dbc2b9ad59e927940325a22d6d3931d630c3644dae7e2369ef5d9ba230/zope.event-5.0-py3-none-any.whl
@@ -3609,7 +3613,7 @@ packages:
 - pypi: ./
   name: oneroof
   version: 1.0.0
-  sha256: 3ae00488cd3f2fc8330cd733ec0de680beb08818ee4e697f011895b42e12003d
+  sha256: 3c1dad8ba277846383adbe56bd77fa5e79ca2f65eabeac79f8cce3a4944de46a
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
@@ -3624,6 +3628,9 @@ packages:
   - lxml>=5.3.0
   - pyyaml
   - pytz>=2025.1
+  - pydantic>=2.9.2,<3
+  - rich
+  - typer
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openjdk-17.0.15-h5ddf6bc_0.conda
@@ -4725,6 +4732,11 @@ packages:
   - pkg:pypi/setuptools
   size: 483015
   timestamp: 1716368141661
+- pypi: https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl
+  name: shellingham
+  version: 1.5.4
+  sha256: 7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686
+  requires_python: '>=3.7'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/simplejson-3.19.3-py312h66e93f0_1.conda
   sha256: 811ed3d952b3ec1ab7d7ce3e68c6dd06f19dc591638d859e7900260968bd1c5f
   md5: c8d1a609d5f3358d715c2273011d9f4d
@@ -4961,6 +4973,16 @@ packages:
   purls: []
   size: 3270220
   timestamp: 1699202389792
+- pypi: https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl
+  name: typer
+  version: 0.16.0
+  sha256: 1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855
+  requires_dist:
+  - click>=8.0.0
+  - typing-extensions>=3.7.4.3
+  - shellingham>=1.3.0
+  - rich>=10.11.0
+  requires_python: '>=3.7'
 - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.12.1-pyha770c72_0.conda
   sha256: c50d61fe29cd2752943358037ee1107a60b44b8d32c464d18308d668b6494573
   md5: 26d7ee34132362115093717c706c384c

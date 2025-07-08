@@ -77,7 +77,7 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 
 ### Build and Configuration Files
 
-\*\*\_quarto.yml\*\*
+\*\*/\_quarto.yml\*\*
 
 - Quarto documentation system configuration
 - Controls documentation rendering settings
@@ -327,8 +327,9 @@ Individual process definitions for specific bioinformatics tools:
 **amplicon-tk.nf**
 
 - Amplicon analysis toolkit
-- May provide amplicon-specific utilities
+- Will provide amplicon-specific utilities
 - Supports targeted sequencing workflows
+- May be used for contamination detection
 
 ### Utility Modules
 
@@ -353,20 +354,20 @@ Individual process definitions for specific bioinformatics tools:
 **vsearch.nf**
 
 - Sequence clustering and searching
-- May be used for contamination detection
 - Supports sequence similarity analyses
 
 **duckdb.nf**
 
 - SQL database for data analysis
-- Likely used for aggregating results
 - Enables complex data queries
+- *currently not implemented in the pipeline*
 
 **grepq.nf**
 
 - Pattern matching in sequences
 - Quick sequence searching
 - Utility for sequence filtering
+- *currently not implemented in the pipeline*
 
 **bbmap.nf**
 
@@ -376,9 +377,8 @@ Individual process definitions for specific bioinformatics tools:
 
 **deacon.nf**
 
-- Purpose unclear from name alone
-- May be related to decontamination
-- Requires investigation of module content
+- customizable decontamination module
+- *currently not implemented in the pipeline*
 
 ### Pipeline-Specific Modules
 
@@ -567,66 +567,6 @@ Configuration files for various pipeline components:
 - Template for file watcher configuration
 - Defines monitoring parameters
 - Customizable for different setups
-
-## assets/ Directory
-
-Reference files and test data:
-
-### SARS-CoV-2 References
-
-**MN908947.3.fasta**
-
-- SARS-CoV-2 reference genome sequence
-- Wuhan-Hu-1 isolate standard reference
-- Used for alignment and variant calling
-
-**MN908947.3.gbk**
-
-- GenBank format with annotations
-- Contains gene and feature information
-- Used for variant annotation
-
-**MN908947.3_corrected_orf1.gff**
-
-- Corrected ORF1 annotations
-- Fixes known annotation issues
-- Improves variant interpretation
-
-### Custom References
-
-**custom_reference.fasta**
-
-- User-definable reference sequence
-- Supports non-standard organisms
-- Flexible pipeline application
-
-**annotation-custom.gbk**
-
-- Custom annotation file
-- Pairs with custom references
-- Enables diverse analyses
-
-### Primer Schemes
-
-**qiaseq_direct_boosted.bed**
-
-- QIAseq SARS-CoV-2 primer scheme
-- Commercial primer set definition
-- Supported primer option
-
-**final_truth_no_dashes.bed**
-
-- Validated primer scheme
-- May be a reference standard
-- Used for testing/validation
-
-### Other References
-
-**h5_cattle_genome_root_segments.fasta**
-
-- H5N1 influenza reference segments
-- Cattle-adapted strain reference
-- Supports influenza surveillance
 
 ## lib/ Directory
 
