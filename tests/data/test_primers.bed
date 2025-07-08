@@ -1,0 +1,8 @@
+test_virus_genome	50	70	amplicon1_LEFT	1	+
+test_virus_genome	350	370	amplicon1_RIGHT	1	-
+test_virus_genome	300	320	amplicon2_LEFT	2	+
+test_virus_genome	650	670	amplicon2_RIGHT	2	-
+test_virus_genome	600	620	amplicon3_LEFT	3	+
+test_virus_genome	1000	1020	amplicon3_RIGHT	3	-
+test_virus_genome	950	970	amplicon4_LEFT	4	+
+test_virus_genome	1350	1370	amplicon4_RIGHT	4	-

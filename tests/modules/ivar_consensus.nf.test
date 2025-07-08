@@ -1,0 +1,207 @@
+nextflow_process {
+
+    name "Test CALL_CONSENSUS process"
+    script "modules/ivar.nf"
+    process "CALL_CONSENSUS"
+
+    tag "modules"
+    tag "ivar"
+    tag "consensus"
+
+    test("CALL_CONSENSUS - Basic consensus calling") {
+
+        when {
+            params {
+                min_consensus_freq = 0.75
+                min_depth_coverage = 10
+                consensus = "${launchDir}/consensus"
+            }
+
+            process {
+                """
+                // Use test BAM and index files
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+
+                input[0] = Channel.of(['sample1', testBam, testBai])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out[0].size() == 1
+
+            with(process.out[0]) {
+                assert it[0] == 'sample1'
+                // ivar consensus creates files with .fa extension
+                assert it[1].any { file -> file.name.endsWith('.consensus.fa') || file.name.endsWith('.consensus.fasta') }
+
+                def consensusFile = it[1].find { file -> file.name.contains('consensus') }
+                assert consensusFile.exists()
+                assert consensusFile.size() > 0
+
+                // Check FASTA format
+                def fastaContent = consensusFile.text
+                assert fastaContent.startsWith('>')
+                assert fastaContent.contains('sample1')
+
+                // Check sequence line exists and contains nucleotides or Ns
+                def lines = fastaContent.split('\n')
+                assert lines.size() >= 2
+                def sequence = lines[1..-1].join('')
+                assert sequence.matches('[ATCGN]+')
+            }
+        }
+
+    }
+
+    test("CALL_CONSENSUS - Low frequency threshold") {
+
+        when {
+            params {
+                min_consensus_freq = 0.25
+                min_depth_coverage = 10
+                consensus = "${launchDir}/consensus"
+            }
+
+            process {
+                """
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+
+                input[0] = Channel.of(['sample_low_freq', testBam, testBai])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'sample_low_freq'
+                def consensusFile = it[1].find { file -> file.name.contains('consensus') }
+                assert consensusFile.exists()
+
+                // With lower frequency threshold, consensus might have fewer Ns
+                def fastaContent = consensusFile.text
+                def sequence = fastaContent.split('\n')[1..-1].join('')
+                assert sequence.matches('[ATCGN]+')
+            }
+        }
+
+    }
+
+    test("CALL_CONSENSUS - High frequency threshold") {
+
+        when {
+            params {
+                min_consensus_freq = 0.95
+                min_depth_coverage = 10
+                consensus = "${launchDir}/consensus"
+            }
+
+            process {
+                """
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+
+                input[0] = Channel.of(['sample_high_freq', testBam, testBai])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'sample_high_freq'
+                def consensusFile = it[1].find { file -> file.name.contains('consensus') }
+                assert consensusFile.exists()
+
+                // With higher frequency threshold, consensus might have more Ns
+                def fastaContent = consensusFile.text
+                def sequence = fastaContent.split('\n')[1..-1].join('')
+                assert sequence.matches('[ATCGN]+')
+            }
+        }
+
+    }
+
+    test("CALL_CONSENSUS - Low depth threshold") {
+
+        when {
+            params {
+                min_consensus_freq = 0.75
+                min_depth_coverage = 1
+                consensus = "${launchDir}/consensus"
+            }
+
+            process {
+                """
+                def testBam = file("${projectDir}/tests/data/test_alignment.bam")
+                def testBai = file("${projectDir}/tests/data/test_alignment.bam.bai")
+
+                input[0] = Channel.of(['sample_low_depth', testBam, testBai])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'sample_low_depth'
+                def consensusFile = it[1].find { file -> file.name.contains('consensus') }
+                assert consensusFile.exists()
+
+                // With low depth threshold, more positions might be called
+                def fastaContent = consensusFile.text
+                assert fastaContent.startsWith('>')
+                def sequence = fastaContent.split('\n')[1..-1].join('')
+                assert sequence.length() > 0
+            }
+        }
+
+    }
+
+    test("CALL_CONSENSUS - Empty BAM file") {
+
+        when {
+            params {
+                min_consensus_freq = 0.75
+                min_depth_coverage = 10
+                consensus = "${launchDir}/consensus"
+            }
+
+            process {
+                """
+                // Would need actual empty BAM in real test
+                def emptyBam = file("${projectDir}/tests/data/empty_alignment.bam")
+                def emptyBai = file("${projectDir}/tests/data/empty_alignment.bam.bai")
+
+                input[0] = Channel.of(['empty_sample', emptyBam, emptyBai])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+
+            with(process.out[0]) {
+                assert it[0] == 'empty_sample'
+                def consensusFile = it[1].find { file -> file.name.contains('consensus') }
+                assert consensusFile.exists()
+
+                // Empty BAM should produce consensus with all Ns
+                def fastaContent = consensusFile.text
+                assert fastaContent.startsWith('>')
+                def sequence = fastaContent.split('\n')[1..-1].join('')
+                // Should be all Ns or empty
+                assert sequence.matches('[N]*') || sequence.isEmpty()
+            }
+        }
+
+    }
+
+}

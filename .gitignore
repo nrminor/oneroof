@@ -19,6 +19,9 @@
 !.gitattributes
 !main.nf
 !nextflow.config
+!nf-test.config
+!CLAUDE.md
+!llms.txt
 
 # github action workflows
 !/.github
@@ -46,6 +49,8 @@
 # bin of executable scripts
 !/bin/
 !/bin/*.py
+!/bin/*.rs
+!/bin/*.ers
 !/bin/*.ts
 !/bin/*.js
 !/bin/*.R
@@ -54,6 +59,7 @@
 !/bin/*.lua
 !/bin/*.sh
 !/bin/*.awk
+!/bin/README.md
 
 # groovy libraries
 !/lib
@@ -65,3 +71,26 @@
 !/docs/*.md
 !/docs/*.pdf
 !/docs/*.html.gz
+
+# globus adapter
+!/globus
+!/globus/.gitignore
+!/globus/README.md
+!/globus/action_provider
+!/globus/action_provider/oneroof_action_provider.py
+!/globus/action_provider/requirements.txt
+!/globus/config
+!/globus/config/.env.template
+!/globus/config/*.json
+!/globus/flows
+!/globus/flows/*.json
+!/globus/scripts
+!/globus/scripts/*.sh
+!/globus/scripts/*.py
+
+# nf-test
+!tests/
+!tests/**/*
+!tests/**/*.nf.test
+!tests/data/
+!tests/data/**/*

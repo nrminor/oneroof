@@ -39,6 +39,47 @@
           else
             null;
 
+        # Build refman using cargo-binstall
+        # refman = pkgs.stdenv.mkDerivation {
+        #   name = "refman";
+        #   version = "latest";
+
+        #   nativeBuildInputs = with pkgs; [
+        #     cargo-binstall
+        #     pkg-config
+        #     openssl
+        #     cacert
+        #   ];
+
+        #   buildInputs = with pkgs; [
+        #     openssl
+        #   ];
+
+        #   dontUnpack = true;
+        #   dontBuild = true;
+
+        #   installPhase = ''
+        #     export HOME=$TMPDIR
+        #     export CARGO_HOME=$TMPDIR/.cargo
+        #     export RUSTUP_HOME=$TMPDIR/.rustup
+        #     export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+
+        #     # Create output directory
+        #     mkdir -p $out/bin
+
+        #     # Install refman using cargo-binstall
+        #     ${pkgs.cargo-binstall}/bin/cargo-binstall \
+        #       --no-confirm \
+        #       --no-symlinks \
+        #       --root $TMPDIR \
+        #       refman
+
+        #     # Move the binary to the output
+        #     mv $TMPDIR/bin/refman $out/bin/refman
+        #     chmod +x $out/bin/refman
+        #   '';
+        # };
+
       in
       {
         devShells.default = pkgs.mkShell {
@@ -56,7 +97,13 @@
             pkgs.libxslt
             pkgs.libffi
             pkgs.pixi
-            dorado
+            pkgs.just
+            pkgs.just-lsp
+            pkgs.pre-commit
+            pkgs.cargo
+            pkgs.rustc
+            pkgs.cargo-binstall
+            # refman
           ] ++ pkgs.lib.optional (dorado != null) dorado;
 
           shellHook = ''
@@ -71,6 +118,16 @@
             fi
 
             export PATH="$PWD/.pixi/envs/default/bin:$PATH"
+
+            # Install pre-commit hooks if not already installed
+            if [ -f .pre-commit-config.yaml ]; then
+              if [ ! -f .git/hooks/pre-commit ] || [ ! -f .pre-commit-installed.stamp ]; then
+                echo "📝 Installing pre-commit hooks..."
+                pre-commit install
+                touch .pre-commit-installed.stamp
+                echo "✅ Pre-commit hooks installed successfully"
+              fi
+            fi
           '';
         };
       }

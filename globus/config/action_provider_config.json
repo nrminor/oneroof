@@ -1,0 +1,30 @@
+{
+  "globus": {
+    "action_provider_config": {
+      "management_app": "${GLOBUS_CLIENT_ID}",
+      "administrator": "${ADMINISTRATOR_PRINCIPAL}",
+      "monitor_by": ["${MONITOR_PRINCIPAL}"],
+      "executable": "/app/oneroof_action_provider.py",
+      "action_url": "${ONEROOF_ACTION_URL}",
+      "action_scope": "${ONEROOF_ACTION_SCOPE}",
+      "api_version": "2.0",
+      "description": "OneRoof Bioinformatics Pipeline Action Provider",
+      "log_level": "INFO",
+      "visible_to": ["all_authenticated_users"]
+    }
+  },
+  "action_endpoint_config": {
+    "public": false,
+    "authentication_policy": "globus_auth_token",
+    "max_request_size": 10485760,
+    "timeout": 600,
+    "environment_variables": {
+      "ONEROOF_PATH": "${ONEROOF_PATH}",
+      "NEXTFLOW_PATH": "${NEXTFLOW_PATH}",
+      "PIXI_PATH": "${PIXI_PATH}",
+      "USE_PIXI": "${USE_PIXI}",
+      "ENABLE_GPU": "${ENABLE_GPU}",
+      "MAX_PARALLEL_RUNS": "${MAX_PARALLEL_RUNS}"
+    }
+  }
+}
