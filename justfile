@@ -44,7 +44,7 @@ make-readme: render-readme
 [group('docs')]
 docs: render-site make-readme
 
-# Render the Quarto documentation website (HTML, PDF, and markdown)
+# Render the Quarto documentation website (HTML and markdown)
 [group('docs')]
 render-site:
     quarto render
@@ -86,9 +86,8 @@ fix-index-paths:
         rm -f _site/index.html.bak && \
         echo "✓ Fixed paths in root index.html"; \
     fi
-    @# Copy PDFs and markdown back to docs directory
+    @# Copy markdown back to docs directory
     @if [ -d "_site/docs" ]; then \
-        cp _site/docs/*.pdf docs/ 2>/dev/null && echo "✓ PDFs copied to docs/" || echo "⚠️  No PDFs found"; \
         cp _site/docs/*.md docs/ 2>/dev/null && echo "✓ Markdown files copied to docs/" || echo "⚠️  No markdown files found"; \
     fi
 

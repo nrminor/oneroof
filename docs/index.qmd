@@ -5,11 +5,9 @@ format:
     html:
         embed-resources: true
         keep-ipynb: false
-    typst: default
     gfm:
         wrap: none
 editor: source
-engine: knitr
 execute:
     echo: false
     eval: false

@@ -12,10 +12,6 @@ format:
     code-fold: true
     code-tools: true
     highlight-style: github
-  typst:
-    toc: true
-    number-sections: true
-    colorlinks: true
   gfm:
     toc: true
     toc-depth: 3

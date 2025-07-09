@@ -69,7 +69,6 @@
 !/docs
 !/docs/*.qmd
 !/docs/*.md
-!/docs/*.pdf
 !/docs/*.css
 
 # globus adapter

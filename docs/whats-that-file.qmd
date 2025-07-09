@@ -9,10 +9,6 @@ format:
     toc-location: right
     number-sections: false
     code-fold: true
-  typst:
-    documentclass: article
-    geometry:
-      - margin=1in
   gfm:
       wrap: none
 ---
