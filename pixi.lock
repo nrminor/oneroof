@@ -3613,7 +3613,7 @@ packages:
 - pypi: ./
   name: oneroof
   version: 1.0.0
-  sha256: 3c1dad8ba277846383adbe56bd77fa5e79ca2f65eabeac79f8cce3a4944de46a
+  sha256: f49f5e81636836899e80c5f93e75ab12997730086e12004ba20ccb3ebba31342
   requires_dist:
   - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
@@ -3630,7 +3630,7 @@ packages:
   - pytz>=2025.1
   - pydantic>=2.9.2,<3
   - rich
-  - typer
+  - typer>=0.16.0,<0.17
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openjdk-17.0.15-h5ddf6bc_0.conda

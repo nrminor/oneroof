@@ -4,7 +4,7 @@ project:
   render:
     - "docs/*.qmd"
   post-render:
-    - "just copy-index"
+    - "just fix-index-paths"
 
 website:
   title: "OneRoof Documentation"
@@ -15,16 +15,16 @@ website:
   navbar:
     background: primary
     left:
-      - href: docs/index.qmd
-        text: "Home"
-      - href: docs/developer.qmd
-        text: "Developer Guide"
-      - href: docs/pipeline_architecture.qmd
-        text: "Architecture"
-      - href: docs/whats-that-file.qmd
-        text: "File Reference"
-      - href: docs/data_management.qmd
-        text: "Data Management"
+      - text: "Home"
+        href: docs/index.html
+      - text: "Developer Guide"
+        href: docs/developer.html
+      - text: "Architecture"
+        href: docs/pipeline_architecture.html
+      - text: "File Reference"
+        href: docs/whats-that-file.html
+      - text: "Data Management"
+        href: docs/data_management.html
     # right:
     #   - icon: github
     #     href: https://github.com/nrminor/oneroof
@@ -42,7 +42,7 @@ website:
     toggle-position: right
 
   sidebar:
-    style: "docked"
+    style: "floating"
     search: true
   #   contents:
   #     - section: "Getting Started"
@@ -78,19 +78,26 @@ format:
     theme:
       light: flatly
       dark: darkly
-    css: docs/styles.css
     toc: true
     toc-depth: 3
     toc-location: right
     code-fold: false
-    code-tools: true
-    code-copy: true
+    # code-tools: true
+    # code-copy: true
     code-overflow: wrap
     highlight-style: github
     link-external-icon: false
     link-external-newwindow: true
     smooth-scroll: true
     anchor-sections: true
+    # css: docs/styles.css
+  typst:
+    toc: true
+    number-sections: true
+  gfm:
+    toc: true
+    toc-depth: 3
+    wrap: none
 
 execute:
   freeze: auto

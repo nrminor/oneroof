@@ -141,3 +141,11 @@ just docker-push
 3. **Memory Management**: Use `--low_memory` flag for resource-constrained environments
 4. **Slack Integration**: Optional alerts can be configured for pipeline completion
 5. **Dependency Management**: Always use `uv` for Python operations to ensure fast, reliable dependency resolution
+
+## Important Project Structure Rules
+
+**NEVER add new files to the project root directory.** The project root is carefully curated and should only contain the files explicitly listed in `.gitignore`. If you think you need to add a file to the project root:
+1. First, thoroughly explore all other possible solutions within the existing project structure
+2. Consider if the file can be placed in an appropriate subdirectory instead
+3. If absolutely no other solution exists, explicitly ask the user for permission before creating any file in the project root
+4. This rule is critical for maintaining a clean, organized project structure

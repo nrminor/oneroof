@@ -100,3 +100,9 @@ The README.md in the project root is generated from docs/index.qmd. To modify th
 1. Edit `docs/index.qmd` (NOT README.md directly)
 2. Run `just make-readme` or `just docs` to regenerate
 3. The README.md will be updated with GitHub-flavored markdown
+
+### Critical: Project Root Rules
+**NEVER add new files to the project root directory.** The project root should only contain files explicitly listed in `.gitignore`. If you think you need a root file:
+1. Explore all other solutions within existing directories first
+2. Consider appropriate subdirectories for the file
+3. Only ask for permission if absolutely no other solution exists

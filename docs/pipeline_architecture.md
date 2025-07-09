@@ -24,23 +24,19 @@ OneRoof Development Team
   - [Platform-Specific Defaults](#platform-specific-defaults)
   - [Resource Management](#resource-management)
   - [Key Process Labels](#key-process-labels)
-- [Error Handling and Retry
-  Strategy](#error-handling-and-retry-strategy)
+- [Error Handling and Retry Strategy](#error-handling-and-retry-strategy)
 - [Testing Considerations](#testing-considerations)
   - [Critical Validation Points](#critical-validation-points)
   - [Edge Cases to Test](#edge-cases-to-test)
   - [Integration Test Scenarios](#integration-test-scenarios)
 
-This document provides a comprehensive map of the OneRoof Nextflow
-pipeline structure, including workflow dependencies, data flow, and
-critical testing points.
+This document provides a comprehensive map of the OneRoof Nextflow pipeline structure, including workflow dependencies, data flow, and critical testing points.
 
 ## Main Workflow Entry Point
 
 ### main.nf
 
-- **Purpose**: Central orchestrator that routes to platform-specific
-  workflows
+- **Purpose**: Central orchestrator that routes to platform-specific workflows
 - **Key Functions**:
   - Platform detection (Nanopore vs Illumina) based on input parameters
   - Input channel initialization for all required files
@@ -410,8 +406,7 @@ errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
 maxRetries 2
 ```
 
-This provides resilience against transient failures while preventing
-infinite loops.
+This provides resilience against transient failures while preventing infinite loops.
 
 ## Testing Considerations
 

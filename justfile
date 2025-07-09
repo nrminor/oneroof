@@ -2,20 +2,23 @@
     just --list
 
 # Render only docs/index.qmd to generate README
-[private]
 [group('docs')]
+[private]
 render-readme:
-    quarto render docs/index.qmd --to gfm --output-dir .
+    @# Temporarily move _quarto.yml to avoid website mode
+    @mv _quarto.yml _quarto.yml.bak
+    quarto render docs/index.qmd --to gfm --output-dir . --no-execute-daemon
+    @mv _quarto.yml.bak _quarto.yml
 
 # Convert the resulting markdown file from `docs/index.qmd` to `README.md` in the project root and fix badge placement.
 [group('docs')]
 make-readme: render-readme
-    #!/usr/bin/env -S uv run
+    #!/usr/bin/env python3
     import re
     import shutil
 
     # First move the file from root (where it was rendered) to README.md
-    shutil.move('index.md', 'README.md')
+    shutil.move('docs/index.md', 'README.md')
 
     # Read the README
     with open('README.md', 'r') as f:
@@ -37,59 +40,15 @@ make-readme: render-readme
         with open('README.md', 'w') as f:
             f.write('\n'.join(lines))
 
-# Render the developer documentation in docs/developer.qmd.
-[private]
+# Render all documentation (website, PDFs, and markdown)
 [group('docs')]
-render-dev:
-    quarto render docs/developer.qmd
+docs: render-site make-readme
 
-# Render the data management documentation in docs/data_management.qmd.
-[private]
-[group('docs')]
-render-data-mgmt:
-    quarto render docs/data_management.qmd
-
-# Render the pipeline architecture documentation.
-[private]
-[group('docs')]
-render-architecture:
-    quarto render docs/pipeline_architecture.qmd
-
-# Render the whats-that-file documentation.
-[private]
-[group('docs')]
-render-whats-that-file:
-    quarto render docs/whats-that-file.qmd
-
-# Compress HTML files rendered from both the main and the developer documentation.
-[private]
-[group('docs')]
-compress_html:
-    @gzip -f docs/index.html
-    @gzip -f docs/developer.html
-    @gzip -f docs/pipeline_architecture.html
-    @gzip -f docs/whats-that-file.html
-    # @gzip -f docs/_management.html
-
-# Render the main docs and the developer docs.
-[private]
-[group('docs')]
-qmd: render-readme render-dev render-data-mgmt render-architecture render-whats-that-file
-
-# Run all quarto recipes in sequence.
-[group('docs')]
-docs: make-readme render-dev render-architecture render-whats-that-file compress_html
-
-# Render the Quarto documentation website
+# Render the Quarto documentation website (HTML, PDF, and markdown)
 [group('docs')]
 render-site:
     quarto render
     @echo "✓ Website rendered to _site/"
-    @# Copy PDFs back to docs directory if desired
-    @if [ -d "_site/docs" ]; then \
-        cp _site/docs/*.pdf docs/ 2>/dev/null && echo "✓ PDFs copied to docs/" || true; \
-        cp _site/docs/*.md docs/ 2>/dev/null && echo "✓ Markdown files copied to docs/" || true; \
-    fi
 
 # Preview the Quarto documentation website locally
 [group('docs')]
@@ -99,7 +58,7 @@ preview-site:
 # Publish documentation to GitHub Pages (requires gh-pages branch)
 [group('docs')]
 publish-docs:
-    quarto publish gh-pages --no-prompt
+    PRE_COMMIT_ALLOW_NO_CONFIG=1 quarto publish gh-pages --no-prompt
 
 # Clean Quarto build artifacts
 [group('docs')]
@@ -107,13 +66,30 @@ clean-site:
     rm -rf _site .quarto
 
 # Copy docs/index.html to site root (internal recipe)
-[private]
 [group('docs')]
+[private]
 copy-index:
     @if [ -f "_site/docs/index.html" ]; then \
         cp _site/docs/index.html _site/index.html && echo "✓ Set docs/index.html as homepage"; \
     else \
         echo "⚠️  No _site directory found - using default homepage"; \
+    fi
+
+# Fix paths in the copied index.html and copy back PDFs/markdown (internal recipe)
+[group('docs')]
+[private]
+fix-index-paths:
+    @if [ -f "_site/docs/index.html" ]; then \
+        cp _site/docs/index.html _site/index.html && \
+        sed -i.bak 's|href="../docs/|href="docs/|g' _site/index.html && \
+        sed -i.bak 's|src="../site_libs/|src="site_libs/|g' _site/index.html && \
+        rm -f _site/index.html.bak && \
+        echo "✓ Fixed paths in root index.html"; \
+    fi
+    @# Copy PDFs and markdown back to docs directory
+    @if [ -d "_site/docs" ]; then \
+        cp _site/docs/*.pdf docs/ 2>/dev/null && echo "✓ PDFs copied to docs/" || echo "⚠️  No PDFs found"; \
+        cp _site/docs/*.md docs/ 2>/dev/null && echo "✓ Markdown files copied to docs/" || echo "⚠️  No markdown files found"; \
     fi
 
 # Set up the Python environment with Pixi.
@@ -351,10 +327,7 @@ globus-init: globus-setup globus-deploy globus-register
 # ALIASES! MORE ALIASES!
 
 alias readme := make-readme
-[private]
 alias render := render-readme
-[private]
-alias zip := compress_html
 alias doc := docs
 alias env := setup-env
 alias install := setup-env
@@ -410,7 +383,6 @@ alias pc := py-test-clean
 
 # Ultra-short aliases for power users
 
-[private]
 alias r := render-readme
 alias e := setup-env
 alias f := py-format
@@ -471,18 +443,6 @@ alias ill := globus-test-illumina
 
 # Documentation shortcuts
 
-[private]
-alias rd := render-dev
-[private]
-alias ra := render-architecture
-[private]
-alias rw := render-whats-that-file
-[private]
-alias rdm := render-data-mgmt
-[private]
-alias compress := compress_html
-[private]
-alias gzip := compress_html
 alias site := render-site
 alias preview := preview-site
 alias publish := publish-docs
