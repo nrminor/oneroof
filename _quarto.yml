@@ -1,10 +1,96 @@
 project:
-  output-dir: docs
-  post-render: just readme
+  type: website
+  output-dir: _site
+  render:
+    - "docs/*.qmd"
+  post-render:
+    - "just copy-index"
 
-toc: true
-number-sections: true
-# bibliography: references.bib 
+website:
+  title: "OneRoof Documentation"
+  description: "Comprehensive documentation for the OneRoof bioinformatics pipeline"
+  site-url: https://nrminor.github.io/oneroof/
+  repo-url: https://github.com/nrminor/oneroof
+
+  navbar:
+    background: primary
+    left:
+      - href: docs/index.qmd
+        text: "Home"
+      - href: docs/developer.qmd
+        text: "Developer Guide"
+      - href: docs/pipeline_architecture.qmd
+        text: "Architecture"
+      - href: docs/whats-that-file.qmd
+        text: "File Reference"
+      - href: docs/data_management.qmd
+        text: "Data Management"
+    # right:
+    #   - icon: github
+    #     href: https://github.com/nrminor/oneroof
+    #   - icon: docker
+    #     href: https://hub.docker.com/r/nrminor/dorado-and-friends
+    tools:
+      - icon: github
+        menu:
+          - text: Source Code
+            href: https://github.com/nrminor/oneroof
+          - text: Report Issue
+            href: https://github.com/nrminor/oneroof/issues
+    collapse: true
+    collapse-below: lg
+    toggle-position: right
+
+  sidebar:
+    style: "docked"
+    search: true
+  #   contents:
+  #     - section: "Getting Started"
+  #       contents:
+  #         - docs/index.qmd
+  #         - text: "Installation"
+  #           href: docs/index.qmd#installation
+  #         - text: "Quick Start"
+  #           href: docs/index.qmd#quick-start
+  #     - section: "Development"
+  #       contents:
+  #         - docs/developer.qmd
+  #         - docs/pipeline_architecture.qmd
+  #     - section: "Reference"
+  #       contents:
+  #         - docs/whats-that-file.qmd
+  #         - docs/data_management.qmd
+
+  back-to-top-navigation: true
+  page-navigation: true
+  reader-mode: true
+
+  page-footer:
+    left: |
+      &copy; 2025 OneRoof Contributors
+    center: |
+      [MIT License](https://github.com/nrminor/oneroof/blob/main/LICENSE)
+    right: |
+      Built with [Quarto](https://quarto.org/)
+
+format:
+  html:
+    theme:
+      light: flatly
+      dark: darkly
+    css: docs/styles.css
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    code-fold: false
+    code-tools: true
+    code-copy: true
+    code-overflow: wrap
+    highlight-style: github
+    link-external-icon: false
+    link-external-newwindow: true
+    smooth-scroll: true
+    anchor-sections: true
 
 execute:
   freeze: auto

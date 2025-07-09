@@ -1,20 +1,21 @@
 @default:
     just --list
 
-# Render the main quarto document `docs/index.qmd`
+# Render only docs/index.qmd to generate README
+[private]
 [group('docs')]
-render:
-    quarto render docs/index.qmd
+render-readme:
+    quarto render docs/index.qmd --to gfm --output-dir .
 
 # Convert the resulting markdown file from `docs/index.qmd` to `README.md` in the project root and fix badge placement.
 [group('docs')]
-make-readme:
+make-readme: render-readme
     #!/usr/bin/env -S uv run
     import re
     import shutil
 
-    # First move the file
-    shutil.move('docs/index.md', 'README.md')
+    # First move the file from root (where it was rendered) to README.md
+    shutil.move('index.md', 'README.md')
 
     # Read the README
     with open('README.md', 'r') as f:
@@ -37,26 +38,31 @@ make-readme:
             f.write('\n'.join(lines))
 
 # Render the developer documentation in docs/developer.qmd.
+[private]
 [group('docs')]
 render-dev:
     quarto render docs/developer.qmd
 
 # Render the data management documentation in docs/data_management.qmd.
+[private]
 [group('docs')]
 render-data-mgmt:
     quarto render docs/data_management.qmd
 
 # Render the pipeline architecture documentation.
+[private]
 [group('docs')]
 render-architecture:
     quarto render docs/pipeline_architecture.qmd
 
 # Render the whats-that-file documentation.
+[private]
 [group('docs')]
 render-whats-that-file:
     quarto render docs/whats-that-file.qmd
 
 # Compress HTML files rendered from both the main and the developer documentation.
+[private]
 [group('docs')]
 compress_html:
     @gzip -f docs/index.html
@@ -66,12 +72,49 @@ compress_html:
     # @gzip -f docs/_management.html
 
 # Render the main docs and the developer docs.
+[private]
 [group('docs')]
-qmd: render render-dev render-data-mgmt render-architecture render-whats-that-file
+qmd: render-readme render-dev render-data-mgmt render-architecture render-whats-that-file
 
 # Run all quarto recipes in sequence.
 [group('docs')]
-docs: render make-readme render-dev render-architecture render-whats-that-file compress_html
+docs: make-readme render-dev render-architecture render-whats-that-file compress_html
+
+# Render the Quarto documentation website
+[group('docs')]
+render-site:
+    quarto render
+    @echo "✓ Website rendered to _site/"
+    @# Copy PDFs back to docs directory if desired
+    @if [ -d "_site/docs" ]; then \
+        cp _site/docs/*.pdf docs/ 2>/dev/null && echo "✓ PDFs copied to docs/" || true; \
+        cp _site/docs/*.md docs/ 2>/dev/null && echo "✓ Markdown files copied to docs/" || true; \
+    fi
+
+# Preview the Quarto documentation website locally
+[group('docs')]
+preview-site:
+    quarto preview
+
+# Publish documentation to GitHub Pages (requires gh-pages branch)
+[group('docs')]
+publish-docs:
+    quarto publish gh-pages --no-prompt
+
+# Clean Quarto build artifacts
+[group('docs')]
+clean-site:
+    rm -rf _site .quarto
+
+# Copy docs/index.html to site root (internal recipe)
+[private]
+[group('docs')]
+copy-index:
+    @if [ -f "_site/docs/index.html" ]; then \
+        cp _site/docs/index.html _site/index.html && echo "✓ Set docs/index.html as homepage"; \
+    else \
+        echo "⚠️  No _site directory found - using default homepage"; \
+    fi
 
 # Set up the Python environment with Pixi.
 [group('setup')]
@@ -308,6 +351,9 @@ globus-init: globus-setup globus-deploy globus-register
 # ALIASES! MORE ALIASES!
 
 alias readme := make-readme
+[private]
+alias render := render-readme
+[private]
 alias zip := compress_html
 alias doc := docs
 alias env := setup-env
@@ -364,7 +410,8 @@ alias pc := py-test-clean
 
 # Ultra-short aliases for power users
 
-alias r := render
+[private]
+alias r := render-readme
 alias e := setup-env
 alias f := py-format
 alias l := py-lints
@@ -424,12 +471,26 @@ alias ill := globus-test-illumina
 
 # Documentation shortcuts
 
+[private]
 alias rd := render-dev
+[private]
 alias ra := render-architecture
+[private]
 alias rw := render-whats-that-file
+[private]
 alias rdm := render-data-mgmt
+[private]
 alias compress := compress_html
+[private]
 alias gzip := compress_html
+alias site := render-site
+alias preview := preview-site
+alias publish := publish-docs
+alias docs-clean := clean-site
+alias rs := render-site
+alias ps := preview-site
+alias pd := publish-docs
+alias cs := clean-site
 
 # Testing shortcuts
 

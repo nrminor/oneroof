@@ -6,11 +6,10 @@ format:
     embed-resources: true
     toc: true
     toc-depth: 3
-    toc-location: left
+    toc-location: right
     number-sections: false
     code-fold: true
-    theme: cosmo
-  pdf:
+  typst:
     documentclass: article
     geometry:
       - margin=1in

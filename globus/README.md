@@ -135,7 +135,7 @@ globus flows run YOUR_FLOW_ID --input flow_input.json
 
 The flow expects the following input parameters:
 
-```json
+```jsonc
 {
   "run_id": "unique_run_identifier",
   "platform": "nanopore",  // or "illumina"
@@ -189,7 +189,7 @@ ENABLE_GPU=true
 
 Pass additional parameters through the flow input:
 
-```json
+```jsonc
 {
   "nextflow_params": {
     "pod5_batch_size": 100,
