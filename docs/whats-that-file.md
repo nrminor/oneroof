@@ -1,6 +1,37 @@
 # OneRoof Pipeline File Reference
 
 
+- [Overview](#overview)
+- [Root Directory Files](#root-directory-files)
+  - [Core Pipeline Files](#core-pipeline-files)
+  - [Documentation and Configuration](#documentation-and-configuration)
+  - [Environment and Container Files](#environment-and-container-files)
+  - [Build and Configuration Files](#build-and-configuration-files)
+- [subworkflows/ Directory](#subworkflows-directory)
+- [modules/ Directory](#modules-directory)
+  - [Basecalling and Preprocessing](#basecalling-and-preprocessing)
+  - [Alignment and Coverage](#alignment-and-coverage)
+  - [Variant Calling and Consensus](#variant-calling-and-consensus)
+  - [Quality Control and Reporting](#quality-control-and-reporting)
+  - [Specialized Tools](#specialized-tools)
+  - [Utility Modules](#utility-modules)
+  - [Pipeline-Specific Modules](#pipeline-specific-modules)
+- [bin/ Directory](#bin-directory)
+  - [Core Analysis Scripts](#core-analysis-scripts)
+  - [Primer Management Scripts](#primer-management-scripts)
+  - [Monitoring and Utilities](#monitoring-and-utilities)
+  - [Package Files](#package-files)
+  - [Test Files](#test-files)
+- [conf/ Directory](#conf-directory)
+- [lib/ Directory](#lib-directory)
+- [docs/ Directory](#docs-directory)
+  - [Core Documentation](#core-documentation)
+  - [Generated Files](#generated-files)
+- [globus/ Directory](#globus-directory)
+- [tests/ Directory](#tests-directory)
+- [GitHub Workflows (.github/)](#github-workflows-github)
+- [Summary](#summary)
+
 ## Overview
 
 This document provides a comprehensive reference for all files in the OneRoof bioinformatics pipeline repository. Files are organized by directory to help you quickly find what you’re looking for.
