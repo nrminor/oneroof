@@ -4,7 +4,7 @@ project:
   render:
     - "docs/*.qmd"
   post-render:
-    - "just fix-index-paths"
+    - docs/fix-index-paths.lua
 
 website:
   title: "OneRoof Documentation"

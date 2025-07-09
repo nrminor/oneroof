@@ -79,17 +79,7 @@ copy-index:
 [group('docs')]
 [private]
 fix-index-paths:
-    @if [ -f "_site/docs/index.html" ]; then \
-        cp _site/docs/index.html _site/index.html && \
-        sed -i.bak 's|href="../docs/|href="docs/|g' _site/index.html && \
-        sed -i.bak 's|src="../site_libs/|src="site_libs/|g' _site/index.html && \
-        rm -f _site/index.html.bak && \
-        echo "✓ Fixed paths in root index.html"; \
-    fi
-    @# Copy markdown back to docs directory
-    @if [ -d "_site/docs" ]; then \
-        cp _site/docs/*.md docs/ 2>/dev/null && echo "✓ Markdown files copied to docs/" || echo "⚠️  No markdown files found"; \
-    fi
+    @lua docs/fix-index-paths.lua
 
 # Set up the Python environment with Pixi.
 [group('setup')]

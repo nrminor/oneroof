@@ -52,14 +52,22 @@ uv run pytest bin/test_*.py
 # Or run tests with tox for multiple environments
 tox
 
-# Build documentation
+# Build documentation website in _site/
 just docs
+
+# Preview documentation website locally
+just preview-site
 
 # IMPORTANT: Modifying README.md
 # The README.md in the project root is generated from docs/index.qmd
 # NEVER edit README.md directly - it will be overwritten
 # Always edit docs/index.qmd and re-render:
 just make-readme  # or: just docs
+
+# IMPORTANT: Documentation Website Structure
+# This is a monorepo where docs/ contains Quarto source files for the documentation website
+# The website is built to _site/ and deployed to GitHub Pages
+# Post-render scripts in docs/ fix paths for proper website navigation
 
 # Docker operations
 just docker-build
@@ -69,12 +77,24 @@ just docker-push
 ## Architecture
 
 ### Directory Structure
+
+This is a **monorepo** that contains both the Nextflow bioinformatics pipeline and its documentation website source:
+
+#### Pipeline Components
 - `main.nf` - Main workflow entry point that orchestrates platform-specific workflows
 - `workflows/` - Platform-specific workflows (nanopore.nf, illumina.nf)
 - `subworkflows/` - Reusable workflow components (alignment, variant_calling, primer_handling, etc.)
 - `modules/` - Individual process definitions for tools (dorado, minimap2, ivar, etc.)
 - `bin/` - Python utility scripts with PEP 723 inline dependencies (fully portable with uv)
 - `conf/` - Configuration files for different platforms and tools
+
+#### Documentation Website
+- `docs/` - Quarto source files for the documentation website
+  - `*.qmd` files - Quarto markdown source files
+  - `fix-index-paths.lua` - Post-render script for fixing paths in generated HTML
+  - `fix-index-paths.py` - Python alternative to the Lua script
+- `_quarto.yml` - Quarto configuration for building the documentation website
+- `_site/` - Generated static website output (git-ignored)
 
 ### Key Workflow Components
 

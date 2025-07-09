@@ -619,13 +619,42 @@ Project documentation sources:
 - Storage and organization practices
 - Best practices documentation
 
+**whats-that-file.qmd** & **whats-that-file.md**
+
+- This file - comprehensive file reference
+- Documents every file in the repository
+- Helps developers understand project structure
+
+### Post-Render Scripts
+
+**fix-index-paths.lua**
+
+- Lua script for Quarto post-render processing
+- Fixes relative paths in generated HTML
+- Copies markdown files back to docs directory
+- Ensures proper website navigation structure
+
+**fix-index-paths.py**
+
+- Python alternative to the Lua script
+- Same functionality as fix-index-paths.lua
+- Provides fallback option if Lua is unavailable
+- Uses standard library for cross-platform compatibility
+
 ### Generated Files
 
-**pipeline_architecture_files/**
+**site_libs/**
 
 - Quarto-generated web assets
 - JavaScript, CSS, and fonts
+- Bootstrap and Quarto theme files
 - Supports interactive documentation
+
+**_site/**
+
+- Rendered documentation website
+- HTML output from Quarto
+- Ready for deployment to GitHub Pages
 
 ## globus/ Directory
 

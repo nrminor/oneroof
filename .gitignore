@@ -70,6 +70,8 @@
 !/docs/*.qmd
 !/docs/*.md
 !/docs/*.css
+!/docs/*.lua
+!/docs/*.py
 
 # globus adapter
 !/globus

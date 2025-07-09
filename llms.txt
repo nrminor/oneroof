@@ -12,11 +12,14 @@
 
 ## Project Structure
 
+This is a **monorepo** containing both the Nextflow bioinformatics pipeline and its documentation website source.
+
 ### Core Files
 - `main.nf` - Main Nextflow workflow entry point
 - `nextflow.config` - Pipeline configuration
 - `pyproject.toml` - Python dependencies and project metadata
 - `justfile` - Common development commands
+- `_quarto.yml` - Quarto configuration for documentation website
 
 ### Workflows
 - `workflows/nanopore.nf` - Nanopore data processing workflow
@@ -29,9 +32,13 @@
 - `lib/Utils.groovy` - Shared Groovy utilities
 
 ### Documentation
-- `README.md` - Main documentation and usage guide
+- `README.md` - Main documentation (generated from docs/index.qmd - DO NOT EDIT DIRECTLY)
 - `CLAUDE.md` - Guidelines for AI assistants working with this codebase
-- `docs/` - Additional documentation (architecture, development, data management)
+- `docs/` - Quarto source files for documentation website
+  - `*.qmd` files - Quarto markdown sources
+  - `fix-index-paths.lua` - Post-render script for fixing HTML paths
+  - `fix-index-paths.py` - Python alternative post-render script
+- `_site/` - Generated documentation website output (git-ignored)
 - `tests/README.md` - Test suite documentation
 
 ### Configuration
@@ -89,7 +96,9 @@ just test-pipeline     # Test end-to-end functionality
 
 ### Common Commands
 ```bash
-just docs              # Build documentation (including README)
+just docs              # Build documentation website and README
+just preview-site      # Preview documentation website locally
+just make-readme       # Generate README.md from docs/index.qmd
 just docker-build      # Build Docker image
 ruff check . --fix     # Lint Python code
 ruff format .          # Format Python code
