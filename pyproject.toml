@@ -1,7 +1,7 @@
 [project]
 name = "oneroof"
 version = "1.0.0"
-description = "Base-, Variant-, and Consensus-calling under One Proverbial Roof. Work in progress!"
+description = "Base-, Variant-, and Consensus-calling under One Proverbial Roof."
 authors = [
   { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
   { name = "Annabelle Kalweit", email = "akalweit@wisc.edu" },

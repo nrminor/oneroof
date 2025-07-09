@@ -7,12 +7,12 @@ format:
     embed-resources: true
     toc: true
     toc-depth: 3
-    toc-location: left
+    toc-location: right
     number-sections: true
     code-fold: true
     code-tools: true
     highlight-style: github
-  pdf:
+  typst:
     toc: true
     number-sections: true
     colorlinks: true
