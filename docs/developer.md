@@ -11,9 +11,11 @@
 
 Most `oneroof` development happens in the `dev` branch of this repo. To get started with doing so yourself, clone and switch to the `dev` branch like so:
 
-    git clone https://github.com/nrminor/oneroof.git && \
-    cd oneroof && \
-    git checkout dev
+``` bash
+git clone https://github.com/nrminor/oneroof.git && \
+cd oneroof && \
+git checkout dev
+```
 
 From there, you’ll have a few tools to consider installing if you haven’t already:
 
@@ -97,7 +99,7 @@ Like most Nextflow pipelines, `oneroof` also has a few other important directori
 
 We’re big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatter, and we use it liberally in the writing of our Python scripts. To do so yourself in VSCode, we offer the following configuration for your User Settings JSON:
 
-``` json
+``` jsonc
 {
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
