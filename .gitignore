@@ -1,25 +1,45 @@
+# Everything is ignored by default so that exceptions can be added as the arise. This
+# prevents anything from being committed unless it was done so deliberately
 *
 
-# project root directory
-!LICENSE
+# open-source table stakes: a readme, a license, and a gitignore
 !README.md
-!justfile
-!Dockerfile
-!Containerfile
-!pyproject.toml
+!LICENSE
+!.gitignore
+
+# further git configuration, including a gitattributes and some pre-commit hooks
+!.gitattributes
+!.pre-commit-config.yaml
+
+# dependency versions for the whole dev environment (flake.nix), Python (pyproject.toml),
+# and the Deno Javascript runtime. A OCI-compliant Containerfile with this environment
+# is also provided.
 !flake.nix
+!pyproject.toml
 !pixi.lock
 !uv.lock
-!_quarto.yml
-!.pre-commit-config.yaml
-!refman.toml
-!data_manifest.yml
+!Containerfile
+!deno.json
+!deno.jsonc
+!deno.lock
+
+# project setup (.envrc for launching a development shell with the nix flake) and project
+# shorthands to be explored by running `just`
 !.envrc
-!.gitignore
-!.gitattributes
+!justfile
+
+# quarto project setup for generating the docsite
+!_quarto.yml
+
+# data asset management with refman
+!refman.toml
+
+# Nextflow workflow entrypoint, configuration, and testing configuration
 !main.nf
 !nextflow.config
 !nf-test.config
+
+# Persistent LLM context
 !CLAUDE.md
 !llms.txt
 
@@ -46,7 +66,9 @@
 !/conf/*.config
 !/conf/*.yml
 
-# bin of executable scripts
+# bin of executable scripts. Scripts written in Python, Rust (rust-scripts), Typescript
+# (which can be executed natively by Deno and Bun now), Javascript, R, Perl, Lua, shell,
+# and Awk are currently allowed.
 !/bin/
 !/bin/*.py
 !/bin/*.rs
@@ -95,5 +117,3 @@
 !tests/**/*.nf.test
 !tests/data/
 !tests/data/**/*
-
-/.quarto/

@@ -137,10 +137,6 @@ This document provides a comprehensive reference for all files in the OneRoof bi
 - Defines test settings and locations
 - Important for pipeline testing and validation
 
-**data_manifest.yml**
-
-- data manifest for [`scidataflow`](https://github.com/vsbuffalo/scidataflow), a supported alternative to `refman` \## workflows/ Directory
-
 Platform-specific workflow definitions that orchestrate the entire analysis pipeline:
 
 **illumina.nf**
