@@ -2061,11 +2061,14 @@ dependencies = [
     { name = "loguru" },
     { name = "lxml" },
     { name = "paramiko" },
+    { name = "patito" },
     { name = "plotnine" },
-    { name = "polars-lts-cpu", extra = ["async", "calamine", "graph", "numpy", "openpyxl", "pandas", "plot", "pyarrow", "pydantic", "style", "timezone", "xlsx2csv", "xlsxwriter"] },
+    { name = "polars-lts-cpu", extra = ["async", "calamine", "graph", "numpy", "openpyxl", "plot", "pyarrow", "pydantic", "style", "timezone", "xlsx2csv", "xlsxwriter"] },
+    { name = "pydantic" },
     { name = "pysam" },
     { name = "pytz" },
     { name = "pyyaml" },
+    { name = "rich" },
     { name = "scipy" },
     { name = "typer" },
     { name = "xlsx2csv" },
@@ -2095,13 +2098,16 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.0" },
     { name = "lxml", specifier = ">=5.3.0" },
     { name = "paramiko", specifier = ">=3.5.0" },
+    { name = "patito", specifier = ">=0.8.3" },
     { name = "plotnine", specifier = ">=0.14.4" },
-    { name = "polars-lts-cpu", extras = ["numpy", "pandas", "pyarrow", "pydantic", "calamine", "openpyxl", "xlsx2csv", "xlsxwriter", "async", "graph", "plot", "style", "timezone"], specifier = ">=1.17.1" },
+    { name = "polars-lts-cpu", extras = ["numpy", "pyarrow", "pydantic", "calamine", "openpyxl", "xlsx2csv", "xlsxwriter", "async", "graph", "plot", "style", "timezone"], specifier = ">=1.17.1" },
+    { name = "pydantic", specifier = ">=2.9.2,<3" },
     { name = "pysam", specifier = ">=0.22.1" },
     { name = "pytz", specifier = ">=2025.1" },
     { name = "pyyaml" },
+    { name = "rich", specifier = ">=13.0.0" },
     { name = "scipy", specifier = ">=1.14.1" },
-    { name = "typer", specifier = ">=0.16.0" },
+    { name = "typer", specifier = ">=0.16.0,<0.17" },
     { name = "xlsx2csv", specifier = ">=0.8.4" },
     { name = "xlsxwriter", specifier = ">=3.2.0" },
 ]
@@ -2230,6 +2236,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/66/94/68e2e17afaa9169cf6412ab0f28623903be73d1b32e208d9e8e541bb086d/parso-0.8.4.tar.gz", hash = "sha256:eb3a7b58240fb99099a345571deecc0f9540ea5f4dd2fe14c2a99d6b281ab92d", size = 400609, upload-time = "2024-04-05T09:43:55.897Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c6/ac/dac4a63f978e4dcb3c6d3a78c4d8e0192a113d288502a1216950c41b1027/parso-0.8.4-py2.py3-none-any.whl", hash = "sha256:a418670a20291dacd2dddc80c377c5c3791378ee1e8d12bffc35420643d43f18", size = 103650, upload-time = "2024-04-05T09:43:53.299Z" },
+]
+
+[[package]]
+name = "patito"
+version = "0.8.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "polars" },
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/77/376b341a49cf5fb2db16daae561f248fb504d65453f137eeda2a1cbbb443/patito-0.8.3.tar.gz", hash = "sha256:aba7ac6bb640a075e1c22862dd577519a615724db0694ac3ae81a6a3f3993fb1", size = 42640, upload-time = "2024-12-26T18:15:32.582Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl", hash = "sha256:cc4dd90ec8a867806548a5161af4cf195f3d223fcae24d879285cc003ab89ed4", size = 43331, upload-time = "2024-12-26T18:15:30.644Z" },
 ]
 
 [[package]]
@@ -2415,10 +2435,6 @@ numpy = [
 ]
 openpyxl = [
     { name = "openpyxl" },
-]
-pandas = [
-    { name = "pandas" },
-    { name = "pyarrow" },
 ]
 plot = [
     { name = "altair" },

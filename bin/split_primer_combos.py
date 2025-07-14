@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "patito",
 #     "polars",
 # ]
 # ///
@@ -29,6 +30,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import patito as pt
 import polars as pl
 
 
@@ -72,6 +74,61 @@ def parse_command_line_args() -> tuple[Path, str, str]:
     return args.input_bed, args.forward_suffix, args.reverse_suffix
 
 
+class PrimerBedSchema(pt.Model):
+    """Schema for validating primer BED format data."""
+
+    Ref: str = pt.Field(description="Reference sequence name")
+    Start_Position: int = pt.Field(ge=0, description="Start position (0-based)")
+    Stop_Position: int = pt.Field(gt=0, description="Stop position (exclusive)")
+    NAME: str = pt.Field(description="Primer name")
+    INDEX: int = pt.Field(ge=0, description="Primer index")
+    SENSE: str = pt.Field(description="Primer sense/strand")
+
+
+def validate_primer_bed(df: pl.DataFrame) -> pl.DataFrame:
+    """Validate primer BED format data using patito schema.
+
+    Args:
+        df: DataFrame with primer BED data
+
+    Returns:
+        Validated DataFrame
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Rename columns temporarily for validation
+    df_for_validation = df.rename(
+        {
+            "Start Position": "Start_Position",
+            "Stop Position": "Stop_Position",
+        },
+    )
+
+    # Validate using patito
+    try:
+        PrimerBedSchema.validate(df_for_validation)
+    except pt.exceptions.DataFrameValidationError as e:
+        msg = f"Primer BED data validation failed: {e}"
+        raise ValueError(msg) from e
+
+    # Additional validation: ensure start < stop
+    invalid_rows = df.filter(pl.col("Start Position") >= pl.col("Stop Position"))
+    if len(invalid_rows) > 0:
+        msg = f"Found {len(invalid_rows)} rows where start >= stop"
+        raise ValueError(msg)
+
+    # Validate SENSE values
+    valid_senses = {"+", "-", "PLUS", "MINUS", "FORWARD", "REVERSE"}
+    invalid_sense = df.filter(~pl.col("SENSE").is_in(valid_senses))
+    if len(invalid_sense) > 0:
+        unique_invalid = invalid_sense.select("SENSE").unique().to_series().to_list()
+        msg = f"Invalid SENSE values found: {unique_invalid}. Expected one of: {valid_senses}"
+        raise ValueError(msg)
+
+    return df
+
+
 def main() -> None:
     """
     Main handles data I/O and ultimately splits the BED file.
@@ -79,28 +136,27 @@ def main() -> None:
 
     bed_to_split, fwd_suff, rev_suff = parse_command_line_args()
 
-    bed_dfs = (
-        pl.read_csv(
-            bed_to_split,
-            separator="\t",
-            has_header=False,
-            new_columns=[
-                "Ref",
-                "Start Position",
-                "Stop Position",
-                "NAME",
-                "INDEX",
-                "SENSE",
-            ],
-        )
-        .with_columns(
-            pl.col("NAME")
-            .str.replace(fwd_suff, "")
-            .str.replace(rev_suff, "")
-            .alias("NAME"),
-        )
-        .partition_by("NAME")
+    # Read the BED file
+    bed_df = pl.read_csv(
+        bed_to_split,
+        separator="\t",
+        has_header=False,
+        new_columns=[
+            "Ref",
+            "Start Position",
+            "Stop Position",
+            "NAME",
+            "INDEX",
+            "SENSE",
+        ],
     )
+
+    # Validate the data
+    bed_df = validate_primer_bed(bed_df)
+
+    bed_dfs = bed_df.with_columns(
+        pl.col("NAME").str.replace(fwd_suff, "").str.replace(rev_suff, "").alias("NAME"),
+    ).partition_by("NAME")
 
     for df in bed_dfs:
         splicing = df.select("NAME").unique().item()

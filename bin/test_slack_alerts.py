@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "pandas",
+#     "pytest",
+#     "slack-sdk",
+# ]
+# ///
+
 """
 Comprehensive pytest test module for slack_alerts.py
 
@@ -19,10 +28,10 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from slack_sdk.errors import SlackApiError
 
 # Import the module we're testing
 import slack_alerts
+from slack_sdk.errors import SlackApiError
 
 
 class TestParseCommandLineArgs:
@@ -76,7 +85,7 @@ class TestPassingSamples:
             {
                 "sample_id": ["sample1", "sample2", "sample3"],
                 "coverage": [0.95, 0.98, 0.96],
-            }
+            },
         )
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)
         assert count == 3
@@ -90,7 +99,7 @@ class TestPassingSamples:
             {
                 "sample_id": ["sample1", "sample2", "sample3"],
                 "coverage": [0.95, 0.85, 0.96],
-            }
+            },
         )
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)
         assert count == 2
@@ -104,7 +113,7 @@ class TestPassingSamples:
             {
                 "sample_id": ["sample1", "sample2"],
                 "coverage": [0.85, 0.80],
-            }
+            },
         )
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)
         assert count == 0
@@ -116,7 +125,7 @@ class TestPassingSamples:
             {
                 "sample_id": ["sample1"],
                 "coverage": [0.95],
-            }
+            },
         )
         # For coverage_threshold=20, threshold should be 1-(1/20)=0.95
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)
@@ -136,7 +145,7 @@ class TestFailingSamples:
             {
                 "sample_id": ["sample1", "sample2", "sample3"],
                 "coverage": [0.85, 0.80, 0.82],
-            }
+            },
         )
         message = slack_alerts.failing_samples(df, coverage_threshold=20)
         assert "sample1: 0.85" in message
@@ -149,7 +158,7 @@ class TestFailingSamples:
             {
                 "sample_id": ["sample1", "sample2", "sample3"],
                 "coverage": [0.95, 0.85, 0.96],
-            }
+            },
         )
         message = slack_alerts.failing_samples(df, coverage_threshold=20)
         assert "sample1" not in message
@@ -162,7 +171,7 @@ class TestFailingSamples:
             {
                 "sample_id": ["sample1", "sample2"],
                 "coverage": [0.96, 0.98],
-            }
+            },
         )
         message = slack_alerts.failing_samples(df, coverage_threshold=20)
         assert message == "No failing samples."
@@ -299,7 +308,10 @@ class TestSendSlackNotification:
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
     def test_successful_notification(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+        self,
+        mock_get_user_ids,
+        mock_get_slack_token,
+        mock_webclient,
     ):
         """Test successful Slack notification sending"""
         # Setup mocks
@@ -346,7 +358,11 @@ class TestSendSlackNotification:
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
     def test_slack_api_error(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient, capsys
+        self,
+        mock_get_user_ids,
+        mock_get_slack_token,
+        mock_webclient,
+        capsys,
     ):
         """Test handling of Slack API errors"""
         # Setup mocks
@@ -358,7 +374,8 @@ class TestSendSlackNotification:
         # Simulate SlackApiError
         error_response = {"error": "invalid_auth"}
         mock_client.chat_postMessage.side_effect = SlackApiError(
-            message="Invalid auth", response=error_response
+            message="Invalid auth",
+            response=error_response,
         )
 
         # Create test data
@@ -385,7 +402,10 @@ class TestSendSlackNotification:
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
     def test_no_users_configured(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+        self,
+        mock_get_user_ids,
+        mock_get_slack_token,
+        mock_webclient,
     ):
         """Test when no users are configured"""
         # Setup mocks
@@ -417,7 +437,10 @@ class TestSendSlackNotification:
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
     def test_message_formatting(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+        self,
+        mock_get_user_ids,
+        mock_get_slack_token,
+        mock_webclient,
     ):
         """Test detailed message formatting"""
         # Setup mocks
@@ -513,7 +536,7 @@ class TestEdgeCases:
             {
                 "sample_id": ["sample1"],
                 "coverage": [0.99],
-            }
+            },
         )
         # For coverage_threshold=100, threshold would be 0.99
         message, count = slack_alerts.passing_samples(df, coverage_threshold=100)
@@ -525,7 +548,7 @@ class TestEdgeCases:
             {
                 "sample_id": ["sample1"],
                 "coverage": [0.95],
-            }
+            },
         )
         # For coverage_threshold=20, threshold is 0.95
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)

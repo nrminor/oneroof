@@ -239,8 +239,10 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/80/0c/c01eb700963a978b741a93c0ed233d613643ece0ad54f5e2765a307f26f2/narwhals-1.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1f/66/14b2c030fcce69cba482d205c2d1462ca5c77303a263260dcb1192801c85/paramiko-3.5.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/43/f3/1d311a09c34f14f5973bb0bb0dc3a6e007e1eda90b5492d082689936ca51/patsy-0.5.6-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/c1/a2953385c0f811cf03e9379c24365b8a42e25deb589adb256a119f467305/plotnine-0.14.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/b8/d9/5e2753784ea30d84b3e769a56f5e50ac5a89c129e87baa16ac0773eb4ef7/polars-1.31.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/14/00/4f9b28c8d952aab1cb57dc4b3621ab022d89e595244ff844fbaf9b14dcfa/polars_lts_cpu-1.17.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/3a/2e/3b99f8a3d9e0ccae0e961978a0d0089b25fb46ebbcfb5ebae3cca179a5b3/pyarrow-18.1.0-cp312-cp312-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/df/e4/ba44652d562cbf0bf320e0f3810206149c8a4e99cdbf66da82e97ab53a15/pydantic-2.9.2-py3-none-any.whl
@@ -448,8 +450,10 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/80/0c/c01eb700963a978b741a93c0ed233d613643ece0ad54f5e2765a307f26f2/narwhals-1.19.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/1f/66/14b2c030fcce69cba482d205c2d1462ca5c77303a263260dcb1192801c85/paramiko-3.5.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/43/f3/1d311a09c34f14f5973bb0bb0dc3a6e007e1eda90b5492d082689936ca51/patsy-0.5.6-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/c1/a2953385c0f811cf03e9379c24365b8a42e25deb589adb256a119f467305/plotnine-0.14.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/3d/6e/bdd0937653c1e7a564a09ae3bc7757ce83fedbf19da600c8b35d62c0182a/polars-1.31.0-cp39-abi3-macosx_10_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/19/cb/49d47059794680bdb45b6f2a667b04c50346c2d148b4cd8e04022db892fc/polars_lts_cpu-1.17.1-cp39-abi3-macosx_10_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/30/90/893acfad917533b624a97b9e498c0e8393908508a0a72d624fe935e632bf/pyarrow-18.1.0-cp310-cp310-macosx_12_0_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/df/e4/ba44652d562cbf0bf320e0f3810206149c8a4e99cdbf66da82e97ab53a15/pydantic-2.9.2-py3-none-any.whl
@@ -3613,9 +3617,9 @@ packages:
 - pypi: ./
   name: oneroof
   version: 1.0.0
-  sha256: 3c1dad8ba277846383adbe56bd77fa5e79ca2f65eabeac79f8cce3a4944de46a
+  sha256: 3769efceb56a1b7c4de11eb9eaf0a142ba2de5213b69b49338387014697e2a59
   requires_dist:
-  - polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
+  - polars-lts-cpu[numpy,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1
   - xlsxwriter>=3.2.0
   - xlsx2csv>=0.8.4
   - biopython>=1.84
@@ -3629,8 +3633,9 @@ packages:
   - pyyaml
   - pytz>=2025.1
   - pydantic>=2.9.2,<3
-  - rich
-  - typer
+  - typer>=0.16.0,<0.17
+  - patito>=0.8.3
+  - rich>=13.0.0
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openjdk-17.0.15-h5ddf6bc_0.conda
@@ -3864,6 +3869,23 @@ packages:
   - pywin32>=2.1.8 ; sys_platform == 'win32' and extra == 'gssapi'
   - invoke>=2.0 ; extra == 'invoke'
   requires_python: '>=3.6'
+- pypi: https://files.pythonhosted.org/packages/72/f1/4a71d8a974d8f5625045b5351e91e4f93b9a3c14aacbd2777de63c53a851/patito-0.8.3-py3-none-any.whl
+  name: patito
+  version: 0.8.3
+  sha256: cc4dd90ec8a867806548a5161af4cf195f3d223fcae24d879285cc003ab89ed4
+  requires_dist:
+  - sphinx<7 ; extra == 'docs'
+  - pandas ; extra == 'pandas'
+  - polars>=1.10.0
+  - pyarrow>=5.0.0 ; extra == 'caching'
+  - pydantic>=2.7.0
+  - sphinx-autobuild ; extra == 'docs'
+  - sphinx-autodoc-typehints ; extra == 'docs'
+  - sphinx-rtd-theme ; extra == 'docs'
+  - sphinx-toolbox ; extra == 'docs'
+  - sphinxcontrib-mermaid ; extra == 'docs'
+  - typing-extensions
+  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/43/f3/1d311a09c34f14f5973bb0bb0dc3a6e007e1eda90b5492d082689936ca51/patsy-0.5.6-py2.py3-none-any.whl
   name: patsy
   version: 0.5.6
@@ -4040,6 +4062,74 @@ packages:
   - ipython ; extra == 'typing'
   - pandas-stubs ; extra == 'typing'
   requires_python: '>=3.10'
+- pypi: https://files.pythonhosted.org/packages/3d/6e/bdd0937653c1e7a564a09ae3bc7757ce83fedbf19da600c8b35d62c0182a/polars-1.31.0-cp39-abi3-macosx_10_12_x86_64.whl
+  name: polars
+  version: 1.31.0
+  sha256: ccc68cd6877deecd46b13cbd2663ca89ab2a2cb1fe49d5cfc66a9cef166566d9
+  requires_dist:
+  - polars-cloud>=0.0.1a1 ; extra == 'polars-cloud'
+  - numpy>=1.16.0 ; extra == 'numpy'
+  - pandas ; extra == 'pandas'
+  - polars[pyarrow] ; extra == 'pandas'
+  - pyarrow>=7.0.0 ; extra == 'pyarrow'
+  - pydantic ; extra == 'pydantic'
+  - fastexcel>=0.9 ; extra == 'calamine'
+  - openpyxl>=3.0.0 ; extra == 'openpyxl'
+  - xlsx2csv>=0.8.0 ; extra == 'xlsx2csv'
+  - xlsxwriter ; extra == 'xlsxwriter'
+  - polars[calamine,openpyxl,xlsx2csv,xlsxwriter] ; extra == 'excel'
+  - adbc-driver-manager[dbapi] ; extra == 'adbc'
+  - adbc-driver-sqlite[dbapi] ; extra == 'adbc'
+  - connectorx>=0.3.2 ; extra == 'connectorx'
+  - sqlalchemy ; extra == 'sqlalchemy'
+  - polars[pandas] ; extra == 'sqlalchemy'
+  - polars[adbc,connectorx,sqlalchemy] ; extra == 'database'
+  - fsspec ; extra == 'fsspec'
+  - deltalake>=1.0.0 ; extra == 'deltalake'
+  - pyiceberg>=0.7.1 ; extra == 'iceberg'
+  - gevent ; extra == 'async'
+  - cloudpickle ; extra == 'cloudpickle'
+  - matplotlib ; extra == 'graph'
+  - altair>=5.4.0 ; extra == 'plot'
+  - great-tables>=0.8.0 ; extra == 'style'
+  - tzdata ; sys_platform == 'win32' and extra == 'timezone'
+  - cudf-polars-cu12 ; extra == 'gpu'
+  - polars[async,cloudpickle,database,deltalake,excel,fsspec,graph,iceberg,numpy,pandas,plot,pyarrow,pydantic,style,timezone] ; extra == 'all'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/b8/d9/5e2753784ea30d84b3e769a56f5e50ac5a89c129e87baa16ac0773eb4ef7/polars-1.31.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: polars
+  version: 1.31.0
+  sha256: ada7940ed92bea65d5500ae7ac1f599798149df8faa5a6db150327c9ddbee4f1
+  requires_dist:
+  - polars-cloud>=0.0.1a1 ; extra == 'polars-cloud'
+  - numpy>=1.16.0 ; extra == 'numpy'
+  - pandas ; extra == 'pandas'
+  - polars[pyarrow] ; extra == 'pandas'
+  - pyarrow>=7.0.0 ; extra == 'pyarrow'
+  - pydantic ; extra == 'pydantic'
+  - fastexcel>=0.9 ; extra == 'calamine'
+  - openpyxl>=3.0.0 ; extra == 'openpyxl'
+  - xlsx2csv>=0.8.0 ; extra == 'xlsx2csv'
+  - xlsxwriter ; extra == 'xlsxwriter'
+  - polars[calamine,openpyxl,xlsx2csv,xlsxwriter] ; extra == 'excel'
+  - adbc-driver-manager[dbapi] ; extra == 'adbc'
+  - adbc-driver-sqlite[dbapi] ; extra == 'adbc'
+  - connectorx>=0.3.2 ; extra == 'connectorx'
+  - sqlalchemy ; extra == 'sqlalchemy'
+  - polars[pandas] ; extra == 'sqlalchemy'
+  - polars[adbc,connectorx,sqlalchemy] ; extra == 'database'
+  - fsspec ; extra == 'fsspec'
+  - deltalake>=1.0.0 ; extra == 'deltalake'
+  - pyiceberg>=0.7.1 ; extra == 'iceberg'
+  - gevent ; extra == 'async'
+  - cloudpickle ; extra == 'cloudpickle'
+  - matplotlib ; extra == 'graph'
+  - altair>=5.4.0 ; extra == 'plot'
+  - great-tables>=0.8.0 ; extra == 'style'
+  - tzdata ; sys_platform == 'win32' and extra == 'timezone'
+  - cudf-polars-cu12 ; extra == 'gpu'
+  - polars[async,cloudpickle,database,deltalake,excel,fsspec,graph,iceberg,numpy,pandas,plot,pyarrow,pydantic,style,timezone] ; extra == 'all'
+  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/14/00/4f9b28c8d952aab1cb57dc4b3621ab022d89e595244ff844fbaf9b14dcfa/polars_lts_cpu-1.17.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   name: polars-lts-cpu
   version: 1.17.1

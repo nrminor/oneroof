@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "biopython",
+#     "pytest",
+# ]
+# ///
+
 """
 Test module for concat_consensus.py
 
@@ -9,6 +17,7 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
+
 import pytest
 from Bio import SeqIO
 
@@ -181,7 +190,7 @@ class TestConcatConsensus:
         (temp_dir / "sample.consensus.fasta").write_text(">seq\nATCG")
         (temp_dir / "other.fasta").write_text(">seq\nGCTA")
         (temp_dir / "another.consensus.fa").write_text(
-            ">seq\nTTTT"
+            ">seq\nTTTT",
         )  # Note: .fa not .fasta
 
         main()
@@ -367,7 +376,10 @@ class TestConcatConsensus:
     ],
 )
 def test_performance_with_many_files(
-    temp_dir, monkeypatch, num_files, num_seqs_per_file
+    temp_dir,
+    monkeypatch,
+    num_files,
+    num_seqs_per_file,
 ):
     """Test performance with many input files."""
     monkeypatch.chdir(temp_dir)

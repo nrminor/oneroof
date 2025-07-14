@@ -3,9 +3,10 @@
 # requires-python = ">=3.10"
 # dependencies = [
 #     "biopython",
+#     "patito",
 #     "loguru",
 #     "numpy",
-#     "polars",
+#     "polars-lts-cpu",
 #     "pydantic",
 #     "scipy",
 #     "typer",
@@ -20,11 +21,14 @@ to VCF format, using Polars expression chains for data transformation and Pydant
 for validation. Features a beautiful command-line interface built with Typer and Rich.
 """
 
+from __future__ import annotations
+
 from enum import Enum
-from pathlib import Path
+from pathlib import Path  # noqa: TC003
 from typing import Annotated, cast
 
 import numpy as np
+import patito as pt
 import polars as pl
 import typer
 from Bio import SeqIO
@@ -104,7 +108,7 @@ class IvarVariant(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_total_depth(self) -> "IvarVariant":
+    def validate_total_depth(self) -> IvarVariant:
         """Ensure total depth is consistent."""
         if self.total_dp < self.ref_dp + self.alt_dp:
             msg = "Total depth must be at least ref_dp + alt_dp"
@@ -174,11 +178,69 @@ class ConversionConfig(BaseModel):
         return v
 
 
+# ===== Patito Schema for iVar TSV Validation =====
+
+
+class IvarTsvSchema(pt.Model):
+    """Schema for validating iVar TSV input data."""
+
+    REGION: str = pt.Field(description="Reference sequence name")
+    POS: int = pt.Field(gt=0, description="Position in reference")
+    REF: str = pt.Field(min_length=1, description="Reference allele")
+    ALT: str = pt.Field(description="Alternative allele (can be +/- for indels)")
+    REF_DP: int = pt.Field(ge=0, description="Reference depth")
+    REF_RV: int = pt.Field(ge=0, description="Reference reverse reads")
+    REF_QUAL: float = pt.Field(ge=0, le=100, description="Reference quality")
+    ALT_DP: int = pt.Field(ge=0, description="Alternative depth")
+    ALT_RV: int = pt.Field(ge=0, description="Alternative reverse reads")
+    ALT_QUAL: float = pt.Field(ge=0, le=100, description="Alternative quality")
+    ALT_FREQ: float = pt.Field(ge=0, le=1, description="Alternative frequency")
+    TOTAL_DP: int = pt.Field(ge=0, description="Total depth")
+    PVAL: float = pt.Field(description="P-value from Fisher's exact test")
+    PASS: bool = pt.Field(description="Whether variant passed iVar filters")
+    REF_CODON: str | None = pt.Field(None, description="Reference codon")
+    ALT_CODON: str | None = pt.Field(None, description="Alternative codon")
+
+
+def validate_ivar_data(unvalidated_lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Validate iVar TSV data using patito schema.
+
+    Args:
+        unvalidated_lf: Lazy DataFrame with iVar data
+
+    Returns:
+        Validated DataFrame
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Collect a small sample to validate schema
+    sample_df = unvalidated_lf.head(1000).collect()
+
+    # Validate using patito
+    try:
+        IvarTsvSchema.validate(sample_df)
+    except Exception as e:
+        msg = f"iVar data validation failed:\n{e}"
+        raise ValueError(msg) from e
+
+    # Additional validation: ensure REF_RV <= REF_DP and ALT_RV <= ALT_DP
+    validated_lf = unvalidated_lf.filter(
+        (pl.col("REF_RV") <= pl.col("REF_DP")) & (pl.col("ALT_RV") <= pl.col("ALT_DP")),
+    )
+
+    # Ensure TOTAL_DP >= REF_DP + ALT_DP
+    return validated_lf.filter(pl.col("TOTAL_DP") >= (pl.col("REF_DP") + pl.col("ALT_DP")))
+
+
 # ===== Pure Functions for Data Transformation =====
 
 
 def calculate_strand_bias_pvalue(
-    ref_dp: int, ref_rv: int, alt_dp: int, alt_rv: int
+    ref_dp: int,
+    ref_rv: int,
+    alt_dp: int,
+    alt_rv: int,
 ) -> float:
     """Calculate p-value for strand bias using Fisher's exact test.
 
@@ -289,9 +351,7 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
 
     # iVar PASS filter
     filters.append(
-        pl.when(pl.col("PASS"))
-        .then(pl.lit(""))
-        .otherwise(pl.lit(FilterType.FAIL_TEST.value)),
+        pl.when(pl.col("PASS")).then(pl.lit("")).otherwise(pl.lit(FilterType.FAIL_TEST.value)),
     )
 
     # Quality filter
@@ -317,7 +377,8 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
         .list.join(";")
         .fill_null("")
         .map_elements(
-            lambda x: FilterType.PASS.value if x == "" else x, return_dtype=pl.Utf8
+            lambda x: FilterType.PASS.value if x == "" else x,
+            return_dtype=pl.Utf8,
         )
     )
 
@@ -345,7 +406,8 @@ def create_sample_info_expr() -> pl.Expr:
 
 
 def transform_ivar_to_vcf(
-    ivar_lf: pl.LazyFrame, config: ConversionConfig
+    ivar_lf: pl.LazyFrame,
+    config: ConversionConfig,
 ) -> pl.LazyFrame:
     """Transform iVar data to VCF format using pure expressions.
 
@@ -382,7 +444,7 @@ def transform_ivar_to_vcf(
                 ],
             ).alias("INFO"),
             pl.lit(
-                "GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ"
+                "GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ",
             ).alias("FORMAT"),
             create_sample_info_expr().alias("SAMPLE"),
         ],
@@ -400,7 +462,8 @@ def find_consecutive_variants_expr() -> pl.Expr:
 
 
 def process_consecutive_snps(
-    ivar_lf: pl.LazyFrame, config: ConversionConfig
+    ivar_lf: pl.LazyFrame,
+    config: ConversionConfig,
 ) -> pl.LazyFrame:
     """Process consecutive SNPs for potential merging.
 
@@ -539,6 +602,10 @@ def process_ivar_file(config: ConversionConfig) -> None:
         task = progress.add_task("[cyan]Loading iVar data...", total=None)
         ivar_df = pl.scan_csv(str(config.file_in), separator="\t")
 
+        # Validate data
+        progress.update(task, description="[yellow]Validating iVar data...")
+        ivar_df = validate_ivar_data(ivar_df)
+
         # Transform to VCF format
         progress.update(task, description="[yellow]Transforming to VCF format...")
         vcf_df = transform_ivar_to_vcf(ivar_df, config)
@@ -565,13 +632,14 @@ def process_ivar_file(config: ConversionConfig) -> None:
         # Write all haplotypes output
         progress.update(task, description="[green]Writing all haplotypes VCF...")
         all_hap_path = (
-            config.file_out.parent
-            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         write_vcf_file(result_df, all_hap_path, headers, sample_name)
 
         progress.update(
-            task, description="[bold green]✓ Conversion complete!", completed=True
+            task,
+            description="[bold green]✓ Conversion complete!",
+            completed=True,
         )
 
 
@@ -758,14 +826,13 @@ def convert(  # noqa: PLR0913
 
         # Success message
         console.print(
-            f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}"
+            f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}",
         )
         all_hap_path = (
-            config.file_out.parent
-            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         console.print(
-            f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}"
+            f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}",
         )
 
     except Exception as e:  # noqa: BLE001
@@ -774,7 +841,7 @@ def convert(  # noqa: PLR0913
 
 
 @app.command()
-def validate(
+def validate(  # noqa: C901, PLR0912
     file_path: Annotated[
         Path,
         typer.Argument(
@@ -841,7 +908,7 @@ def validate(
 
         if missing_cols:
             console.print(
-                f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}"
+                f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}",
             )
         else:
             console.print("\n[green]✓ All required VCF columns present[/green]")
@@ -905,8 +972,7 @@ def stats(
         console.print("\n[bold]Variant Types:[/bold]")
         snp_count = len(
             ivar_df.filter(
-                ~pl.col("ALT").str.starts_with("+")
-                & ~pl.col("ALT").str.starts_with("-"),
+                ~pl.col("ALT").str.starts_with("+") & ~pl.col("ALT").str.starts_with("-"),
             ),
         )
         ins_count = len(ivar_df.filter(pl.col("ALT").str.starts_with("+")))
@@ -929,8 +995,8 @@ def stats(
         for low, high in freq_bins:
             count = len(
                 ivar_df.filter(
-                    (pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high)
-                )
+                    (pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high),
+                ),
             )
             if count > 0:
                 console.print(f"  • {low:.0%}-{high:.0%}: {count:,} variants")

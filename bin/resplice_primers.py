@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">= 3.10"
 # dependencies = [
+#     "patito",
 #     "polars-lts-cpu",
 #     "loguru",
 # ]
@@ -49,6 +50,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any
 
+import patito as pt
 import polars as pl
 from loguru import logger
 
@@ -144,9 +146,7 @@ def check_bed_existence(provided_bed_path: str | Path) -> None:
     """
     logger.info(f"Parsing input BED file at {provided_bed_path}...")
     if not Path(provided_bed_path).is_file():
-        available_bed_files = [
-            str(file) for file in Path(provided_bed_path).parent.glob("*.bed")
-        ]
+        available_bed_files = [str(file) for file in Path(provided_bed_path).parent.glob("*.bed")]
         if len(available_bed_files) == 0:
             logger.error(
                 f"The provided input BED file, {provided_bed_path}, does not exist or is not a file. Aborting.",
@@ -481,12 +481,8 @@ def resolve_primer_names(
             sys.exit(1)
 
         # use f-strings to construct new names that make the combinations explicit
-        new_fwd_primer = (
-            old_fwd_primer.replace(f"-{fwd_final_element}", "") + f"_splice{i + 1}"
-        )
-        new_rev_primer = (
-            old_rev_primer.replace(f"-{rev_final_element}", "") + f"_splice{i + 1}"
-        )
+        new_fwd_primer = old_fwd_primer.replace(f"-{fwd_final_element}", "") + f"_splice{i + 1}"
+        new_rev_primer = old_rev_primer.replace(f"-{rev_final_element}", "") + f"_splice{i + 1}"
 
         # continue accumulating old and new primer pair lists
         old_primer_pairs.append((old_fwd_primer, old_rev_primer))
@@ -648,14 +644,10 @@ def finalize_primer_pairings(
     final_frames: list[pl.DataFrame] = []
     for df in mutated_frames:
         fwd_keepers = [
-            primer
-            for primer in df.select("NAME").to_series().to_list()
-            if fwd_suffix in primer
+            primer for primer in df.select("NAME").to_series().to_list() if fwd_suffix in primer
         ]
         rev_keepers = [
-            primer
-            for primer in df.select("NAME").to_series().to_list()
-            if rev_suffix in primer
+            primer for primer in df.select("NAME").to_series().to_list() if rev_suffix in primer
         ]
         if len(fwd_keepers) == 0 or len(rev_keepers) == 0:
             logger.warning(
@@ -666,6 +658,72 @@ def finalize_primer_pairings(
         final_frames.append(df)
 
     return pl.concat(final_frames)
+
+
+class PrimerBedSchema(pt.Model):
+    """Schema for validating primer BED format data."""
+
+    Ref: str = pt.Field(description="Reference sequence name")
+    Start_Position: int = pt.Field(ge=0, description="Start position (0-based)")
+    Stop_Position: int = pt.Field(gt=0, description="Stop position (exclusive)")
+    NAME: str = pt.Field(description="Primer name")
+    INDEX: int = pt.Field(ge=0, description="Primer index")
+    SENSE: str = pt.Field(description="Primer sense/strand")
+
+
+def validate_primer_bed(df: pl.DataFrame, fwd_suffix: str, rev_suffix: str) -> pl.DataFrame:
+    """Validate primer BED format data using patito schema.
+
+    Args:
+        df: DataFrame with primer BED data
+        fwd_suffix: Suffix for forward primers
+        rev_suffix: Suffix for reverse primers
+
+    Returns:
+        Validated DataFrame
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Rename columns temporarily for validation
+    df_for_validation = df.rename(
+        {
+            "Start Position": "Start_Position",
+            "Stop Position": "Stop_Position",
+        },
+    )
+
+    # Validate using patito
+    try:
+        PrimerBedSchema.validate(df_for_validation)
+    except Exception as e:
+        msg = f"Primer BED data validation failed: {e}"
+        raise ValueError(msg) from e
+
+    # Additional validation: ensure start < stop
+    invalid_rows = df.filter(pl.col("Start Position") >= pl.col("Stop Position"))
+    if len(invalid_rows) > 0:
+        msg = f"Found {len(invalid_rows)} rows where start >= stop"
+        raise ValueError(msg)
+
+    # Validate SENSE values
+    valid_senses = {"+", "-", "PLUS", "MINUS", "FORWARD", "REVERSE"}
+    invalid_sense = df.filter(~pl.col("SENSE").is_in(valid_senses))
+    if len(invalid_sense) > 0:
+        unique_invalid = invalid_sense.select("SENSE").unique().to_series().to_list()
+        msg = f"Invalid SENSE values found: {unique_invalid}. Expected one of: {valid_senses}"
+        raise ValueError(msg)
+
+    # Validate that primer names contain forward or reverse suffixes
+    primer_names = df.select("NAME").to_series().to_list()
+    missing_suffix = [
+        name for name in primer_names if fwd_suffix not in name and rev_suffix not in name
+    ]
+    if missing_suffix:
+        msg = f"Found {len(missing_suffix)} primers without forward ({fwd_suffix}) or reverse ({rev_suffix}) suffix: {missing_suffix[:5]}..."
+        raise ValueError(msg)
+
+    return df
 
 
 def main() -> None:
@@ -723,6 +781,11 @@ def main() -> None:
             "SENSE",
         ],
     )
+
+    # Validate the BED data
+    logger.info("Validating primer BED data...")
+    bed_df = validate_primer_bed(bed_df, args.fwd_suffix, args.rev_suffix)
+    logger.success(f"Validation passed for {len(bed_df)} primers")
 
     # look through primer names before proceeding to make sure primers aren't named
     # inconsistently with respect the symbols they contain

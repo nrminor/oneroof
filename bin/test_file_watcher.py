@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "paramiko",
+#     "pytest",
+#     "yaml",
+# ]
+# ///
+
 """
 Comprehensive pytest test module for file_watcher.py
 Tests all major components including file watching, remote connections,
@@ -16,8 +25,6 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 import yaml
-from paramiko.client import SSHClient
-from paramiko.sftp_attr import SFTPAttributes
 
 # Import the modules we're testing
 from file_watcher import (
@@ -31,6 +38,8 @@ from file_watcher import (
     try_access_env_setting,
     try_access_setting,
 )
+from paramiko.client import SSHClient
+from paramiko.sftp_attr import SFTPAttributes
 
 
 # Fixtures
@@ -117,7 +126,11 @@ class TestTransferRunner:
     @patch("file_watcher.time.sleep")
     @patch("os.listdir")
     def test_transfer_runner_init_file_ready(
-        self, mock_listdir, mock_sleep, mock_ssh_client, mock_sftp_attr
+        self,
+        mock_listdir,
+        mock_sleep,
+        mock_ssh_client,
+        mock_sftp_attr,
     ):
         """Test TransferRunner initialization when file is ready"""
         mock_listdir.return_value = []  # File not in local directory
@@ -138,7 +151,10 @@ class TestTransferRunner:
     @patch("file_watcher.time.sleep")
     @patch("os.listdir")
     def test_transfer_runner_init_file_not_ready(
-        self, mock_listdir, mock_sleep, mock_ssh_client
+        self,
+        mock_listdir,
+        mock_sleep,
+        mock_ssh_client,
     ):
         """Test TransferRunner initialization when file is not ready"""
         mock_listdir.return_value = []
@@ -287,7 +303,7 @@ class TestTransferRunner:
         )
 
         # Set up matching hashes
-        filename_bytes = "test.pod5".encode("utf-8")
+        filename_bytes = b"test.pod5"
         expected_hash = hashlib.sha256(filename_bytes).hexdigest()
         runner.remote_hash = expected_hash
 
@@ -386,7 +402,8 @@ class TestRuntimeConfigCheck:
         """Test validation with unsupported file pattern"""
         valid_config_dict["pattern"] = "*.txt"
         with pytest.raises(
-            AssertionError, match="file watcher currently only supports"
+            AssertionError,
+            match="file watcher currently only supports",
         ):
             runtime_config_check(valid_config_dict)
 
@@ -484,7 +501,8 @@ class TestCredentialHelpers:
         mock_exists.return_value = False
         config_dict = {}
         with pytest.raises(
-            AssertionError, match="does not point to a file that exists"
+            AssertionError,
+            match="does not point to a file that exists",
         ):
             try_access_setting("TEST_VAR", "test_field", "config.yml", config_dict)
 
@@ -496,7 +514,10 @@ class TestFindCredentials:
     @patch("pathlib.Path.exists")
     @patch.dict(os.environ, {}, clear=True)
     def test_find_credentials_from_config(
-        self, mock_exists, mock_file, valid_config_dict
+        self,
+        mock_exists,
+        mock_file,
+        valid_config_dict,
     ):
         """Test finding credentials from config file"""
         mock_exists.return_value = True
@@ -567,7 +588,12 @@ class TestMainFunction:
     @patch("file_watcher.time.time")
     @patch("file_watcher.time.sleep")
     def test_main_time_limit_reached(
-        self, mock_sleep, mock_time, mock_parse_args, mock_find_creds, mock_ssh_class
+        self,
+        mock_sleep,
+        mock_time,
+        mock_parse_args,
+        mock_find_creds,
+        mock_ssh_class,
     ):
         """Test main function stops after time limit"""
         # Setup mocks
@@ -659,7 +685,11 @@ class TestMainFunction:
     @patch("file_watcher.parse_command_line_args")
     @patch("file_watcher.sys.exit")
     def test_main_keyboard_interrupt(
-        self, mock_exit, mock_parse_args, mock_find_creds, mock_ssh_class
+        self,
+        mock_exit,
+        mock_parse_args,
+        mock_find_creds,
+        mock_ssh_class,
     ):
         """Test handling of keyboard interrupt"""
         # Setup mocks
@@ -740,7 +770,7 @@ class TestMainFunction:
 
             # Verify error was logged for corrupted transfer
             mock_logger.error.assert_called_with(
-                "The file, test.pod5, was corrupted during the transfer process."
+                "The file, test.pod5, was corrupted during the transfer process.",
             )
 
 
@@ -773,7 +803,7 @@ class TestEdgeCases:
         all_files = stdout_mock.read().decode("utf8").splitlines()
         assert all_files == []
 
-    @patch("builtins.open", side_effect=IOError("Permission denied"))
+    @patch("builtins.open", side_effect=OSError("Permission denied"))
     @patch("pathlib.Path.exists", return_value=True)
     def test_config_file_permission_error(self, mock_exists, mock_open):
         """Test handling of permission error when reading config"""

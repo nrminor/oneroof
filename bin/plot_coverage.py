@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "patito",
 #     "plotnine",
 #     "polars",
 #     "pyarrow",
@@ -24,6 +25,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import patito as pt
 import polars as pl
 from plotnine import (
     aes,
@@ -77,6 +79,41 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+class MosdepthBedSchema(pt.Model):
+    """Schema for validating Mosdepth BED format coverage data."""
+
+    chromosome: str = pt.Field(description="Chromosome or contig name")
+    start: int = pt.Field(ge=0, description="Start position (0-based)")
+    stop: int = pt.Field(gt=0, description="Stop position (exclusive)")
+    coverage: float = pt.Field(ge=0, description="Coverage depth")
+
+
+def validate_bed_data(bed_df: pl.LazyFrame) -> pl.LazyFrame:
+    """Validate BED format coverage data using patito schema.
+
+    Args:
+        bed_df: LazyFrame with BED coverage data
+
+    Returns:
+        Validated LazyFrame
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Collect a small sample to validate schema
+    sample_df = bed_df.head(1000).collect()
+
+    # Validate using patito
+    try:
+        MosdepthBedSchema.validate(sample_df)
+    except pt.exceptions.DataFrameValidationError as e:
+        msg = f"BED coverage data validation failed:\n{e}"
+        raise ValueError(msg) from e
+
+    # Additional validation: ensure start < stop
+    return bed_df.filter(pl.col("start") < pl.col("stop"))
+
+
 def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
     """
     Transform Mosdepth BED output into a Polars LazyFrame for visualization.
@@ -93,14 +130,19 @@ def adapt_bed_to_df(input_bed: str | Path, depth: int) -> pl.LazyFrame:
         pl.LazyFrame: A LazyFrame containing processed coverage data with columns for
                      chromosome, position, coverage, and depth assessment.
     """
+    # Read the BED file
+    raw_bed_lf = pl.scan_csv(
+        input_bed,
+        separator="\t",
+        has_header=False,
+        new_columns=["chromosome", "start", "stop", "coverage"],
+    )
+
+    # Validate the data
+    bed_lf = validate_bed_data(raw_bed_lf)
+
     exploded_df = (
-        pl.scan_csv(
-            input_bed,
-            separator="\t",
-            has_header=False,
-            new_columns=["chromosome", "start", "stop", "coverage"],
-        )
-        .with_columns(
+        bed_lf.with_columns(
             pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
                 "position",
             ),

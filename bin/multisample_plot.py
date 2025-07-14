@@ -2,6 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
+#     "patito",
 #     "plotnine",
 #     "polars",
 #     "pyarrow",
@@ -39,6 +40,7 @@ import argparse
 from math import log10
 from pathlib import Path
 
+import patito as pt
 import polars as pl
 from plotnine import (
     aes,
@@ -97,6 +99,43 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+class CoverageBedSchema(pt.Model):
+    """Schema for validating BED format coverage data."""
+
+    chromosome: str = pt.Field(description="Chromosome or contig name")
+    start: int = pt.Field(ge=0, description="Start position (0-based)")
+    stop: int = pt.Field(gt=0, description="Stop position (exclusive)")
+    coverage: float = pt.Field(ge=0.0, description="Coverage depth")
+
+
+def validate_coverage_bed(df: pl.DataFrame) -> pl.DataFrame:
+    """Validate BED format coverage data using patito schema.
+
+    Args:
+        df: DataFrame with BED coverage data
+
+    Returns:
+        Validated DataFrame
+
+    Raises:
+        ValueError: If validation fails
+    """
+    # Validate using patito
+    try:
+        CoverageBedSchema.validate(df)
+    except pt.exceptions.DataFrameValidationError as e:
+        msg = f"BED coverage data validation failed:\n{e!s}"
+        raise ValueError(msg) from e
+
+    # Additional validation: ensure start < stop
+    invalid_rows = df.filter(pl.col("start") >= pl.col("stop"))
+    if len(invalid_rows) > 0:
+        msg = f"Found {len(invalid_rows)} rows where start >= stop"
+        raise ValueError(msg)
+
+    return df
+
+
 def accumulate_cov_dfs(directory: str, sample_list: list[str]) -> pl.DataFrame:
     """
     Accumulate and concatenate multiple CSV files from a specified directory into a single Polars DataFrame.
@@ -143,20 +182,24 @@ def accumulate_cov_dfs(directory: str, sample_list: list[str]) -> pl.DataFrame:
     ).is_dir(), f"The provided input directory {directory} does not exist."
 
     sample_lookup = {
-        sample_id: Path(directory) / Path(f"{sample_id}.per-base.bed")
-        for sample_id in sample_list
+        sample_id: Path(directory) / Path(f"{sample_id}.per-base.bed") for sample_id in sample_list
     }
 
     df_list = []
     for sample_id, bed_file in sample_lookup.items():
+        # Read the BED file
+        bed_df = pl.read_csv(
+            bed_file,
+            separator="\t",
+            has_header=False,
+            new_columns=["chromosome", "start", "stop", "coverage"],
+        )
+
+        # Validate the data
+        bed_df = validate_coverage_bed(bed_df)
+
         bc_df = (
-            pl.read_csv(
-                bed_file,
-                separator="\t",
-                has_header=False,
-                new_columns=["chromosome", "start", "stop", "coverage"],
-            )
-            .with_columns(sample=pl.lit(sample_id))
+            bed_df.with_columns(sample=pl.lit(sample_id))
             .with_columns(
                 pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
                     "position",

@@ -37,7 +37,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-  "polars-lts-cpu[numpy,pandas,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1",
+  "polars-lts-cpu[numpy,pyarrow,pydantic,calamine,openpyxl,xlsx2csv,xlsxwriter,async,graph,plot,style,timezone]>=1.17.1",
   "xlsxwriter>=3.2.0",
   "xlsx2csv>=0.8.4",
   "biopython>=1.84",
@@ -51,8 +51,9 @@ dependencies = [
   "pyyaml",
   "pytz>=2025.1",
   "pydantic>=2.9.2,<3",
-  "rich",
   "typer>=0.16.0,<0.17",
+  "patito>=0.8.3",
+  "rich>=13.0.0",
 ]
 
 [build-system]
@@ -147,52 +148,3 @@ markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
   "network: marks tests as requiring network access",
 ]
-
-[tool.coverage.run]
-source = ["bin"]
-omit = ["*/test_*.py", "*/__init__.py", "*/__main__.py"]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "if __name__ == .__main__.:",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if 0:",
-  "if False:",
-  "pass",
-]
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py{310,311,312,313}
-isolated_build = True
-
-[testenv]
-deps =
-    pytest>=8.3.3
-    pytest-cov
-    pytest-mock
-    pytest-xdist
-commands =
-    pytest {posargs}
-
-[testenv:lint]
-deps =
-    ruff>=0.9.6
-    basedpyright>=1.21.0
-commands =
-    ruff check .
-    ruff format --check .
-    basedpyright
-
-[testenv:format]
-deps =
-    ruff>=0.9.6
-commands =
-    ruff check . --fix --unsafe-fixes
-    ruff format .
-"""
