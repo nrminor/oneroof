@@ -68,7 +68,7 @@ process CONVERT_TO_VCF {
 
     script:
     """
-    ivar_variants_to_vcf.py ${ivar_table} ${barcode}.vcf
+    ivar_variants_to_vcf.py convert ${ivar_table} ${barcode}.vcf
     """
 
 }
