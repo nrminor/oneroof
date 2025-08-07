@@ -19,6 +19,7 @@ include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 include { WRITE_PRIMER_FASTA } from "../modules/write_primer_fasta"
 include { CREATE_PRIMER_TSV } from "../modules/output_primer_tsv"
 include { COLLECT_PRIMER_TSV } from "../modules/output_primer_tsv"
+include { CREATE_AMPLICON_TSV } from "../modules/amplicon_reads"
 
 
 workflow PRIMER_HANDLING {
@@ -84,6 +85,9 @@ workflow PRIMER_HANDLING {
                 def fwd = row.fwd_sequence
                 def rev = row.reverse_sequence
 
+                assert rev : "Missing reverse sequence for ${name}"
+                assert fwd : "Missing forward sequence for ${name}"
+
                 def header1 = ">${name}:0-${fwd.size() - 1}"
                 def header2 = ">${name}:${fwd.size()}-${fwd.size() + rev.size() - 1}"
 
@@ -118,6 +122,7 @@ workflow PRIMER_HANDLING {
             .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
+
     FAIDX(
         PER_AMPLICON_FILTERS.out
             .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
@@ -132,6 +137,11 @@ workflow PRIMER_HANDLING {
     AMPLICON_STATS(
         RASUSA_READ_DOWNSAMPLING.out.groupTuple(by: 0)
     )
+
+    CREATE_AMPLICON_TSV(
+    AMPLICON_STATS.out.collect(),
+    RESPLICE_PRIMERS.out
+)
 
     MERGE_BY_SAMPLE(
         RASUSA_READ_DOWNSAMPLING.out.groupTuple(by: 0)

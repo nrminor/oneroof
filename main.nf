@@ -85,8 +85,13 @@ workflow {
         Channel.fromPath ( params.sylph_tax_db ) :
         Channel.empty()
 
+    ch_sylph_db_link = params.sylph_db_link ?
+        Channel.value ( params.sylph_db_link ) :
+        Channel.empty()
 
-    // decide whether to run the ont or the illumina workflow
+
+    // decide whether to run the ont or the illumina workflowls
+
     if ( params.platform == "ont" ) {
 
         NANOPORE (
@@ -97,7 +102,8 @@ workflow {
             ch_snpeff_config,
             ch_metagenomics_ref,
             ch_primer_tsv,
-            ch_sylph_tax_db
+            ch_sylph_tax_db,
+            ch_sylph_db_link
         )
 
     }  else if ( params.platform == "illumina" ) {
@@ -110,7 +116,8 @@ workflow {
             ch_snpeff_config,
             ch_metagenomics_ref,
             ch_primer_tsv,
-            ch_sylph_tax_db
+            ch_sylph_tax_db,
+            ch_sylph_db_link
         )
 
     } else {

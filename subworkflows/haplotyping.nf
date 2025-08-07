@@ -15,19 +15,11 @@ workflow HAPLOTYPING {
         ch_bams
     )
 
-    // PROCESS_VCF(
-    //     ch_vcfs
-    // )
-
-    // PHASE_READS_WITH_DEVIDER(
-    //    SPLIT_SEGMENTS.out.join(PROCESS_VCF.out).combine(ch_ref)
-    // )
-
     FASTQ_CONVERSION(
     SPLIT_SEGMENTS.out.flatten()
         .filter { ~/.bam$/ } // skip .bai files
         .map{bam -> tuple(file(bam).getSimpleName(), file(bam))}
-)
+    )
 
     IDENTIFY_HAPLOTYPES(
         FASTQ_CONVERSION.out

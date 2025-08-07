@@ -20,6 +20,7 @@ workflow ILLUMINA {
         ch_metagenome_ref
         ch_primer_tsv
         ch_sylph_tax_db
+        ch_sylph_db_link
 
     main:
         assert params.platform == "illumina"
@@ -52,8 +53,8 @@ workflow ILLUMINA {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                PRIMER_HANDLING.out,
-                Channel.empty()
+                ch_sylph_db_link,
+                PRIMER_HANDLING.out
             )
 
             alignment_outputs = ALIGNMENT (
@@ -66,8 +67,8 @@ workflow ILLUMINA {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db, 
-                ILLUMINA_CORRECTION.out,
-                Channel.empty()
+                ch_sylph_db_link,
+                ILLUMINA_CORRECTION.out
             )
 
             alignment_outputs = ALIGNMENT (

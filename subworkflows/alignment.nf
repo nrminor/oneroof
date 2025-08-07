@@ -51,7 +51,7 @@ workflow ALIGNMENT {
     MULTI_SAMPLE_PLOT(
         MOSDEPTH.out.map { _sample_id, files -> files }.flatten().filter { mosdepth_file -> mosdepth_file.toString().endsWith(".per-base.bed") }.collect(),
     )
-
+    
     COVERAGE_SUMMARY(
         PLOT_COVERAGE.out.passing_cov.collect()
     )

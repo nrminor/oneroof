@@ -167,49 +167,179 @@ ice:
     @open "https://www.youtube.com/watch?v=sy1dYFGkPUE" || xdg-open "https://www.youtube.com/watch?v=sy1dYFGkPUE" || echo "Please open: https://www.youtube.com/watch?v=sy1dYFGkPUE"
 
 # === Testing Commands ===
+LOGDIR := 'test_logs'
 
-# Run all nf-test tests
-[group('nf-test')]
-test:
-    nf-test test --profile test,docker
+[group('testing')]
+test-all: test-illumina test-nanopore
+    @echo "🎉 All tests (Illumina + Nanopore) completed successfully!"
 
-# Run tests with verbose output
-[group('nf-test')]
-test-verbose:
-    nf-test test --verbose --profile test,docker
+# Run all illumina tests
+[group('testing')]
+test-illumina: clean-logs test-illumina-with-primers test-illumina-without-primers test-illumina-with-metagenomics test-illumina-with-phylo test-illumina-missing-fastq
+    @echo "✅ All Illumina tests completed successfully!"
 
-# Run only module tests
-[group('nf-test')]
-test-modules:
-    nf-test test --tag modules --profile test,docker
+# Run all nanopore tests
+[group('testing')]
+test-nanopore: clean-logs test-nanopore-with-primers test-nanopore-without-primers test-nanopore-with-haplo test-nanopore-with-metagenomics test-nanopore-with-phylo test-nanopore-missing-input
+    @echo "✅ All Nanopore tests completed successfully!"
 
-# Run only workflow tests
-[group('nf-test')]
-test-workflows:
-    nf-test test --tag workflows --profile test,docker
+# Individual Illumina test targets
+[group('testing')]
+test-illumina-with-primers:
+    @echo "🧪 Running Illumina test with primers..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile illumina_test_with_primers > {{LOGDIR}}/illumina_with_primers.log 2>&1; then \
+        echo "  ✅ illumina_test_with_primers PASSED"; \
+    else \
+        echo "  ❌ illumina_test_with_primers FAILED"; \
+        echo "     Check {{LOGDIR}}/illumina_with_primers.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-illumina-without-primers:
+    @echo "🧪 Running Illumina test without primers..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile illumina_test_without_primers > {{LOGDIR}}/illumina_without_primers.log 2>&1; then \
+        echo "  ✅ illumina_test_without_primers PASSED"; \
+    else \
+        echo "  ❌ illumina_test_without_primers FAILED"; \
+        echo "     Check {{LOGDIR}}/illumina_without_primers.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-illumina-with-metagenomics:
+    @echo "🧪 Running Illumina test with metagenomics..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile illumina_test_with_metagenomics > {{LOGDIR}}/illumina_with_metagenomics.log 2>&1; then \
+        echo "  ✅ illumina_test_with_metagenomics PASSED"; \
+    else \
+        echo "  ❌ illumina_test_with_metagenomics FAILED"; \
+        echo "     Check {{LOGDIR}}/illumina_with_metagenomics.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-illumina-with-phylo:
+    @echo "🧪 Running Illumina test with phylo..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile illumina_test_with_phylo > {{LOGDIR}}/illumina_with_phylo.log 2>&1; then \
+        echo "  ✅ illumina_test_with_phylo PASSED"; \
+    else \
+        echo "  ❌ illumina_test_with_phylo FAILED"; \
+        echo "     Check {{LOGDIR}}/illumina_with_phylo.log for details"; \
+        exit 1; \
+    fi
 
-# Run only pipeline tests
-[group('nf-test')]
-test-pipeline:
-    nf-test test --tag pipeline --profile test,docker
+[group('testing')]
+test-illumina-missing-fastq:
+    @echo "🧪 Running pipeline expecting failure due to bad input..."
+    @mkdir -p {{LOGDIR}}
+    @if ! nextflow run . -profile illumina_test_missing_fastq > {{LOGDIR}}/illumina_too_small_input.log 2>&1; then \
+        echo "  ✅ illumina_test_missing_fastq FAILED as expected"; \
+    else \
+        echo "  ❌ illumina_test_missing_fastq unexpectedly SUCCEEDED"; \
+        echo "     Check {{LOGDIR}}/illumina_test_missing_fastq.log for details"; \
+        exit 1; \
+    fi
 
-# Run a specific test file
-[group('nf-test')]
-test-file FILE:
-    nf-test test {{ FILE }} --profile test,docker
+[group('testing')]
+test-illumina-bad-primers:
+    @echo "🧪 Running pipeline expecting failure due to bad input..."
+    @mkdir -p {{LOGDIR}}
+    @if ! nextflow run . -profile illumina_test_bad_primers > {{LOGDIR}}/illumina_test_bad_primers.log 2>&1; then \
+        echo "  ✅ illumina_test_bad_primers FAILED as expected"; \
+    else \
+        echo "  ❌ illumina_test_bad_primers unexpectedly SUCCEEDED"; \
+        echo "     Check {{LOGDIR}}/illumina_test_bad_primers.log for details"; \
+        exit 1; \
+    fi
 
-# Update test snapshots after intentional changes
-[group('nf-test')]
-test-update:
-    nf-test test --update-snapshot --profile test,docker
+# Individual Nanopore test targets
+[group('testing')]
+test-nanopore-with-primers:
+    @echo "🧪 Running Nanopore test with primers..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile nanopore_test_with_primers > {{LOGDIR}}/nanopore_with_primers.log 2>&1; then \
+        echo "  ✅ nanopore_test_with_primers PASSED"; \
+    else \
+        echo "  ❌ nanopore_test_with_primers FAILED"; \
+        echo "     Check {{LOGDIR}}/nanopore_with_primers.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-nanopore-without-primers:
+    @echo "🧪 Running Nanopore test without primers..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile nanopore_test_without_primers > {{LOGDIR}}/nanopore_without_primers.log 2>&1; then \
+        echo "  ✅ nanopore_test_without_primers PASSED"; \
+    else \
+        echo "  ❌ nanopore_test_without_primers FAILED"; \
+        echo "     Check {{LOGDIR}}/nanopore_without_primers.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-nanopore-with-haplo:
+    @echo "🧪 Running Nanopore test with haplotyping..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile nanopore_test_with_haplo > {{LOGDIR}}/nanopore_with_haplo.log 2>&1; then \
+        echo "  ✅ nanopore_test_with_haplo PASSED"; \
+    else \
+        echo "  ❌ nanopore_test_with_haplo FAILED"; \
+        echo "     Check {{LOGDIR}}/nanopore_with_haplo.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-nanopore-with-metagenomics:
+    @echo "🧪 Running Nanopore test with metagenomics..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile nanopore_test_with_metagenomics > {{LOGDIR}}/nanopore_with_metagenomics.log 2>&1; then \
+        echo "  ✅ nanopore_test_with_metagenomics PASSED"; \
+    else \
+        echo "  ❌ nanopore_test_with_metagenomics FAILED"; \
+        echo "     Check {{LOGDIR}}/nanopore_with_metagenomics.log for details"; \
+        exit 1; \
+    fi
+[group('testing')]
+test-nanopore-with-phylo:
+    @echo "🧪 Running Nanopore test with phylo..."
+    @mkdir -p {{LOGDIR}}
+    @if nextflow run . -profile nanopore_test_with_phylo > {{LOGDIR}}/nanopore_with_phylo.log 2>&1; then \
+        echo "  ✅ nanopore_test_with_phylo PASSED"; \
+    else \
+        echo "  ❌ nanopore_test_with_phylo FAILED"; \
+        echo "     Check {{LOGDIR}}/nanopore_with_phylo.log for details"; \
+        exit 1; \
+    fi
 
-# Clean test outputs and working directories
-[group('nf-test')]
-test-clean:
-    rm -rf .nf-test/
-    rm -rf tests/output/
-    rm -rf tests/work/
-    rm -rf tests/.nextflow/
+[group('testing')]
+test-nanopore-missing-input:
+    @echo "🧪 Running pipeline expecting failure due to bad input..."
+    @mkdir -p {{LOGDIR}}
+    @if ! nextflow run . -profile nanopore_test_missing_input > {{LOGDIR}}/illumina_too_small_input.log 2>&1; then \
+        echo "  ✅ nanopore_test_missing_input FAILED as expected"; \
+    else \
+        echo "  ❌ nanopore_test_missing_input unexpectedly SUCCEEDED"; \
+        echo "     Check {{LOGDIR}}/nanopore_test_missing_input.log for details"; \
+        exit 1; \
+    fi
+
+[group('testing')]
+test-nanopore-bad-primers:
+    @echo "🧪 Running pipeline expecting failure due to bad input..."
+    @mkdir -p {{LOGDIR}}
+    @if ! nextflow run . -profile nanopore_test_bad_primers > {{LOGDIR}}/nanopore_test_bad_primers.log 2>&1; then \
+        echo "  ✅ nanopore_test_bad_primers FAILED as expected"; \
+    else \
+        echo "  ❌ nanopore_test_bad_primers unexpectedly SUCCEEDED"; \
+        echo "     Check {{LOGDIR}}/nanopore_test_bad_primers.log for details"; \
+        exit 1; \
+    fi
+
+# Clean up test logs
+[group('testing')]
+clean-logs:
+    @echo "🧹 Cleaning previous test logs..."
+    @if [ -d "{{LOGDIR}}" ]; then rm -rf {{LOGDIR}}; fi
+
 
 # === Globus Integration Commands ===
 
@@ -328,11 +458,11 @@ alias py := python
 
 # Short aliases for common commands
 
-alias t := test
-alias tv := test-verbose
-alias tm := test-modules
-alias tw := test-workflows
-alias tp := test-pipeline
+# alias t := test
+# alias tv := test-verbose
+# alias tm := test-modules
+# alias tw := test-workflows
+# alias tp := test-pipeline
 alias d := docs
 alias b := docker-build
 alias p := docker-push
@@ -350,7 +480,7 @@ alias help := default
 
 # Common mistypings
 
-alias tests := test
+# alias tests := test
 alias pytest := py-test
 alias tox := py-test-tox
 alias build-docker := docker-build
@@ -365,9 +495,9 @@ alias pytes := py-test
 alias g := globus-status
 alias gs := globus-setup
 alias gi := globus-init
-alias clean := test-clean
+alias clean := clean-logs
 alias cleanpy := py-test-clean
-alias tc := test-clean
+# alias tc := test-clean
 alias pc := py-test-clean
 
 # Ultra-short aliases for power users
@@ -380,8 +510,8 @@ alias s := py-sort-imports
 alias c := py-test-cov
 alias pt := py-test
 alias ptp := py-test-parallel
-alias tu := test-update
-alias tf := test-file
+# alias tu := test-update
+# alias tf := test-file
 
 # Intuitive alternatives
 
@@ -395,21 +525,21 @@ alias fix := py-lints
 alias imports := py-sort-imports
 alias sort := py-sort-imports
 alias parallel := py-test-parallel
-alias update := test-update
-alias snapshot := test-update
-alias snapshots := test-update
+# alias update := test-update
+# alias snapshot := test-update
+# alias snapshots := test-update
 
 # More common typos
 
 alias dcos := docs
 alias dosc := docs
 alias dcso := docs
-alias tetst := test
-alias tets := test
-alias tes := test
-alias tst := test
-alias nftest := test
-alias nf-test := test
+# alias tetst := test
+# alias tets := test
+# alias tes := test
+# alias tst := test
+# alias nftest := test
+# alias nf-test := test
 alias buil := docker-build
 alias biuld := docker-build
 alias puhs := docker-push
@@ -443,21 +573,21 @@ alias cs := clean-site
 
 # Testing shortcuts
 
-alias test-all := test
-alias testall := test
-alias ta := test
-alias test-v := test-verbose
-alias test-m := test-modules
-alias test-w := test-workflows
-alias test-p := test-pipeline
-alias test-u := test-update
+# alias test-all := test
+# alias testall := test
+# alias ta := test
+# alias test-v := test-verbose
+# alias test-m := test-modules
+# alias test-w := test-workflows
+# alias test-p := test-pipeline
+# alias test-u := test-update
 
 # Python testing shortcuts
 
-alias py-t := py-test
-alias py-c := py-test-cov
-alias py-p := py-test-parallel
-alias py-m := py-test-module
+# alias py-t := py-test
+# alias py-c := py-test-cov
+# alias py-p := py-test-parallel
+# alias py-m := py-test-module
 
 # Container shortcuts
 

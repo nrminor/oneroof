@@ -42,7 +42,7 @@ process SKETCH_SAMPLE_KMERS {
 	tuple val(sample_id), path(reads)
 
 	output:
-	tuple val(sample_id), path("${sample_id}*.sylsp")
+	tuple val(sample_id), path("${reads}.sylsp")
 
 	when:
     params.meta_ref
@@ -59,21 +59,22 @@ process CLASSIFY_SAMPLE {
 
     tag "${sample_id}"
 
-    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    //errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
     maxRetries 1
 
     input:
     tuple val(sample_id), path(sample_sketches), path(syldb)
 
     output:
-    tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
+    // tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
+	tuple val(sample_id), path("${sample_id}_sylph_results.tsv")
 
     script:
     """
-	mkdir -p sylph_results
-	sylph profile \
-	-t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 --read-seq-id 0.80 \
-	${sample_sketches} ${syldb} > sylph_results/${sample_id}_sylph_results.tsv
+
+    sylph profile \\
+        -t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 -c 10 --read-seq-id 0.80 \\
+        ${sample_sketches} ${syldb} > ${sample_id}_sylph_results.tsv
     """
 }
 
@@ -99,6 +100,7 @@ process SYLPH_TAX_DOWNLOAD {
 }
 
 process OVERLAY_TAXONOMY {
+
     publishDir params.metagenomics, mode: 'copy'
     tag "${sample_id}"
     
@@ -106,19 +108,20 @@ process OVERLAY_TAXONOMY {
     tuple val(sample_id), path(tsv_path), val ("ready"), path(input_db)
     
     output:
-    tuple val(sample_id), path("sylph_tax_results/${sample_id}*.sylphmpa")
+    tuple val(sample_id), path("${sample_id}*.sylphmpa")
     
     script:
     """
+	echo ${tsv_path}
     mkdir -p sylph_tax_results
 
-conflict_file=\$(find sylph_tax_results -type f -name '${sample_id}*.sylphmpa')
-if [[ -n "\$conflict_file" ]]; then
-  echo "Removing conflicting file: \$conflict_file"
-  rm -f "\$conflict_file"
-fi
+	conflict_file=\$(find sylph_tax_results -type f -name '${sample_id}*.sylphmpa')
+	if [[ -n "\$conflict_file" ]]; then
+	echo "Removing conflicting file: \$conflict_file"
+	rm -f "\$conflict_file"
+	fi
 
-sylph-tax taxprof ${sample_id}_sylph_results.tsv -t IMGVR_4.1 --add-folder-information -o sylph_tax_results/${sample_id}
+	sylph-tax taxprof ${tsv_path} -t ${input_db} --add-folder-information -o ${sample_id}
     """
 }
 
@@ -144,6 +147,25 @@ process MERGE_TAXONOMY {
 	sylph-tax merge ${input_dir} --column relative_abundance -o merged_taxonomy.tsv
 
     """
+}
+
+process DOWNLOAD_DB_LINK {
+
+	tag "download"
+
+	input: 
+	val db_link
+
+	output:
+
+	path "*.syldb"
+
+	script: 
+	// this should just download into cwd 
+	"""
+	wget ${db_link} -O database.syldb
+	"""
+
 }
 
 

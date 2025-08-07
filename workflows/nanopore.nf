@@ -24,6 +24,7 @@ workflow NANOPORE {
         ch_metagenome_ref
         ch_primer_tsv
         ch_sylph_tax_db
+        ch_sylph_db_link
 
     main:
         assert params.platform == "ont"
@@ -42,8 +43,8 @@ workflow NANOPORE {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                PRIMER_HANDLING.out,
-                Channel.empty()
+                ch_sylph_db_link,
+                PRIMER_HANDLING.out
             )
 
             alignment_outputs = ALIGNMENT (
@@ -56,8 +57,8 @@ workflow NANOPORE {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                GATHER_NANOPORE.out,
-                Channel.empty()
+                ch_sylph_db_link,
+                GATHER_NANOPORE.out
             )
 
             alignment_outputs = ALIGNMENT (
