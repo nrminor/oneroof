@@ -66,7 +66,7 @@
 !/conf/illuminia_tests
 !/conf/nanopore_test
 !/conf/illuminia_tests/*.config
-/conf/nanopore_tests/*.config
+!/conf/nanopore_tests/*.config
 !/conf/*.config
 !/conf/*.yml
 
