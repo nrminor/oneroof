@@ -123,8 +123,8 @@
 !/tests/data/illumina_meta_reads
 !/tests/data/illumina_reads
 !/tests/data/nanopore_reads
-!/tests/data/illumina_bad_reads/*.fasta
-!/tests/data/illumina_reads/*.fasta
-!/tests/data/nanopore_reads/*.bam
+!/tests/data/illumina_bad_reads/*.fast*
+!/tests/data/illumina_reads/*.fast*
+!/tests/data/nanopore_reads/*.bam*
 
 
