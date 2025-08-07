@@ -118,3 +118,5 @@
 # testing
 !/tests
 !/tests/data
+!/tests/data/*
+
