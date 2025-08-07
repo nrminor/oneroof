@@ -116,5 +116,5 @@
 !/globus/scripts/*.py
 
 # testing
-!/tests/
-!/tests/data/
+!/tests
+!/tests/data
