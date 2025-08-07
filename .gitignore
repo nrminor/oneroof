@@ -118,7 +118,10 @@
 # testing
 !/tests
 !/tests/data
-!/tests/data/*
+!/tests/data/*.fast*
+!/tests/data/*.bed
+!/tests/data/*.bam*
+!/tests/data/*.gbk
 !/tests/data/illumina_bad_reads
 !/tests/data/illumina_meta_reads
 !/tests/data/illumina_reads
