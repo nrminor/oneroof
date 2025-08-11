@@ -98,6 +98,7 @@ Most users should configure `oneroof` through the command line via the following
 | `--min_variant_frequency` | 0.05 (illumina) or 0.10 (nanopore) | Minimum variant frequency to call a variant. |
 | `--meta_ref` | None | Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: [Pre-built Sylph Databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases). |
 | `--sylph_tax_db` | None | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here. |
+|`--sylph_tax_link` | None | The link to download the sylph dataset needed to run metagenomics, would be used instead of specifying an already downloaded data set in `--meta_ref`. |
 | `--nextclade_dataset` | None | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`. |
 | `--results` | results/ | Where to place results. |
 | `--cleanup` | false | Whether to cleanup work directory after a successful run. |
@@ -155,32 +156,21 @@ OneRoof includes a comprehensive test suite built with [nf-test](https://www.nf-
 Before contributing or deploying changes, ensure all tests pass:
 
 ``` bash
-# Ensure you're in the Pixi environment (includes nf-test)
+# Ensure you're in the Pixi environment
 pixi shell --frozen
 
-# Run all tests
-just test
+# Run all tests based on platform 
+just test-illumina 
+just test-nanopore 
 
-# Run tests with verbose output
-just test-verbose
+# To run specific tests, run `just` and then under `testing` will be all the specific tests
+just 
 
-# Run specific test categories
-just test-modules      # Test individual processes
-just test-workflows    # Test platform workflows
-just test-pipeline     # Test end-to-end functionality
-
-# Run a specific test file
-just test-file tests/modules/minimap2_align.nf.test
-
-# Update test snapshots after intentional changes
-just test-update
 ```
 
 ### Test Structure
 
-Tests are organized in the `tests/` directory: - `tests/modules/` - Unit tests for individual processes - `tests/workflows/` - Integration tests for platform-specific workflows - `tests/pipelines/` - End-to-end pipeline tests - `tests/data/` - Minimal test datasets
-
-The test suite uses minimal synthetic data to ensure fast execution while still exercising all key pipeline features. Tests are automatically run in CI/CD on all pull requests and pushes to main branches.
+Tests are organized as profiles in `nextflow.config` and each specific test is in its own config file under `conf/illumina_tests` or `conf/nanopore_tests`. The data used for these tests can be found under `tests/data`. Tests can also be run with `nextflow run . -profile illumina_test_with_primers` or any other test specified as a profile in `nextflow.config` and this will show a verbose output to see the pipeline running. 
 
 For more details on the testing framework and how to write new tests, see the [test suite documentation](../tests/README.md).
 

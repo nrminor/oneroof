@@ -1,6 +1,6 @@
 # OneRoof Test Suite
 
-This directory contains the nf-test based testing framework for the OneRoof pipeline. The test suite is designed to validate pipeline functionality with minimal intrusion into the existing codebase.
+The test suite is designed to validate pipeline functionality with minimal intrusion into the existing codebase.
 
 ## Overview
 
@@ -9,10 +9,6 @@ The test suite uses [nf-test](https://www.nf-test.com/), the official testing fr
 ```
 tests/
 ├── data/                 # Test data files
-├── modules/              # Tests for individual processes
-├── subworkflows/         # Tests for sub-workflows (future)
-├── workflows/            # Tests for platform-specific workflows
-└── pipelines/            # End-to-end pipeline tests
 ```
 
 ## Installation
@@ -25,12 +21,7 @@ pixi install --frozen
 
 # Activate the Pixi environment
 pixi shell --frozen
-
-# Verify nf-test is available
-nf-test version
 ```
-
-No separate installation is required as nf-test is managed alongside all other project dependencies through Pixi.
 
 ## Running Tests
 
@@ -41,142 +32,68 @@ All test commands assume you're working within the Pixi environment:
 pixi shell --frozen
 ```
 
-### Run all tests
-```bash
-just test
-# Or directly: nf-test test
+### Run all tests 
+```bash 
+just test-all
 ```
 
-### Run specific test categories
+### Run all tests per sequencing type
 ```bash
-# Run only module tests
-just test-modules
-# Or: nf-test test --tag modules
-
-# Run only workflow tests
-just test-workflows
-# Or: nf-test test --tag workflows
-
-# Run only pipeline tests
-just test-pipeline
-# Or: nf-test test --tag pipeline
+just test-illumina 
+just test-nanopore
 ```
 
-### Run specific test files
+### Run specific Illumina tests 
 ```bash
-# Test a specific module using just
-just test-file tests/modules/minimap2_align.nf.test
-
-# Or directly with nf-test
-nf-test test tests/modules/minimap2_align.nf.test
+just test-illumina-bad-primers
+just test-illumina-missing-fastq
+just test-illumina-with-metagenomics
+just test-illumina-with-phylo
+just test-illumina-with-primers     
+just test-illumina-without-primers
 ```
 
-### Update test snapshots
+### Run specific Nanopore tests
 ```bash
-# Update all snapshots after intentional changes
-just test-update
-# Or: nf-test test --update-snapshot
+just test-nanopore-bad-primers
+just test-nanopore-missing-input
+just test-nanopore-with-haplo
+just test-nanopore-with-metagenomics
+just test-nanopore-with-phylo
+just test-nanopore-with-primers    
+just test-nanopore-without-primers
 ```
 
 ### Clean test outputs
 ```bash
 # Remove all test artifacts
-just test-clean
+just clean-logs
 ```
 
 ## Test Structure
 
-### Module Tests
-Located in `tests/modules/`, these tests validate individual processes:
-- `minimap2_align.nf.test` - Tests read alignment functionality
-- `ivar_variants.nf.test` - Tests variant calling
-- `ivar_consensus.nf.test` - Tests consensus sequence generation
+### Illumina Tests
+Located in `conf/illumina_tests/`
 
-### Workflow Tests
-Located in `tests/workflows/`, these tests validate platform-specific workflows:
-- `illumina.nf.test` - Tests the Illumina paired-end workflow
-- `nanopore.nf.test` - Tests the Nanopore workflow (without basecalling)
-
-### Pipeline Tests
-Located in `tests/pipelines/`, these tests validate end-to-end functionality:
-- `main.nf.test` - Tests the complete pipeline with various input combinations
+### Nanopore Tests
+Located in `conf/nanopore/`
 
 ## Test Data
 
-The `tests/data/` directory contains minimal test datasets:
-- Reference genome (1.5kb synthetic sequence)
-- Primer BED files
-- Small FASTQ files (10 reads each)
-- Pre-aligned BAM files
-- Sample metadata files
+The `tests/data/` directory contains minimal test datasets
 
 All test data is internally consistent and designed to exercise key pipeline features while maintaining small file sizes for fast test execution.
 
-## CI/CD Integration
-
-Tests are automatically run on:
-- Push to main/dev branches
-- Pull requests
-- Manual workflow dispatch
-
-The GitHub Actions workflow is defined in `.github/workflows/test.yml`.
 
 ## Writing New Tests
 
 When adding new functionality to the pipeline:
 
 1. Create test data if needed in `tests/data/`
-2. Write a test file following the naming convention: `<module_name>.nf.test`
-3. Include appropriate tags for test organization
-4. Run the test locally before committing
-5. Update snapshots if output changes are expected
-
-Example test structure:
-```groovy
-nextflow_process {
-    name "Test Process Name"
-    script "../../../modules/process_name.nf"
-    process "PROCESS_NAME"
-    tag "modules"
-    tag "process_name"
-
-    test("basic functionality") {
-        when {
-            process {
-                """
-                input[0] = file("${projectDir}/tests/data/test_file.txt")
-                """
-            }
-        }
-        then {
-            assert process.success
-            assert path(process.out.output[0]).exists()
-        }
-    }
-}
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Tests fail with "file not found"**
-   - Ensure test data files exist in `tests/data/`
-   - Check file paths use `${projectDir}` prefix
-
-2. **Snapshot mismatches**
-   - Review changes with `nf-test test --verbose`
-   - Update snapshots if changes are intentional
-
-3. **Resource errors**
-   - The test profile limits resources; adjust in `nextflow.config` if needed
-
-### Debug Mode
-
-Run tests with increased verbosity:
-```bash
-nf-test test --verbose --debug
-```
+2. Write a test config file in the correct directory under `conf/`
+3. Add the test as a new process in `nextflow.config`
+4. Create a new just recipe for the test in the `justfile`
+5. Run the test locally before committing
 
 ## Python Script Testing
 
