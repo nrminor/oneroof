@@ -89,6 +89,10 @@ workflow {
         Channel.value ( params.sylph_db_link ) :
         Channel.empty()
 
+    ch_decon_ref = params.decon_ref ?
+        Channel.value ( params.decon_ref ) :
+        Channel.empty()
+
 
     // decide whether to run the ont or the illumina workflowls
 
@@ -117,7 +121,8 @@ workflow {
             ch_metagenomics_ref,
             ch_primer_tsv,
             ch_sylph_tax_db,
-            ch_sylph_db_link
+            ch_sylph_db_link,
+            ch_decon_ref
         )
 
     } else {

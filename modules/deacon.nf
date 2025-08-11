@@ -21,7 +21,7 @@ process INDEX_CONTAMINANTS {
 
 }
 
-process DECONTAMINATE {
+process DECON{
 
     /* */
 

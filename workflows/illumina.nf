@@ -8,6 +8,7 @@ include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
+include { DECONTAMINATE } from '../subworkflows/decontaminate.nf'
 
 workflow ILLUMINA {
 
@@ -21,6 +22,7 @@ workflow ILLUMINA {
         ch_primer_tsv
         ch_sylph_tax_db
         ch_sylph_db_link
+        ch_decon_ref
 
     main:
         assert params.platform == "illumina"
@@ -30,6 +32,13 @@ workflow ILLUMINA {
         "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
 
         GATHER_ILLUMINA ( )
+
+    if(params.decon_ref != null && params.decon_ref != ""){
+        DECONTAMINATE( 
+            ch_decon_ref,
+            GATHER_ILLUMINA.out
+        )
+    }
 
         ILLUMINA_CORRECTION (
             GATHER_ILLUMINA.out,
