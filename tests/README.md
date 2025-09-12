@@ -2,21 +2,10 @@
 
 The test suite is designed to validate pipeline functionality with minimal intrusion into the existing codebase.
 
-## Overview
-
-The test suite uses [nf-test](https://www.nf-test.com/), the official testing framework for Nextflow pipelines. Tests are organized hierarchically to match the pipeline structure:
-
-```
-tests/
-├── data/                 # Test data files
-```
-
 ## Installation
 
-nf-test is included in the project's Pixi environment. To access it:
-
 ```bash
-# Install all project dependencies including nf-test
+# Install all project dependencies 
 pixi install --frozen
 
 # Activate the Pixi environment

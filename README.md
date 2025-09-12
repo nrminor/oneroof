@@ -98,7 +98,7 @@ Most users should configure `oneroof` through the command line via the following
 | `--min_variant_frequency` | 0.05 (illumina) or 0.10 (nanopore) | Minimum variant frequency to call a variant. |
 | `--meta_ref` | None | Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: [Pre-built Sylph Databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases). |
 | `--sylph_tax_db` | None | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here. |
-|`--sylph_tax_link` | None | The link to download the sylph dataset needed to run metagenomics, would be used instead of specifying an already downloaded data set in `--meta_ref`. |
+|`--meta_ref_link` | None | The link to download the sylph dataset needed to run metagenomics, would be used instead of specifying an already downloaded data set in `--meta_ref`. |
 | `--nextclade_dataset` | None | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`. |
 | `--results` | results/ | Where to place results. |
 | `--cleanup` | false | Whether to cleanup work directory after a successful run. |

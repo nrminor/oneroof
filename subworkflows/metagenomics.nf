@@ -13,14 +13,14 @@ workflow METAGENOMICS {
     take:
     ch_metagenome_ref
     ch_sylph_tax_db
-    ch_sylph_db_link
+    ch_meta_ref_link
     ch_sample_reads
 
     main:
 
      if (params.sylph_db_link) {
         // This captures the output from the process into a new variable
-        ch_metagenome_link = DOWNLOAD_DB_LINK(ch_sylph_db_link)
+        ch_metagenome_link = DOWNLOAD_DB_LINK(ch_meta_ref_link)
        ch_prebuilt_ref = ch_metagenome_link.filter { fa ->
         !file(fa).getBaseName().endsWith("fasta") || !file(fa).getBaseName().endsWith("fasta")
     }

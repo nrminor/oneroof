@@ -24,7 +24,7 @@ workflow NANOPORE {
         ch_metagenome_ref
         ch_primer_tsv
         ch_sylph_tax_db
-        ch_sylph_db_link
+        ch_meta_ref_link
 
     main:
         assert params.platform == "ont"
@@ -43,7 +43,7 @@ workflow NANOPORE {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                ch_sylph_db_link,
+                ch_meta_ref_link,
                 PRIMER_HANDLING.out
             )
 
@@ -57,7 +57,7 @@ workflow NANOPORE {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                ch_sylph_db_link,
+                ch_meta_ref_link,
                 GATHER_NANOPORE.out
             )
 

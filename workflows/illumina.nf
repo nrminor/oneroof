@@ -21,7 +21,7 @@ workflow ILLUMINA {
         ch_metagenome_ref
         ch_primer_tsv
         ch_sylph_tax_db
-        ch_sylph_db_link
+        ch_meta_ref_link
         ch_decon_ref
 
     main:
@@ -62,7 +62,7 @@ workflow ILLUMINA {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
-                ch_sylph_db_link,
+                ch_meta_ref_link,
                 PRIMER_HANDLING.out
             )
 
@@ -76,7 +76,7 @@ workflow ILLUMINA {
             METAGENOMICS(
                 ch_metagenome_ref,
                 ch_sylph_tax_db, 
-                ch_sylph_db_link,
+                ch_meta_ref_link,
                 ILLUMINA_CORRECTION.out
             )
 
