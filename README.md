@@ -58,7 +58,7 @@ If you want to use Apptainer containers instead of Docker, just add `-profile ap
 
 Nextflow pipelines like this one have a ton of configuration, which can be overwhelming for beginners and new users. To make this process easier, we’re developing a Terminal User Interface (TUI) to guide you through setup. Please stay tuned!
 
-![oneroof dag](visuals/oneroof_dag.svg)
+![oneroof dag](oneroof_dag.svg)
 
 ## Quick Start
 
