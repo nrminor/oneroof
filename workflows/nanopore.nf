@@ -19,7 +19,7 @@ workflow NANOPORE {
         ch_primer_bed
         ch_refseq
         ch_refgbk
-        _ch_contam_fasta
+        ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
         ch_primer_tsv
@@ -31,10 +31,15 @@ workflow NANOPORE {
 
         GATHER_NANOPORE ( )
 
+        QUALITY_CONTROL(
+            GATHER_NANOPORE.out,
+            ch_contam_fasta
+        )
+
         if ( params.primer_bed && params.primer_bed != "" || params.primer_tsv && params.primer_tsv != "" ) {
 
-            PRIMER_HANDLING (
-                GATHER_NANOPORE.out,
+            PRIMER_HANDLING(
+                QUALITY_CONTROL.out,
                 ch_primer_bed,
                 ch_refseq,
                 ch_primer_tsv
@@ -58,11 +63,11 @@ workflow NANOPORE {
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
                 ch_meta_ref_link,
-                GATHER_NANOPORE.out
+                QUALITY_CONTROL.out
             )
 
             alignment_outputs = ALIGNMENT (
-                GATHER_NANOPORE.out,
+                QUALITY_CONTROL.out,
                 ch_refseq
             )
 

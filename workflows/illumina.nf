@@ -2,13 +2,11 @@ include { GATHER_ILLUMINA } from "../subworkflows/gather_illumina"
 include { ILLUMINA_CORRECTION } from "../subworkflows/illumina_correction"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
-include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
-include { DECONTAMINATE } from '../subworkflows/decontaminate.nf'
 
 workflow ILLUMINA {
 
@@ -22,7 +20,6 @@ workflow ILLUMINA {
         ch_primer_tsv
         ch_sylph_tax_db
         ch_meta_ref_link
-        ch_decon_ref
 
     main:
         assert params.platform == "illumina"
@@ -32,13 +29,6 @@ workflow ILLUMINA {
         "The provided Illumina FASTQ directory ${params.illumina_fastq_dir} does not exist."
 
         GATHER_ILLUMINA ( )
-
-    if(params.decon_ref != null && params.decon_ref != ""){
-        DECONTAMINATE( 
-            ch_decon_ref,
-            GATHER_ILLUMINA.out
-        )
-    }
 
         ILLUMINA_CORRECTION (
             GATHER_ILLUMINA.out,
@@ -53,11 +43,6 @@ workflow ILLUMINA {
                 ch_refseq,
                 ch_primer_tsv
             )
-
-            // QUALITY_CONTROL (
-            //     PRIMER_HANDLING.out,
-            //     ch_contam_fasta
-            // )
 
             METAGENOMICS(
                 ch_metagenome_ref,
@@ -75,7 +60,7 @@ workflow ILLUMINA {
 
             METAGENOMICS(
                 ch_metagenome_ref,
-                ch_sylph_tax_db, 
+                ch_sylph_tax_db,
                 ch_meta_ref_link,
                 ILLUMINA_CORRECTION.out
             )
@@ -103,7 +88,7 @@ workflow ILLUMINA {
         PHYLO (
             CONSENSUS.out
         )
-        
+
 
         SLACK_ALERT(
             alignment_outputs.coverage_summary,

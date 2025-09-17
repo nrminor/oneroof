@@ -1,7 +1,5 @@
 include { CORRECT_WITH_FASTP } from "../modules/fastp"
-include { FASTQC  } from "../modules/fastqc"
-// include { INDEX_CONTAMINANTS; DECONTAMINATE } from "../modules/deacon"
-include { MULTIQC } from "../modules/multiqc"
+include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { COMPRESS_TO_SORTED_FASTA } from "../modules/seqkit"
 include { FAIDX             } from "../modules/samtools"
 include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
@@ -16,25 +14,9 @@ workflow ILLUMINA_CORRECTION {
         ch_uncorrected_reads
     )
 
-    // if ( params.contam_fasta && file(params.contam_fasta).isFile() ) {
-    //     INDEX_CONTAMINANTS(ch_contam_fasta)
-
-    //     DECONTAMINATE(
-    //         CORRECT_WITH_FASTP.out.combine(INDEX_CONTAMINANTS.out)
-    //     )
-
-    //     FASTQC(
-    //         DECONTAMINATE.out
-    //     )
-    // } else {
-    //     FASTQC(
-    //         CORRECT_WITH_FASTP.out
-    //     )
-       
-    // }
-
-    MULTIQC(
-        FASTQC.out.zip.collect()
+    QUALITY_CONTROL(
+        CORRECT_WITH_FASTP.out,
+        ch_contam_fasta
     )
 
     COMPRESS_TO_SORTED_FASTA(
