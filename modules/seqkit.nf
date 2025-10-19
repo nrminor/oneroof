@@ -1,51 +1,3 @@
-process SORT_AND_COMPRESS_TO_FASTA {
-
-    /* */
-
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
-
-	cpus 3
-
-    input:
-	tuple path(reads), path(patterns)
-
-    output:
-    tuple val(barcode), path(patterns), path("${barcode}_amplicons.fasta.gz")
-
-    script:
-	barcode = file(reads).getSimpleName()
-    """
-    set -eou pipefail
-
-    mkdir -p tmp
-
-    cleanup() {
-        echo "Performing cleanup..."
-        rm -rf tmp
-    }
-    trap cleanup EXIT
-
-    seqkit fq2fa \
-    --threads ${task.cpus} \
-    --out-file tmp/1.fasta \
-    ${reads}
-
-    seqkit faidx tmp/1.fasta
-
-    seqkit sort \
-    --by-seq \
-    --two-pass \
-    --threads ${task.cpus} \
-    --out-file ${barcode}_amplicons.fasta.gz \
-    tmp/1.fasta
-
-    # Explicit sync to help ensure file is flushed before cleanup
-    sync
-    """
-}
-
-
 process FIND_COMPLETE_AMPLICONS {
 
     /* */
@@ -217,4 +169,3 @@ process COMPRESS_TO_SORTED_FASTA{
     | bgzip -c > "${barcode}.fasta.gz"
     """
 }
-

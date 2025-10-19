@@ -1,8 +1,14 @@
 include { VALIDATE_PRIMER_BED      } from "../modules/validate"
 include { REPORT_REFERENCES        } from "../modules/reporting"
-include { RESPLICE_PRIMERS         } from "../modules/resplice_primers"
-include { SPLIT_PRIMER_COMBOS      } from "../modules/split_primer_combos"
-include { GET_PRIMER_PATTERNS      } from "../modules/primer_patterns"
+include { RESPLICE_PRIMERS;
+          SPLIT_PRIMER_COMBOS
+} from "../modules/resplice_primers"
+include { GET_PRIMER_PATTERNS;
+          WRITE_PRIMER_FASTA;
+          CREATE_PRIMER_TSV;
+          COLLECT_PRIMER_TSV;
+          CREATE_AMPLICON_TSV;
+} from "../modules/primer_patterns"
 include { GET_PRIMER_SEQS          } from "../modules/bedtools"
 include { FAIDX                    } from "../modules/samtools"
 include { ORIENT_READS             } from "../modules/vsearch"
@@ -16,10 +22,6 @@ include {
 } from "../modules/seqkit"
 include { FILTER_WITH_CHOPPER      } from "../modules/chopper"
 include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
-include { WRITE_PRIMER_FASTA } from "../modules/write_primer_fasta"
-include { CREATE_PRIMER_TSV } from "../modules/output_primer_tsv"
-include { COLLECT_PRIMER_TSV } from "../modules/output_primer_tsv"
-include { CREATE_AMPLICON_TSV } from "../modules/amplicon_reads"
 
 
 workflow PRIMER_HANDLING {
@@ -38,9 +40,9 @@ workflow PRIMER_HANDLING {
             .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) },
         ch_refseq,
     )
-  
+
     if (params.primer_bed && params.primer_bed  != "") {
-        
+
         VALIDATE_PRIMER_BED(
             ch_primer_bed
         )
@@ -95,7 +97,7 @@ workflow PRIMER_HANDLING {
 
                 tuple(name, fasta)
           }
-    
+
         WRITE_PRIMER_FASTA(
             ch_tsv_to_fasta
         )
@@ -150,4 +152,3 @@ workflow PRIMER_HANDLING {
     emit:
     MERGE_BY_SAMPLE.out
 }
-

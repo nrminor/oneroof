@@ -1,4 +1,15 @@
-#!/usr/bin/env rust-script
+#!/usr/bin/env -S cargo +nightly -Zscript
+---
+[dependencies]
+polars = { version = "0.44", features = ["lazy", "csv", "strings", "regex", "fmt"] }
+clap = { version = "4.5", features = ["derive"] }
+env_logger = "0.11"
+log = "0.4"
+itertools = "0.13"
+regex = "1.11"
+anyhow = "1.0"
+---
+
 //! Resplice primers - finds all possible combinations of spike-in primers in an amplicon scheme.
 //!
 //! This script reads a BED file containing PCR primer coordinates and generates all valid
@@ -6,16 +17,6 @@
 //! primers, assigns unique indices, and outputs a new BED file with all possible amplicon
 //! combinations.
 //!
-//! ```cargo
-//! [dependencies]
-//! polars = { version = "0.44", features = ["lazy", "csv", "strings", "regex", "fmt"] }
-//! clap = { version = "4.5", features = ["derive"] }
-//! env_logger = "0.11"
-//! log = "0.4"
-//! itertools = "0.13"
-//! regex = "1.11"
-//! anyhow = "1.0"
-//! ```
 
 use anyhow::Result;
 use clap::Parser;
