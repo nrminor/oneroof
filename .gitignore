@@ -19,9 +19,6 @@
 !pixi.lock
 !uv.lock
 !Containerfile
-!deno.json
-!deno.jsonc
-!deno.lock
 
 # project setup (.envrc for launching a development shell with the nix flake) and project
 # shorthands to be explored by running `just`
@@ -37,7 +34,6 @@
 # Nextflow workflow entrypoint, configuration, and testing configuration
 !main.nf
 !nextflow.config
-!nf-test.config
 
 # Persistent LLM context
 !CLAUDE.md
@@ -87,6 +83,10 @@
 !/bin/*.awk
 !/bin/README.md
 
+# Rust development files for IDE support
+!/Cargo.toml
+!/Cargo.lock
+
 # groovy libraries
 !/lib
 !/lib/*.groovy
@@ -129,5 +129,3 @@
 !/tests/data/illumina_bad_reads/*.fast*
 !/tests/data/illumina_reads/*.fast*
 !/tests/data/nanopore_reads/*.bam*
-
-

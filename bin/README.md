@@ -2,7 +2,7 @@
 
 This directory contains utility scripts that support various operations in the OneRoof bioinformatics pipeline. These scripts handle tasks ranging from consensus sequence concatenation to primer validation, variant processing, and quality control visualization.
 
-All Python scripts include PEP 723 inline dependencies and can be run directly with `uv run` without additional setup.
+All Python scripts include PEP 723 inline dependencies and can be run directly with `uv run` without additional setup. Rust scripts use rust-script with inline cargo metadata for dependency management.
 
 ## Scripts Overview
 
@@ -173,20 +173,59 @@ To run tests, use pytest:
 pytest test_*.py
 ```
 
+## Rust Scripts
+
+### find_and_trim_amplicons.rs
+**Purpose**: High-performance primer finding and trimming for FASTQ/FASTA reads.
+
+**Key Features**:
+- Parallel processing with configurable thread count
+- Approximate string matching with configurable mismatches
+- Bidirectional search (forward and reverse orientations)
+- Smart amplicon selection (lowest edit distance, longest insert)
+- IUPAC ambiguity code support
+- Detailed statistics tracking
+- FASTQ/FASTA output with optional gzip compression
+
+**Usage Example**:
+```bash
+find_and_trim_amplicons.rs \
+  -i input.fastq.gz \
+  -o output.fastq.gz \
+  -f ACGTACGTACGT \
+  -r TGCATGCATGCA \
+  --min-len 100 \
+  --max-len 500 \
+  -k 2 \
+  -t 8
+```
+
+**Environment Variables**:
+- `RUST_LOG`: Controls logging verbosity (e.g., `debug`, `info`, `warn`)
+- `RAYON_NUM_THREADS`: Overrides default thread count
+
 ## Other Files
 
 - `__init__.py` and `__main__.py`: Python package initialization files
-- `resplice_primers.rs`: Rust implementation of primer resplicing (alternative to Python version)
 
 ## Dependencies
 
-All scripts use PEP 723 inline script dependencies, which means you can run them directly with `uv run` without manual dependency installation. Common dependencies include:
+### Python Scripts
+All Python scripts use PEP 723 inline script dependencies, which means you can run them directly with `uv run` without manual dependency installation. Common dependencies include:
 - `polars` or `polars-lts-cpu`: High-performance dataframe library
 - `biopython`: Biological sequence handling
 - `loguru`: Advanced logging
 - `plotnine`: Grammar of graphics plotting
 - `typer` and `rich`: Beautiful CLI interfaces
 - `pydantic`: Data validation
+
+### Rust Scripts
+Rust scripts use rust-script with inline cargo metadata blocks. Dependencies are automatically managed. Common dependencies include:
+- `paraseq`: Parallel FASTQ/FASTA processing
+- `sassy`: Approximate string matching
+- `clap`: Command-line argument parsing
+- `anyhow`: Error handling
+- `env_logger` and `log`: Logging infrastructure
 
 ## Notes
 
