@@ -35,10 +35,6 @@
 !main.nf
 !nextflow.config
 
-# Persistent LLM context
-!CLAUDE.md
-!llms.txt
-
 # github action workflows
 !/.github
 !/.github/workflows
