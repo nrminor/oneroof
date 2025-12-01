@@ -1,10 +1,9 @@
 #!/usr/bin/env rust-script
 //! Find and trim primer sequences in FASTQ/FASTA reads.
 //!
-//! This high-performance Rust script combines primer finding and trimming operations
-//! into a single process, replacing traditional two-process workflows. It uses
-//! approximate string matching to locate primers, handles both orientations,
-//! and outputs trimmed amplicons with detailed statistics.
+//! This Rust script combines primer finding and trimming operations into a single process,
+//! replacing two-step find-then-trim processing. It uses approximate string matching to locate primers,
+//! handles both orientations, and outputs trimmed amplicons with detailed statistics.
 //!
 //! # Features
 //!
@@ -27,7 +26,7 @@
 //! # Usage
 //!
 //! ```bash
-//! trim_primers.rs \
+//! find_and_trim_amplicons.rs \
 //!   -i input.fastq.gz \
 //!   -o output.fastq.gz \
 //!   -f ACGTACGTACGT \
@@ -210,7 +209,7 @@ fn validate_args(args: &Args) -> Result<()> {
 fn create_writer(args: &Args) -> Result<SharedWriter> {
     let file = std::fs::File::create(&args.output)?;
 
-    let writer: Box<dyn std::io::Write + Send> = if args.no_compress {
+    let writer: Box<dyn Write + Send> = if args.no_compress {
         Box::new(file)
     } else {
         Box::new(GzEncoder::new(file, Compression::default()))
@@ -402,7 +401,7 @@ impl TrimStats {
         Self::default()
     }
 
-    fn report(&self, output: &mut dyn std::io::Write) -> std::io::Result<()> {
+    fn report(&self, output: &mut dyn Write) -> std::io::Result<()> {
         let total = self.total_reads.load(Ordering::Relaxed);
         let found = self.amplicons_found.load(Ordering::Relaxed);
 
@@ -580,21 +579,15 @@ impl PrimerTrimProcessor {
     /// * `Ok(AmpliconMatch)` - Valid amplicon with coordinates and costs
     /// * `Err(FailureReason)` - Specific reason why no amplicon was found
     fn find_amplicon(&mut self, read_seq: &[u8]) -> Result<AmpliconMatch, FailureReason> {
-        // Clone primers to avoid borrow checker issues
-        let fwd = self.primers.forward.clone();
-        let rev_rc = self.primers.reverse_rc.clone();
-        let fwd_rc = self.primers.forward_rc.clone();
-        let rev = self.primers.reverse.clone();
-
         // Pass 1: Forward orientation (fwd as-is, rev as RC)
-        match self.try_orientation(read_seq, &fwd, &rev_rc, Orientation::Forward) {
+        match self.try_orientation(read_seq, Orientation::Forward) {
             Ok(amplicon) => Ok(amplicon),
             Err(reason) => {
                 // Save the failure reason from forward orientation
                 let fwd_failure = reason;
 
                 // Pass 2: Reverse orientation (fwd as RC, rev as-is)
-                match self.try_orientation(read_seq, &fwd_rc, &rev, Orientation::Reverse) {
+                match self.try_orientation(read_seq, Orientation::Reverse) {
                     Ok(amplicon) => Ok(amplicon),
                     // If both orientations fail, return the forward failure reason
                     // (since forward is the expected orientation)
@@ -608,10 +601,20 @@ impl PrimerTrimProcessor {
     fn try_orientation(
         &mut self,
         read_seq: &[u8],
-        fwd_primer: &[u8],
-        rev_primer: &[u8],
         orientation: Orientation,
     ) -> Result<AmpliconMatch, FailureReason> {
+        // bind references to the correct primer sequences based on the requested orientation
+        let (fwd_primer, rev_primer) = match orientation {
+            Orientation::Forward => (
+                self.primers.forward.as_slice(),
+                self.primers.reverse_rc.as_slice(),
+            ),
+            Orientation::Reverse => (
+                self.primers.forward_rc.as_slice(),
+                self.primers.reverse.as_slice(),
+            ),
+        };
+
         // Search for forward primer (max_cost is usize in sassy)
         let fwd_matches = self
             .searcher
@@ -705,19 +708,10 @@ impl PrimerTrimProcessor {
         // Return the best match if found, otherwise return the most specific failure reason
         match best {
             Some(amplicon) => Ok(amplicon),
-            None => {
-                // Prioritize failure reasons: invalid structure > too short > too long
-                if has_invalid_structure {
-                    Err(FailureReason::InvalidStructure)
-                } else if has_too_short {
-                    Err(FailureReason::TooShort)
-                } else if has_too_long {
-                    Err(FailureReason::TooLong)
-                } else {
-                    // Should not happen if we have matches, but default to invalid structure
-                    Err(FailureReason::InvalidStructure)
-                }
-            }
+            None if has_invalid_structure => Err(FailureReason::InvalidStructure),
+            None if has_too_short => Err(FailureReason::TooShort),
+            None if has_too_long => Err(FailureReason::TooLong),
+            None => Err(FailureReason::InvalidStructure),
         }
     }
 }
@@ -863,7 +857,7 @@ fn main() -> Result<()> {
     info!("Processing complete");
 
     // Report statistics
-    let mut stats_output: Box<dyn std::io::Write> = match &args.stats {
+    let mut stats_output: Box<dyn Write> = match &args.stats {
         Some(path) => {
             info!("Writing statistics to: {:?}", path);
             Box::new(std::fs::File::create(path)?)
