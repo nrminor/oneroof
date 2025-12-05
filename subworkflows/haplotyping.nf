@@ -16,9 +16,9 @@ workflow HAPLOTYPING {
     )
 
     FASTQ_CONVERSION(
-    SPLIT_SEGMENTS.out.flatten()
-        .filter { ~/.bam$/ } // skip .bai files
-        .map{bam -> tuple(file(bam).getSimpleName(), file(bam))}
+        SPLIT_SEGMENTS.out.flatten()
+            .filter { ~/.bam$/ } // skip .bai files
+            .map{bam -> tuple(file(bam).getSimpleName(), file(bam))}
     )
 
     IDENTIFY_HAPLOTYPES(
