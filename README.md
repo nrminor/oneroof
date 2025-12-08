@@ -116,7 +116,7 @@ Note that `oneroof` checks for how to gather data in a particular order for Nano
 To reproduce the environment required by this pipeline, make sure you are on a Mac, a linux machine, or a Windows machine using Windows Subsystem for Linux. Then, to reproduce the environment, install pixi with:
 
 ``` bash
-PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
+curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
 Download the pipeline with:

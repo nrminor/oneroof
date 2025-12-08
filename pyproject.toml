@@ -65,9 +65,10 @@ py-modules = ["bin"]
 [project.scripts]
 "oneroof" = "bin.__main__:main"
 
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge", "bioconda", "anaconda"]
-platforms = ["osx-64", "linux-64"]
+platforms = ["osx-64", "linux-64", "osx-arm64"]
+# platforms = ["osx-64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
 oneroof = { path = ".", editable = true }
@@ -83,27 +84,25 @@ chopper = ">=0.9.0,<0.10"
 seqkit = ">=2.8.2,<2.9"
 snpeff = ">=5.2,<6"
 vsearch = ">=2.28.1,<2.29"
-nextclade = ">=3.7.1,<3.8"
 cutadapt = ">=4.8,<5"
-ivar = ">=1.4.2,<1.5"
 rasusa = ">=2.0.0,<2.1"
-mosdepth = ">=0.3.8,<0.4"
 csvtk = { version = ">=0.30.0,<0.31", channel = "bioconda" }
 snpsift = ">=5.2,<6"
 bbmap = ">=39.1,<40"
 bedtools = ">=2.31.1,<3"
-devider = ">=0.0.1,<0.0.2"
+# devider = ">=0.0.1,<0.0.2"
 deacon = ">=0.2.0,<0.3"
 sylph = ">=0.8.1,<0.9"
 sylph-tax = ">=1.2.0,<2"
 fastp = ">=0.24.0,<0.25"
 slack_sdk = ">=3.35.0,<4"
-fq = { version = ">=0.12.0,<0.13", channel = "bioconda" }
 deno = ">=2.3.4,<2.4"
-nanoq = ">=0.10.0,<0.11"
-nf-test = ">=0.9.2,<0.10"
-r-base = ">=4.4.3,<4.5"
 lua = ">=5.4.8,<6"
+nextclade = ">=3.18.1,<4"
+fq = ">=0.15.1,<0.16"
+mosdepth = ">=0.3.3,<0.4"
+ivar = ">=1.4.4,<2"
+rust-script = ">=0.36.0,<0.37"
 
 [tool.uv]
 dev-dependencies = [

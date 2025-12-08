@@ -1,0 +1,38 @@
+# Cargo.toml for IDE support (rust-analyzer)
+# This is NOT used for building - rust-script handles dependencies via inline metadata
+# This file exists solely to provide IDE completion and error checking
+
+[package]
+name = "oneroof-rust-scripts"
+version = "1.0.0"
+edition = "2021"
+
+# Binary entries for rust-analyzer to recognize scripts
+[[bin]]
+name = "find_and_trim_amplicons"
+path = "bin/find_and_trim_amplicons.rs"
+
+# Dependencies used across Rust scripts
+# Keep these in sync with the inline dependencies in each .rs file
+[dependencies]
+# Sequence I/O
+paraseq = { version = "0.4", features = ["niffler"] }
+noodles = { version = "0.102", features = ["fastq", "fasta"] }
+
+# Approximate matching
+sassy = "0.1"
+
+# CLI & Errors
+clap = { version = "4.5", features = ["derive", "cargo"] }
+anyhow = "1.0"
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Utilities
+num_cpus = "1.16"
+flate2 = "1.0"
+
+# Note: Individual scripts may have additional dependencies
+# specified in their inline cargo metadata blocks
