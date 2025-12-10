@@ -47,57 +47,17 @@ workflow METAGENOMICS {
 
     ch_classified = CLASSIFY_SAMPLE.out.filter { _id, sketch -> file(sketch).countLines() > 1 }
 
+    sylph_tax_trig_ch = Channel.of(1)
 
-    // SYLPH_TAX_DOWNLOAD(ch_classified)
+    SYLPH_TAX_DOWNLOAD(sylph_tax_trig_ch)
 
-    // OVERLAY_TAXONOMY(
-    //     ch_classified.combine(ch_sylph_tax_db).combine(SYLPH_TAX_DOWNLOAD.out)
-    // )
-    // Channel
-    //     .of(1)
-    //     .set { sylph_tax_trig_ch }
+    ch_sylph_taxonomy_dir = SYLPH_TAX_DOWNLOAD.out
 
-    // // Run SYLPH_TAX_DOWNLOAD once, driven by the trigger
-    // SYLPH_TAX_DOWNLOAD(sylph_tax_trig_ch)
-
-    // // Capture its output channel (assumed to be the taxonomy dir or files)
-    // SYLPH_TAX_DOWNLOAD.out .map { tax_output -> tax_output.toString() }   // turn into a simple val
-    //     .set { ch_tax_ready }
-    //------------------------------------------------------------------
-    // Overlay taxonomy per sample, combining:
-    //   - ch_classified: (sample_id, tsv_path)
-    //   - ch_sylph_taxonomy_dir: shared Sylph taxonomy directory
-    //   - ch_sylph_tax_db: DB path
-    //------------------------------------------------------------------
-
-    // OVERLAY_TAXONOMY(
-    //     ch_classified
-    //         .combine(ch_sylph_taxonomy_dir)
-    //         .combine(ch_sylph_tax_db)
-    // )
-
-    Channel
-    .of(1)
-    .set { sylph_tax_trig_ch }
-
-SYLPH_TAX_DOWNLOAD(sylph_tax_trig_ch)
-
-// this will now be a channel that emits the *directory* sylph_taxonomy
-SYLPH_TAX_DOWNLOAD.out
-    .set { ch_sylph_taxonomy_dir }
-
-
-    // OVERLAY_TAXONOMY(
-    //     ch_classified
-    //         .combine(ch_tax_ready)
-    //         .combine(ch_sylph_tax_db)
-    // )
     OVERLAY_TAXONOMY(
     ch_classified          // (sample_id, tsv_path)
         .combine(ch_sylph_taxonomy_dir)  // (taxonomy_dir)
         .combine(ch_sylph_tax_db)        // (input_db)
 )
-
 
     MERGE_TAXONOMY(
         OVERLAY_TAXONOMY.out
