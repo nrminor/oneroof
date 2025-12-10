@@ -8,17 +8,35 @@ process INDEX_CONTAMINANTS {
 	cpus 1
 
     input:
-    path contam_fasta
+    // tuple path(contam_fasta), val(sample_id)
+    tuple path(contam_fasta)
 
     output:
     path "*.idx"
 
     script:
+
     def dbName = file(contam_fasta).getSimpleName()
     """
     deacon index build ${contam_fasta} > ${dbName}.idx
     """
 
+}
+
+process GET_INDEX {
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 1
+
+    output: 
+    path "*.idx"
+
+    script: 
+    """
+    wget https://dholk.primate.wisc.edu/_webdav/dho/public/DHO%20Lab%20Bespoke%20Reference%20Dataset%20Registry/Pathogen%20Genomics/%40files/combined_kitome_human_t2t_minus_argos.idx -O index_for_decon.idx
+    """
 }
 
 process DECON{
