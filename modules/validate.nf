@@ -18,10 +18,12 @@ process VALIDATE_NANOPORE {
     script:
     if ( file(seq_file).getName().endsWith(".fastq.gz") )
         """
-        fq lint \
-        --lint-mode panic \
-        --single-read-validation-level high \
-        ${seq_file} && cp \$(realpath ${seq_file}) ${label}.validated.fastq.gz
+        # fq lint \
+        # --lint-mode panic \
+        # --single-read-validation-level high \
+        # ${seq_file} && ln -s \$(realpath ${seq_file}) ${label}.validated.fastq.gz
+
+        cat ${seq_file} | seqkit seq --validate-seq --out-file ${label}.validated.fastq.gz
         """
     else if ( file(seq_file).getName().endsWith(".bam") )
         """
@@ -52,12 +54,14 @@ process VALIDATE_ILLUMINA {
 
     script:
     """
-    fq lint \
-    --lint-mode panic \
-    --single-read-validation-level high \
-    --paired-read-validation-level high \
-    ${reads1} ${reads2} \
-    > ${label}.report.txt
+    # fq lint \\
+    # --lint-mode panic \\
+    # --single-read-validation-level high \\
+    # --paired-read-validation-level high \\
+    # ${reads1} ${reads2} \\
+    # > ${label}.report.txt
+
+    reformat.sh in=${reads1} in2=${reads2} vpair 2> ${label}.report.txt
     """
 
 }

@@ -17,13 +17,33 @@
 //!
 //! # Algorithm
 //!
-//! 1. For each read, search for forward and reverse primers in both orientations
+//! By default, the entire read is searched for primer sequences. For each read:
+//!
+//! 1. Search for forward and reverse primers in both orientations
 //! 2. Find all valid amplicons (primers in correct order, within length bounds)
 //! 3. Select the amplicon with lowest total edit distance (ties broken by length)
 //! 4. Trim the read to exclude primers, keeping only the insert sequence
 //! 5. Write trimmed sequence to output file
 //!
+//! ## Search Window Optimization
+//!
+//! For long reads (e.g., Nanopore), searching the entire read for primers can be slow.
+//! The `--forward-window` and `--reverse-window` options limit primer search to bounded
+//! regions at the ends of reads, improving performance when primers are expected near
+//! the read termini.
+//!
+//! - `--forward-window N`: Search for forward primer only in the first N bases (5' end
+//!   in forward orientation, 3' end in reverse orientation)
+//! - `--reverse-window N`: Search for reverse primer only in the last N bases (3' end
+//!   in forward orientation, 5' end in reverse orientation)
+//! - Default (0): Search the entire read (no windowing)
+//!
+//! Choose window sizes larger than your primer length plus any expected adapter/barcode
+//! sequences. A warning is issued if the window size is smaller than the primer length.
+//!
 //! # Usage
+//!
+//! Basic usage (searches entire read for primers):
 //!
 //! ```bash
 //! find_and_trim_amplicons.rs \
@@ -35,6 +55,18 @@
 //!   --max-len 500 \
 //!   -k 2 \
 //!   -t 8
+//! ```
+//!
+//! With search windows for long reads (primers expected within 100bp of read ends):
+//!
+//! ```bash
+//! find_and_trim_amplicons.rs \
+//!   -i long_reads.fastq.gz \
+//!   -o trimmed.fastq.gz \
+//!   -f ACGTACGTACGT \
+//!   -r TGCATGCATGCA \
+//!   --forward-window 100 \
+//!   --reverse-window 100
 //! ```
 //!
 //! # Environment Variables
@@ -59,10 +91,11 @@ use anyhow::Result;
 use clap::Parser;
 use flate2::{write::GzEncoder, Compression};
 use log::{debug, info, warn};
-use paraseq::{fastq, prelude::*, ProcessError};
+use paraseq::{fastx, prelude::*, ProcessError};
 use sassy::{profiles::Iupac, Searcher};
 use std::{
     cmp,
+    fs::File,
     io::Write,
     path::PathBuf,
     sync::{
@@ -80,7 +113,7 @@ type SharedStats = Arc<TrimStats>;
 #[command(name = "primer-trim")]
 #[command(version, about = "Find and trim primer sequences in FASTQ/FASTA reads")]
 struct Args {
-    /// Input FASTQ/FASTA file (gzip supported)
+    /// Input FASTQ/FASTA file (format auto-detected, gzip/bzip2 supported)
     #[arg(short = 'i', long)]
     input: PathBuf,
 
@@ -123,6 +156,22 @@ struct Args {
     /// Statistics output file (default: stderr)
     #[arg(long)]
     stats: Option<PathBuf>,
+
+    /// Limit forward primer search to N bases at the expected end of the read.
+    /// In forward orientation, searches the first N bases (5' end).
+    /// In reverse orientation, searches the last N bases (3' end).
+    /// Default (0) searches the entire read. Use for long reads when primers
+    /// are expected near read termini.
+    #[arg(long, default_value = "0")]
+    forward_window: usize,
+
+    /// Limit reverse primer search to N bases at the expected end of the read.
+    /// In forward orientation, searches the last N bases (3' end).
+    /// In reverse orientation, searches the first N bases (5' end).
+    /// Default (0) searches the entire read. Use for long reads when primers
+    /// are expected near read termini.
+    #[arg(long, default_value = "0")]
+    reverse_window: usize,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
@@ -201,13 +250,47 @@ fn validate_args(args: &Args) -> Result<()> {
         );
     }
 
+    // Warn if search windows are smaller than primers (primer cannot be found)
+    if args.forward_window > 0 && args.forward_window < args.forward.len() {
+        warn!(
+            "Forward window ({} bp) is smaller than forward primer ({} bp) - primer cannot be found",
+            args.forward_window,
+            args.forward.len()
+        );
+    }
+    if args.reverse_window > 0 && args.reverse_window < args.reverse.len() {
+        warn!(
+            "Reverse window ({} bp) is smaller than reverse primer ({} bp) - primer cannot be found",
+            args.reverse_window,
+            args.reverse.len()
+        );
+    }
+
     debug!("All arguments validated successfully");
+    Ok(())
+}
+
+/// Validate that the input/output format combination is supported.
+///
+/// FASTA input cannot produce FASTQ output because there are no quality scores
+/// to preserve. All other combinations are valid.
+fn validate_format_combination(
+    input_format: fastx::Format,
+    output_format: OutputFormat,
+) -> Result<()> {
+    if matches!(input_format, fastx::Format::Fasta) && matches!(output_format, OutputFormat::Fastq)
+    {
+        anyhow::bail!(
+            "Cannot output FASTQ format from FASTA input (no quality scores available). \
+             Use --format fasta instead."
+        );
+    }
     Ok(())
 }
 
 /// Create output writer with optional compression
 fn create_writer(args: &Args) -> Result<SharedWriter> {
-    let file = std::fs::File::create(&args.output)?;
+    let file = File::create(&args.output)?;
 
     let writer: Box<dyn Write + Send> = if args.no_compress {
         Box::new(file)
@@ -468,10 +551,8 @@ impl TrimStats {
 /// sharing only the writer and statistics via Arc.
 #[derive(Clone)]
 struct PrimerTrimProcessor {
-    /// Primer sequences with pre-computed reverse complements
-    primers: PrimerPair,
-    /// Maximum number of mismatches allowed in primer matching
-    max_mismatch: u8,
+    /// Configured windowed search (primers, mismatch tolerance, windows)
+    search: WindowedSearch,
     /// Minimum insert length (after trimming primers)
     min_len: usize,
     /// Maximum insert length (after trimming primers)
@@ -486,22 +567,146 @@ struct PrimerTrimProcessor {
     stats: SharedStats,
 }
 
+/// Configured primer search with optional windowing.
+///
+/// By default (window sizes of 0), the entire read is searched for primers.
+/// When window sizes are specified, primer search is limited to bounded regions
+/// at the ends of reads - an optimization for long reads where primers are
+/// expected near the termini.
+///
+/// This struct holds immutable search configuration (primers, mismatch tolerance,
+/// window sizes) and provides methods that accept a mutable searcher. This design
+/// enables split borrowing - the caller can pass `&mut searcher` while the config
+/// is borrowed immutably.
+#[derive(Clone)]
+struct WindowedSearch {
+    primers: PrimerPair,
+    max_mismatch: usize,
+    forward_window: usize,
+    reverse_window: usize,
+}
+
+impl WindowedSearch {
+    fn new(
+        primers: PrimerPair,
+        max_mismatch: u8,
+        forward_window: usize,
+        reverse_window: usize,
+    ) -> Self {
+        Self {
+            primers,
+            max_mismatch: max_mismatch as usize,
+            forward_window,
+            reverse_window,
+        }
+    }
+
+    /// Compute search window bounds for a given end of the read.
+    ///
+    /// Returns (start, end) indices for slicing the read sequence.
+    ///
+    /// # Arguments
+    ///
+    /// * `read_len` - Length of the read sequence
+    /// * `window_size` - Size of the search window (0 = no limit)
+    /// * `at_end` - If true, window is at 3' end; if false, at 5' end
+    fn window_bounds(&self, read_len: usize, window_size: usize, at_end: bool) -> (usize, usize) {
+        if window_size == 0 || window_size >= read_len {
+            (0, read_len)
+        } else if at_end {
+            (read_len - window_size, read_len)
+        } else {
+            (0, window_size)
+        }
+    }
+
+    /// Search for a primer in a windowed region, returning matches in read coordinates.
+    fn search_primer(
+        &self,
+        searcher: &mut Searcher<Iupac>,
+        primer: &[u8],
+        read_seq: &[u8],
+        window_start: usize,
+        window_end: usize,
+    ) -> Vec<sassy::Match> {
+        let slice = &read_seq[window_start..window_end];
+
+        searcher
+            .search(primer, slice, self.max_mismatch)
+            .into_iter()
+            .map(|mut m| {
+                // Adjust coordinates from slice space to read space
+                m.text_start += window_start;
+                m.text_end += window_start;
+                m
+            })
+            .collect()
+    }
+
+    /// Search for forward primer in the appropriate window for the given orientation.
+    ///
+    /// When `forward_window` is 0, searches the entire read. Otherwise, searches
+    /// a bounded region: the 5' end for forward orientation, or the 3' end for
+    /// reverse orientation (where the forward primer RC would appear).
+    fn search_forward(
+        &self,
+        searcher: &mut Searcher<Iupac>,
+        read_seq: &[u8],
+        orientation: Orientation,
+    ) -> Vec<sassy::Match> {
+        let read_len = read_seq.len();
+        let at_end = matches!(orientation, Orientation::Reverse);
+        let (start, end) = self.window_bounds(read_len, self.forward_window, at_end);
+
+        let primer = match orientation {
+            Orientation::Forward => &self.primers.forward,
+            Orientation::Reverse => &self.primers.forward_rc,
+        };
+
+        self.search_primer(searcher, primer, read_seq, start, end)
+    }
+
+    /// Search for reverse primer in the appropriate window for the given orientation.
+    ///
+    /// When `reverse_window` is 0, searches the entire read. Otherwise, searches
+    /// a bounded region: the 3' end for forward orientation (where the reverse
+    /// primer RC would appear), or the 5' end for reverse orientation.
+    fn search_reverse(
+        &self,
+        searcher: &mut Searcher<Iupac>,
+        read_seq: &[u8],
+        orientation: Orientation,
+    ) -> Vec<sassy::Match> {
+        let read_len = read_seq.len();
+        let at_end = matches!(orientation, Orientation::Forward);
+        let (start, end) = self.window_bounds(read_len, self.reverse_window, at_end);
+
+        let primer = match orientation {
+            Orientation::Forward => &self.primers.reverse_rc,
+            Orientation::Reverse => &self.primers.reverse,
+        };
+
+        self.search_primer(searcher, primer, read_seq, start, end)
+    }
+}
+
 impl PrimerTrimProcessor {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         primers: PrimerPair,
         max_mismatch: u8,
         min_len: usize,
         max_len: usize,
+        forward_window: usize,
+        reverse_window: usize,
         writer: SharedWriter,
         output_format: OutputFormat,
         stats: SharedStats,
     ) -> Self {
         Self {
-            primers,
-            max_mismatch,
+            search: WindowedSearch::new(primers, max_mismatch, forward_window, reverse_window),
             min_len,
             max_len,
-            // rc=true enables reverse complement search, alpha=None uses default scoring
             searcher: Searcher::new(true, None),
             writer,
             output_format,
@@ -528,9 +733,11 @@ impl PrimerTrimProcessor {
 
         match self.output_format {
             OutputFormat::Fastq => {
-                let quality = record
-                    .qual()
-                    .ok_or_else(|| anyhow::anyhow!("FASTQ format requires quality scores"))?;
+                let quality = record.qual().ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "FASTQ output requires quality scores, but input record has none"
+                    )
+                })?;
 
                 // Validate quality length matches sequence
                 if amplicon.end > quality.len() {
@@ -598,42 +805,31 @@ impl PrimerTrimProcessor {
     }
 
     /// Try to find an amplicon in a specific orientation
+    ///
+    /// Uses bounded search windows when configured to limit the search space
+    /// for better performance on long reads.
     fn try_orientation(
         &mut self,
         read_seq: &[u8],
         orientation: Orientation,
     ) -> Result<AmpliconMatch, FailureReason> {
-        // bind references to the correct primer sequences based on the requested orientation
-        let (fwd_primer, rev_primer) = match orientation {
-            Orientation::Forward => (
-                self.primers.forward.as_slice(),
-                self.primers.reverse_rc.as_slice(),
-            ),
-            Orientation::Reverse => (
-                self.primers.forward_rc.as_slice(),
-                self.primers.reverse.as_slice(),
-            ),
-        };
-
-        // Search for forward primer (max_cost is usize in sassy)
         let fwd_matches = self
-            .searcher
-            .search(fwd_primer, read_seq, self.max_mismatch as usize);
+            .search
+            .search_forward(&mut self.searcher, read_seq, orientation);
 
         if fwd_matches.is_empty() {
             return Err(FailureReason::NoForwardPrimer);
         }
 
-        // Search for reverse primer
         let rev_matches = self
-            .searcher
-            .search(rev_primer, read_seq, self.max_mismatch as usize);
+            .search
+            .search_reverse(&mut self.searcher, read_seq, orientation);
 
         if rev_matches.is_empty() {
             return Err(FailureReason::NoReversePrimer);
         }
 
-        // Find best valid amplicon
+        // Find best valid amplicon (coordinates are in read space)
         self.find_best_amplicon(&fwd_matches, &rev_matches, orientation)
     }
 
@@ -652,15 +848,23 @@ impl PrimerTrimProcessor {
 
         for fwd in fwd_matches {
             for rev in rev_matches {
-                // Check valid orientation (forward primer before reverse)
-                if fwd.text_end > rev.text_start {
+                // Determine insert boundaries based on orientation
+                // Forward: FWD at 5' end, REV_RC at 3' end → insert is fwd.text_end to rev.text_start
+                // Reverse: REV at 5' end, FWD_RC at 3' end → insert is rev.text_end to fwd.text_start
+                let (insert_start, insert_end) = match orientation {
+                    Orientation::Forward => (fwd.text_end, rev.text_start),
+                    Orientation::Reverse => (rev.text_end, fwd.text_start),
+                };
+
+                // Check valid structure (insert_start must be before insert_end)
+                if insert_start > insert_end {
                     // Primers overlap or in wrong order
                     has_invalid_structure = true;
                     continue;
                 }
 
                 // Trimmed length excludes primers (insert only)
-                let trimmed_len = rev.text_start - fwd.text_end;
+                let trimmed_len = insert_end - insert_start;
 
                 // Check length bounds on trimmed sequence
                 if trimmed_len < self.min_len {
@@ -674,8 +878,8 @@ impl PrimerTrimProcessor {
                 }
 
                 let candidate = AmpliconMatch {
-                    start: fwd.text_end, // Start after forward primer
-                    end: rev.text_start, // End before reverse primer
+                    start: insert_start,
+                    end: insert_end,
                     fwd_cost: fwd.cost,
                     rev_cost: rev.cost,
                     orientation,
@@ -805,6 +1009,24 @@ fn main() -> Result<()> {
     info!("Max mismatches: {}", args.max_mismatch);
     info!("Insert length bounds: {}-{} bp", args.min_len, args.max_len);
 
+    // Log search window settings
+    if args.forward_window > 0 {
+        info!(
+            "Forward primer search window: first {} bp",
+            args.forward_window
+        );
+    } else {
+        info!("Forward primer search window: entire read");
+    }
+    if args.reverse_window > 0 {
+        info!(
+            "Reverse primer search window: last {} bp",
+            args.reverse_window
+        );
+    } else {
+        info!("Reverse primer search window: entire read");
+    }
+
     // Create primer pair with pre-computed reverse complements
     let primers = PrimerPair::new(args.forward.as_bytes(), args.reverse.as_bytes());
 
@@ -841,15 +1063,29 @@ fn main() -> Result<()> {
         args.max_mismatch,
         args.min_len,
         args.max_len,
+        args.forward_window,
+        args.reverse_window,
         writer,
         args.format,
         stats.clone(),
     );
 
     // Read and process in parallel
-    info!("Reading and processing FASTQ records...");
-    let reader = fastq::Reader::from_path(&args.input)?;
+    let reader = fastx::Reader::from_path(&args.input)?;
+    let input_format = reader.format();
 
+    info!(
+        "Detected input format: {}",
+        match input_format {
+            fastx::Format::Fasta => "FASTA",
+            fastx::Format::Fastq => "FASTQ",
+        }
+    );
+
+    // Validate format combination before processing
+    validate_format_combination(input_format, args.format)?;
+
+    info!("Processing records...");
     reader
         .process_parallel(&mut processor, args.threads)
         .map_err(|e| anyhow::anyhow!("Processing failed: {}", e))?;
@@ -860,7 +1096,7 @@ fn main() -> Result<()> {
     let mut stats_output: Box<dyn Write> = match &args.stats {
         Some(path) => {
             info!("Writing statistics to: {:?}", path);
-            Box::new(std::fs::File::create(path)?)
+            Box::new(File::create(path)?)
         }
         None => {
             debug!("Writing statistics to stderr");
@@ -884,12 +1120,24 @@ mod tests {
     type SharedBuffer = Arc<Mutex<Vec<u8>>>;
     type TestWriterPair = (SharedWriter, SharedBuffer);
 
-    // Helper function to create a test processor
+    // Helper function to create a test processor (full-read search, no windows)
     fn create_test_processor(
         primers: PrimerPair,
         max_mismatch: u8,
         min_len: usize,
         max_len: usize,
+    ) -> PrimerTrimProcessor {
+        create_test_processor_with_windows(primers, max_mismatch, min_len, max_len, 0, 0)
+    }
+
+    // Helper function to create a test processor with custom search windows
+    fn create_test_processor_with_windows(
+        primers: PrimerPair,
+        max_mismatch: u8,
+        min_len: usize,
+        max_len: usize,
+        forward_window: usize,
+        reverse_window: usize,
     ) -> PrimerTrimProcessor {
         // Create a dummy writer that discards output
         let writer: Box<dyn std::io::Write + Send> = Box::new(std::io::sink());
@@ -901,6 +1149,8 @@ mod tests {
             max_mismatch,
             min_len,
             max_len,
+            forward_window,
+            reverse_window,
             writer,
             OutputFormat::Fastq,
             stats,
@@ -1123,13 +1373,17 @@ mod tests {
         let primers = PrimerPair::new(b"ACGT", b"TGCA");
         let mut processor = create_test_processor(primers, 0, 5, 100);
 
-        // Primers in wrong order: reverse before forward
+        // This read has REV at 5' and FWD_RC at 3' - this is valid reverse orientation!
+        // TGCA (REV) at position 0, ACGT (FWD_RC, palindromic) at position 10
         let read = b"TGCAATATATACGT";
         let result = processor.find_amplicon(read);
 
-        // Should not find valid amplicon (primers in wrong order)
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FailureReason::InvalidStructure);
+        // Should find valid amplicon in reverse orientation
+        assert!(result.is_ok());
+        let amplicon = result.unwrap();
+        assert_eq!(amplicon.orientation, Orientation::Reverse);
+        assert_eq!(amplicon.start, 4); // After REV primer
+        assert_eq!(amplicon.end, 10); // Before FWD_RC primer
     }
 
     // Phase 6 Tests: ParallelProcessor Integration
@@ -1145,6 +1399,8 @@ mod tests {
             0,
             5, // min_len=5 for insert only
             100,
+            0, // forward_window (0 = full read)
+            0, // reverse_window (0 = full read)
             writer,
             OutputFormat::Fastq,
             stats.clone(),
@@ -1187,6 +1443,8 @@ mod tests {
             0,
             10,
             100,
+            0, // forward_window (0 = full read)
+            0, // reverse_window (0 = full read)
             writer,
             OutputFormat::Fastq,
             stats.clone(),
@@ -1225,6 +1483,8 @@ mod tests {
             0,
             10,
             50,
+            0, // forward_window (0 = full read)
+            0, // reverse_window (0 = full read)
             writer,
             OutputFormat::Fastq,
             stats.clone(),
@@ -1360,7 +1620,7 @@ mod tests {
         let stats = Arc::new(TrimStats::default());
 
         let processor =
-            PrimerTrimProcessor::new(primers, 0, 5, 100, writer, OutputFormat::Fastq, stats);
+            PrimerTrimProcessor::new(primers, 0, 5, 100, 0, 0, writer, OutputFormat::Fastq, stats);
 
         let amplicon = AmpliconMatch {
             start: 4,
@@ -1421,6 +1681,8 @@ mod tests {
             0,
             5,
             100,
+            0, // forward_window (0 = full read)
+            0, // reverse_window (0 = full read)
             writer,
             OutputFormat::Fastq,
             stats.clone(),
@@ -1459,6 +1721,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1483,6 +1747,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1512,6 +1778,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1538,6 +1806,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1567,6 +1837,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1593,6 +1865,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let result = validate_args(&args);
@@ -1660,8 +1934,17 @@ mod tests {
         let (writer, buffer) = create_test_writer();
         let stats = Arc::new(TrimStats::default());
 
-        let processor =
-            PrimerTrimProcessor::new(primers, 0, 10, 100, writer, OutputFormat::Fastq, stats);
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            10,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fastq,
+            stats,
+        );
 
         let amplicon = AmpliconMatch {
             start: 4,
@@ -1697,8 +1980,17 @@ mod tests {
         let (writer, buffer) = create_test_writer();
         let stats = Arc::new(TrimStats::default());
 
-        let processor =
-            PrimerTrimProcessor::new(primers, 0, 10, 100, writer, OutputFormat::Fasta, stats);
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            10,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fasta,
+            stats,
+        );
 
         let amplicon = AmpliconMatch {
             start: 4,
@@ -1732,8 +2024,17 @@ mod tests {
         let (writer, _buffer) = create_test_writer();
         let stats = Arc::new(TrimStats::default());
 
-        let processor =
-            PrimerTrimProcessor::new(primers, 0, 10, 100, writer, OutputFormat::Fastq, stats);
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            10,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fastq,
+            stats,
+        );
 
         let amplicon = AmpliconMatch {
             start: 0,
@@ -1772,6 +2073,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: true,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let writer = create_writer(&args).unwrap();
@@ -1809,6 +2112,8 @@ mod tests {
             format: OutputFormat::Fastq,
             no_compress: false,
             stats: None,
+            forward_window: 0,
+            reverse_window: 0,
         };
 
         let writer = create_writer(&args).unwrap();
@@ -1830,5 +2135,288 @@ mod tests {
 
         // Cleanup
         std::fs::remove_file(&output_path).unwrap();
+    }
+
+    // Format combination validation tests
+
+    #[test]
+    fn test_validate_format_combination_fasta_to_fasta() {
+        // FASTA -> FASTA is valid
+        let result = validate_format_combination(fastx::Format::Fasta, OutputFormat::Fasta);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_format_combination_fasta_to_fastq() {
+        // FASTA -> FASTQ is invalid (no quality scores)
+        let result = validate_format_combination(fastx::Format::Fasta, OutputFormat::Fastq);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("quality scores"));
+    }
+
+    #[test]
+    fn test_validate_format_combination_fastq_to_fasta() {
+        // FASTQ -> FASTA is valid (quality scores discarded)
+        let result = validate_format_combination(fastx::Format::Fastq, OutputFormat::Fasta);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_format_combination_fastq_to_fastq() {
+        // FASTQ -> FASTQ is valid
+        let result = validate_format_combination(fastx::Format::Fastq, OutputFormat::Fastq);
+        assert!(result.is_ok());
+    }
+
+    // Windowed search tests
+
+    #[test]
+    fn test_window_bounds_no_limit() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let search = WindowedSearch::new(primers, 0, 0, 0);
+
+        // window_size=0 means search entire read
+        assert_eq!(search.window_bounds(100, 0, false), (0, 100));
+        assert_eq!(search.window_bounds(100, 0, true), (0, 100));
+    }
+
+    #[test]
+    fn test_window_bounds_at_5_prime() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let search = WindowedSearch::new(primers, 0, 50, 50);
+
+        // at_end=false means 5' end (first N bases)
+        assert_eq!(search.window_bounds(100, 50, false), (0, 50));
+    }
+
+    #[test]
+    fn test_window_bounds_at_3_prime() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let search = WindowedSearch::new(primers, 0, 50, 50);
+
+        // at_end=true means 3' end (last N bases)
+        assert_eq!(search.window_bounds(100, 50, true), (50, 100));
+    }
+
+    #[test]
+    fn test_window_bounds_larger_than_read() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let search = WindowedSearch::new(primers, 0, 200, 200);
+
+        // Window larger than read should search entire read
+        assert_eq!(search.window_bounds(100, 200, false), (0, 100));
+        assert_eq!(search.window_bounds(100, 200, true), (0, 100));
+    }
+
+    #[test]
+    fn test_windowed_search_forward_orientation_primer_in_window() {
+        // Forward orientation: FWD at 5' end, REV_RC at 3' end
+        // Using 4-base primers for simpler math
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Windows of 10 bases at each end
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 10, 10);
+
+        // 30bp read: FWD(4) + insert(18) + REV_RC(4) + padding(4) = 30bp
+        // FWD at 0-4, REV_RC at 22-26, padding at 26-30
+        // REV_RC of TGCA is TGCA (palindrome)
+        let read = b"ACGTATATATATATATATATATTGCAAAAA";
+        assert_eq!(read.len(), 30);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon when primers are within windows"
+        );
+        let amplicon = result.unwrap();
+        assert_eq!(amplicon.orientation, Orientation::Forward);
+        assert_eq!(amplicon.start, 4); // After forward primer
+        assert_eq!(amplicon.end, 22); // Before reverse primer RC
+    }
+
+    #[test]
+    fn test_windowed_search_forward_orientation_primer_outside_window() {
+        // Forward primer placed beyond the forward window
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Forward window of only 5 bases - primer starts at position 10
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 5, 15);
+
+        // 30bp read: padding(10) + FWD(4) + insert(8) + REV_RC(4) + padding(4) = 30bp
+        let read = b"AAAAAAAAAAAACGTATATATATATTGCAAAA";
+        assert_eq!(read.len(), 32);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_err(),
+            "Should not find amplicon when forward primer is outside window"
+        );
+        assert_eq!(result.unwrap_err(), FailureReason::NoForwardPrimer);
+    }
+
+    #[test]
+    fn test_windowed_search_forward_orientation_rev_primer_outside_window() {
+        // Reverse primer RC placed beyond the reverse window
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Reverse window of only 5 bases at 3' end
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 15, 5);
+
+        // 32bp read: FWD(4) + insert(8) + REV_RC(4) + padding(16) = 32bp
+        // REV_RC ends at position 16, but window only covers positions 27-32
+        let read = b"ACGTATATATATATTGCAAAAAAAAAAAAAAAA";
+        assert_eq!(read.len(), 33);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_err(),
+            "Should not find amplicon when reverse primer is outside window"
+        );
+        assert_eq!(result.unwrap_err(), FailureReason::NoReversePrimer);
+    }
+
+    #[test]
+    fn test_windowed_search_reverse_orientation_primer_in_window() {
+        // Reverse orientation: REV at 5' end, FWD_RC at 3' end
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Windows of 10 bases at each end
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 10, 10);
+
+        // 31bp read in reverse orientation: REV(4) + insert(18) + FWD_RC(4) + padding(5)
+        // REV = TGCA at 0-4, FWD_RC = ACGT at 22-26 (ACGT is palindromic)
+        let read = b"TGCAATATATATATATATATATACGTAAAAA";
+        assert_eq!(read.len(), 31);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon in reverse orientation"
+        );
+        let amplicon = result.unwrap();
+        assert_eq!(amplicon.orientation, Orientation::Reverse);
+        assert_eq!(amplicon.start, 4); // After reverse primer (rev.text_end)
+        assert_eq!(amplicon.end, 22); // Before forward primer RC (fwd.text_start)
+    }
+
+    #[test]
+    fn test_windowed_search_reverse_orientation_fwd_rc_outside_window() {
+        // In reverse orientation, FWD_RC is at 3' end (searched with forward_window)
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Forward window of only 5 bases at 3' end (in reverse orientation)
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 5, 15);
+
+        // 32bp read: REV(4) + insert(8) + FWD_RC(4) + padding(16) = 32bp
+        // FWD_RC at position 12-16, but forward_window=5 means we only search last 5 bases
+        let read = b"TGCAATATATATATACGTAAAAAAAAAAAAAAAA";
+        assert_eq!(read.len(), 34);
+
+        let result = processor.find_amplicon(read);
+        // Forward orientation also fails (no FWD at 5'), so we get NoForwardPrimer
+        assert!(
+            result.is_err(),
+            "Should not find amplicon when FWD_RC is outside window"
+        );
+    }
+
+    #[test]
+    fn test_windowed_search_reverse_orientation_rev_outside_window() {
+        // In reverse orientation, REV is at 5' end (searched with reverse_window)
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Reverse window of only 5 bases at 5' end (in reverse orientation)
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 15, 5);
+
+        // 32bp read: padding(10) + REV(4) + insert(8) + FWD_RC(4) + padding(6) = 32bp
+        // REV at position 10-14, but reverse_window=5 means we only search first 5 bases
+        let read = b"AAAAAAAAAATGCAATATATATATACGTAAAAAA";
+        assert_eq!(read.len(), 34);
+
+        let result = processor.find_amplicon(read);
+        // Forward orientation also fails (no FWD at 5'), reverse fails (REV outside window)
+        assert!(
+            result.is_err(),
+            "Should not find amplicon when REV is outside window"
+        );
+    }
+
+    #[test]
+    fn test_windowed_search_coordinate_adjustment() {
+        // Verify that match coordinates are correctly adjusted from window space to read space
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Windows of 15 bases at each end
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 15, 15);
+
+        // 40bp read with primers positioned within windows:
+        // FWD (ACGT) at position 9-13 (within 15-base window at 5' end: 0-15)
+        // REV_RC (TGCA) at position 29-33 (within 15-base window at 3' end: 25-40)
+        let read = b"AAAAAAAAAACGTATATATAAAAAAAAAATGCAAAAAAAA";
+        assert_eq!(read.len(), 40);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon with primers near window edges"
+        );
+        let amplicon = result.unwrap();
+
+        // Verify coordinates are in read space, not window space
+        // FWD ends at 13, REV_RC starts at 29
+        assert_eq!(amplicon.start, 13, "Start should be after forward primer");
+        assert_eq!(amplicon.end, 29, "End should be before reverse primer RC");
+    }
+
+    #[test]
+    fn test_windowed_search_both_orientations_tried() {
+        // When forward orientation fails due to windowing, reverse should still be tried
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 10, 10);
+
+        // 30bp read in reverse orientation with primers within windows
+        // REV at 5' (position 0-4), FWD_RC at 3' (position 26-30)
+        let read = b"TGCAATATATATATATATATATATACGT";
+        assert_eq!(read.len(), 28);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon in reverse orientation"
+        );
+        let amplicon = result.unwrap();
+        assert_eq!(amplicon.orientation, Orientation::Reverse);
+    }
+
+    #[test]
+    fn test_windowed_search_zero_window_searches_entire_read() {
+        // Window of 0 should behave like no windowing (search entire read)
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 0, 0);
+
+        // 40bp read with primers in the middle - would fail with small windows
+        let read = b"AAAAAAAAAAAAAAAACGTATATATATATTGCAAAAAAAAA";
+        assert_eq!(read.len(), 41);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon anywhere when windows are 0"
+        );
+    }
+
+    #[test]
+    fn test_windowed_search_asymmetric_windows() {
+        // Different window sizes for forward and reverse primers
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        // Large forward window (20), small reverse window (10)
+        let mut processor = create_test_processor_with_windows(primers, 0, 5, 200, 20, 10);
+
+        // 36bp read with:
+        // FWD (ACGT) at position 14-18 (within 20-base window at 5': 0-20)
+        // REV_RC (TGCA) at position 28-32 (within 10-base window at 3': 26-36)
+        let read = b"AAAAAAAAAAAAAAAACGTATATAAAAAAATGCAAAA";
+        assert_eq!(read.len(), 37);
+
+        let result = processor.find_amplicon(read);
+        assert!(
+            result.is_ok(),
+            "Should find amplicon with asymmetric windows"
+        );
+        let amplicon = result.unwrap();
+        assert_eq!(amplicon.orientation, Orientation::Forward);
     }
 }

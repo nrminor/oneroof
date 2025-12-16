@@ -20,7 +20,7 @@ process RASUSA_READ_DOWNSAMPLING {
     basename = file(amplicons).getName().replace(".fasta.gz", "")
     if ( params.downsample_to == 0 )
         """
-        cp ${amplicons} ${basename}.no_downsampling.fasta.gz
+        ln -s ${amplicons} ${basename}.no_downsampling.fasta.gz
         """
     else
         """
@@ -57,7 +57,7 @@ process EARLY_RASUSA_READ_DOWNSAMPLING {
     basename = file(amplicons).getName().replace(".fasta.gz", "")
     if ( params.early_downsample_to == 0 )
         """
-        cp ${amplicons} ${basename}.no_early_downsampling.fasta.gz
+        ln -s ${amplicons} ${basename}.no_early_downsampling.fasta.gz
         """
     else
         """
@@ -93,7 +93,7 @@ process RASUSA_ALN_DOWNSAMPLING {
     basename = file(bam).getName().replace(".bam", "")
     if ( params.downsample_to == 0 )
         """
-        cp ${bam} ${basename}.no_downsampling.bam
+        ln -s ${bam} ${basename}.no_downsampling.bam
         """
     else
         """

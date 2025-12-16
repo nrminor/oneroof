@@ -86,8 +86,6 @@ workflow NANOPORE {
 
         if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
 
-            error "Haplotyping is not yet available. Please review the github issue at https://github.com/bluenote-1577/devider/issues/4 for progress on the blocker for this feature."
-
             HAPLOTYPING (
                 alignment_outputs.index,
                 variant_outputs.annotate,

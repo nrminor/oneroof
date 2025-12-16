@@ -3,10 +3,10 @@ process PHASE_READS_WITH_DEVIDER {
     /* */
 
     tag "${sample_id}"
-    publishDir  params.haplotyping, mode: 'copy'
+    publishDir params.haplotyping, mode: 'copy'
 
-    // errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-    // maxRetries 2
+    errorStrategy task.attempt < 3 ? 'retry' : 'ignore' 
+    maxRetries 2
 
     cpus 4
 

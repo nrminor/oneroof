@@ -55,7 +55,7 @@ process CREATE_AMPLICON_TSV {
 
     script:
     """
-    amplicon_tsv.py --bed ${bed_file} --pattern "stats_*.tsv"
+    create_amplicon_tsv.py --bed ${bed_file} --pattern "stats_*.tsv"
     """
 }
 
@@ -97,6 +97,5 @@ process COLLECT_PRIMER_TSV {
     script:
     """
     awk -F"\t" 'BEGIN {print "amplicon_name\tfwd_sequence\treverse_sequence"} \$1 != "amplicon_name" {print \$0}' *.tsv > primer_pairs.tsv
-
     """
 }

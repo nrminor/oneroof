@@ -9,14 +9,15 @@ include { GET_PRIMER_PATTERNS;
           COLLECT_PRIMER_TSV;
           CREATE_AMPLICON_TSV;
 } from "../modules/primer_patterns"
+include { FIND_AND_TRIM_AMPLICONS  } from "../modules/find_and_trim_amplicons"
 include { GET_PRIMER_SEQS          } from "../modules/bedtools"
 include { FAIDX                    } from "../modules/samtools"
 include { ORIENT_READS             } from "../modules/vsearch"
-include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
+// include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
 include {
-    FIND_COMPLETE_AMPLICONS ;
+    // FIND_COMPLETE_AMPLICONS ;
     // TRIM_ENDS_TO_PRIMERS ;
-    PER_AMPLICON_FILTERS ;
+    // PER_AMPLICON_FILTERS ;
     MERGE_BY_SAMPLE ;
     AMPLICON_STATS
 } from "../modules/seqkit"
@@ -36,7 +37,7 @@ workflow PRIMER_HANDLING {
     ORIENT_READS(
         ch_basecalls
             .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFasta()) }
-            .filter { it[2] > 100 }
+            .filter { item -> item[2] > 100 }
             .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) },
         ch_refseq,
     )
@@ -106,29 +107,30 @@ workflow PRIMER_HANDLING {
             WRITE_PRIMER_FASTA.out
         )
     }
-
-
-    FIND_COMPLETE_AMPLICONS(
+    
+    FIND_AND_TRIM_AMPLICONS(
         ORIENT_READS.out.map { _barcode, fastq -> fastq }.combine(GET_PRIMER_PATTERNS.out)
     )
 
+    // FIND_COMPLETE_AMPLICONS(
+    //     ORIENT_READS.out.map { _barcode, fastq -> fastq }.combine(GET_PRIMER_PATTERNS.out)
+    // )
 
-    TRIM_ENDS_TO_PRIMERS(
-        FIND_COMPLETE_AMPLICONS.out
-    )
+    // TRIM_ENDS_TO_PRIMERS(
+    //     FIND_COMPLETE_AMPLICONS.out
+    // )
 
-    PER_AMPLICON_FILTERS(
-        TRIM_ENDS_TO_PRIMERS.out
-            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
-            .filter { it[2] > 0 }
-            .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
-    )
-
+    // PER_AMPLICON_FILTERS(
+    //     TRIM_ENDS_TO_PRIMERS.out
+    //         .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
+    //         .filter { it[2] > 0 }
+    //         .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
+    // )
 
     FAIDX(
-        PER_AMPLICON_FILTERS.out
+        FIND_AND_TRIM_AMPLICONS.out
             .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
-            .filter { it[2] > 0 }
+            .filter { item -> item[2] > 0 }
             .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
@@ -141,9 +143,9 @@ workflow PRIMER_HANDLING {
     )
 
     CREATE_AMPLICON_TSV(
-    AMPLICON_STATS.out.collect(),
-    RESPLICE_PRIMERS.out
-)
+        AMPLICON_STATS.out.collect(),
+        RESPLICE_PRIMERS.out
+    )
 
     MERGE_BY_SAMPLE(
         RASUSA_READ_DOWNSAMPLING.out.groupTuple(by: 0)

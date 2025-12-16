@@ -63,7 +63,6 @@ class Utils {
 
         Optional arguments:
         --primer_bed                   A bed file of primer coordinates relative to the reference provided with the parameters 'refseq' and 'ref_gbk'.
-        --sample_lookup                Lookup JSON file where the key is the barcode or sequencer ID and the value is the desired sample ID.
         --ref_gbk                      The reference sequence to be used for variant annotation in Genbank format.
         --fwd_suffix                   Suffix in the primer bed file denoting whether a primer is forward. Default: '_LEFT'
         --rev_suffix                   Suffix in the primer bed file denoting whether a primer is reverse. Default: '_RIGHT'
@@ -138,7 +137,6 @@ class Utils {
                 Local POD5 directory        : ${params.pod5_dir ?: ""}
                 Pre-basecalled directory    : ${params.precalled_staging ?: params.prepped_data}
                 Illumina FASTQs directory   : ${params.illumina_fastq_dir ?: ""}
-                Sample ID lookup            : ${params.sample_lookup ?: ""}
                 Results directory           : ${params.results}
                 Email Address(es)           : ${params.email ?: ""}
 
