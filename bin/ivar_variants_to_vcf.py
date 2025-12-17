@@ -20,6 +20,7 @@ to VCF format, using Polars expression chains for data transformation and Pydant
 for validation. Features a beautiful command-line interface built with Typer and Rich.
 """
 
+import gzip
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, cast
@@ -97,9 +98,17 @@ class IvarVariant(BaseModel):
     @field_validator("ref_rv", "alt_rv")
     @classmethod
     def validate_reverse_depth(cls, v: int, info: ValidationInfo) -> int:
-        """Ensure reverse depth doesn't exceed total depth."""
-        if "ref_dp" in info.data and v > info.data["ref_dp"]:
-            msg = "Reverse depth cannot exceed total depth"
+        """Ensure reverse depth doesn't exceed total depth for that allele."""
+        if info.field_name == "ref_rv":
+            depth_field = "ref_dp"
+        elif info.field_name == "alt_rv":
+            depth_field = "alt_dp"
+        else:
+            msg = f"Unexpected field in reverse depth validator: {info.field_name}"
+            raise ValueError(msg)
+
+        if depth_field in info.data and v > info.data[depth_field]:
+            msg = f"Reverse depth ({info.field_name}) cannot exceed total depth ({depth_field})"
             raise ValueError(msg)
         return v
 
@@ -178,7 +187,10 @@ class ConversionConfig(BaseModel):
 
 
 def calculate_strand_bias_pvalue(
-    ref_dp: int, ref_rv: int, alt_dp: int, alt_rv: int
+    ref_dp: int,
+    ref_rv: int,
+    alt_dp: int,
+    alt_rv: int,
 ) -> float:
     """Calculate p-value for strand bias using Fisher's exact test.
 
@@ -199,7 +211,7 @@ def calculate_strand_bias_pvalue(
     )
     _odds_ratio, pvalue = cast(
         "tuple[float, float]",
-        fisher_exact(contingency_table, alternative="greater"),
+        fisher_exact(contingency_table, alternative="two-sided"),
     )
     return pvalue
 
@@ -289,9 +301,7 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
 
     # iVar PASS filter
     filters.append(
-        pl.when(pl.col("PASS"))
-        .then(pl.lit(""))
-        .otherwise(pl.lit(FilterType.FAIL_TEST.value)),
+        pl.when(pl.col("PASS")).then(pl.lit("")).otherwise(pl.lit(FilterType.FAIL_TEST.value)),
     )
 
     # Quality filter
@@ -317,7 +327,8 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
         .list.join(";")
         .fill_null("")
         .map_elements(
-            lambda x: FilterType.PASS.value if x == "" else x, return_dtype=pl.Utf8
+            lambda x: FilterType.PASS.value if x == "" else x,
+            return_dtype=pl.Utf8,
         )
     )
 
@@ -345,7 +356,8 @@ def create_sample_info_expr() -> pl.Expr:
 
 
 def transform_ivar_to_vcf(
-    ivar_lf: pl.LazyFrame, config: ConversionConfig
+    ivar_lf: pl.LazyFrame,
+    config: ConversionConfig,
 ) -> pl.LazyFrame:
     """Transform iVar data to VCF format using pure expressions.
 
@@ -382,7 +394,7 @@ def transform_ivar_to_vcf(
                 ],
             ).alias("INFO"),
             pl.lit(
-                "GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ"
+                "GT:DP:REF_DP:REF_RV:REF_QUAL:ALT_DP:ALT_RV:ALT_QUAL:ALT_FREQ",
             ).alias("FORMAT"),
             create_sample_info_expr().alias("SAMPLE"),
         ],
@@ -400,7 +412,8 @@ def find_consecutive_variants_expr() -> pl.Expr:
 
 
 def process_consecutive_snps(
-    ivar_lf: pl.LazyFrame, config: ConversionConfig
+    ivar_lf: pl.LazyFrame,
+    config: ConversionConfig,
 ) -> pl.LazyFrame:
     """Process consecutive SNPs for potential merging.
 
@@ -509,7 +522,6 @@ def write_vcf_file(
     # Write file (handle gzipped output)
     if str(filepath).endswith(".gz"):
         # For gzip, we need to write everything as text to the same handle
-        import gzip
 
         with gzip.open(filepath, "wt") as f:
             f.write(header_text)
@@ -539,6 +551,52 @@ def process_ivar_file(config: ConversionConfig) -> None:
         task = progress.add_task("[cyan]Loading iVar data...", total=None)
         ivar_df = pl.scan_csv(str(config.file_in), separator="\t")
 
+        # Check if input has any data rows (collect schema to check)
+        progress.update(task, description="[yellow]Checking input data...")
+        try:
+            row_count = ivar_df.select(pl.len()).collect().item()
+        except pl.exceptions.NoDataError:
+            row_count = 0
+
+        # Generate headers (needed regardless of data)
+        progress.update(task, description="[yellow]Generating VCF headers...")
+        headers = generate_vcf_header(config)
+        sample_name = config.file_in.stem
+
+        if row_count == 0:
+            # Handle empty input: write VCF with headers only
+            progress.update(
+                task,
+                description="[yellow]No variants found, writing empty VCF...",
+            )
+            empty_df = pl.DataFrame(
+                schema={
+                    "CHROM": pl.Utf8,
+                    "POS": pl.Int64,
+                    "ID": pl.Utf8,
+                    "REF": pl.Utf8,
+                    "ALT": pl.Utf8,
+                    "QUAL": pl.Utf8,
+                    "FILTER": pl.Utf8,
+                    "INFO": pl.Utf8,
+                    "FORMAT": pl.Utf8,
+                    "SAMPLE": pl.Utf8,
+                },
+            )
+            write_vcf_file(empty_df, config.file_out, headers, sample_name)
+
+            all_hap_path = (
+                config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            )
+            write_vcf_file(empty_df, all_hap_path, headers, sample_name)
+
+            progress.update(
+                task,
+                description="[bold yellow]✓ No variants found, empty VCF written",
+                completed=True,
+            )
+            return
+
         # Transform to VCF format
         progress.update(task, description="[yellow]Transforming to VCF format...")
         vcf_df = transform_ivar_to_vcf(ivar_df, config)
@@ -551,13 +609,6 @@ def process_ivar_file(config: ConversionConfig) -> None:
         progress.update(task, description="[yellow]Collecting results...")
         result_df = processed_df.collect()
 
-        # Generate headers
-        progress.update(task, description="[yellow]Generating VCF headers...")
-        headers = generate_vcf_header(config)
-
-        # Get sample name from input file
-        sample_name = config.file_in.stem
-
         # Write consensus output
         progress.update(task, description="[green]Writing consensus VCF...")
         write_vcf_file(result_df, config.file_out, headers, sample_name)
@@ -565,13 +616,14 @@ def process_ivar_file(config: ConversionConfig) -> None:
         # Write all haplotypes output
         progress.update(task, description="[green]Writing all haplotypes VCF...")
         all_hap_path = (
-            config.file_out.parent
-            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         write_vcf_file(result_df, all_hap_path, headers, sample_name)
 
         progress.update(
-            task, description="[bold green]✓ Conversion complete!", completed=True
+            task,
+            description="[bold green]✓ Conversion complete!",
+            completed=True,
         )
 
 
@@ -758,14 +810,13 @@ def convert(  # noqa: PLR0913
 
         # Success message
         console.print(
-            f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}"
+            f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}",
         )
         all_hap_path = (
-            config.file_out.parent
-            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         console.print(
-            f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}"
+            f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}",
         )
 
     except Exception as e:  # noqa: BLE001
@@ -774,7 +825,7 @@ def convert(  # noqa: PLR0913
 
 
 @app.command()
-def validate(
+def validate(  # noqa: C901, PLR0912
     file_path: Annotated[
         Path,
         typer.Argument(
@@ -792,8 +843,6 @@ def validate(
     console.print(f"[cyan]Validating VCF file:[/cyan] {file_path}")
 
     try:
-        import gzip
-
         # Count header lines (handle gzipped files)
         header_count = 0
         if str(file_path).endswith(".gz"):
@@ -841,7 +890,7 @@ def validate(
 
         if missing_cols:
             console.print(
-                f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}"
+                f"\n[red]✗ Missing required columns:[/red] {', '.join(missing_cols)}",
             )
         else:
             console.print("\n[green]✓ All required VCF columns present[/green]")
@@ -905,8 +954,7 @@ def stats(
         console.print("\n[bold]Variant Types:[/bold]")
         snp_count = len(
             ivar_df.filter(
-                ~pl.col("ALT").str.starts_with("+")
-                & ~pl.col("ALT").str.starts_with("-"),
+                ~pl.col("ALT").str.starts_with("+") & ~pl.col("ALT").str.starts_with("-"),
             ),
         )
         ins_count = len(ivar_df.filter(pl.col("ALT").str.starts_with("+")))
@@ -929,8 +977,8 @@ def stats(
         for low, high in freq_bins:
             count = len(
                 ivar_df.filter(
-                    (pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high)
-                )
+                    (pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high),
+                ),
             )
             if count > 0:
                 console.print(f"  • {low:.0%}-{high:.0%}: {count:,} variants")

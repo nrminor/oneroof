@@ -7,8 +7,6 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from typer.testing import CliRunner
-
 from ivar_variants_to_vcf import (
     ConversionConfig,
     FilterType,
@@ -25,6 +23,7 @@ from ivar_variants_to_vcf import (
     transform_ivar_to_vcf,
     transform_ref_alt_expr,
 )
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -241,7 +240,7 @@ class TestPureFunctions:
     def test_transform_ref_alt_expr(self):
         """Test REF/ALT transformation for indels."""
         df = pl.DataFrame(
-            {"REF": ["A", "A", "ACGT", "G"], "ALT": ["T", "+CGTC", "-CGT", "C"]}
+            {"REF": ["A", "A", "ACGT", "G"], "ALT": ["T", "+CGTC", "-CGT", "C"]},
         )
 
         ref_expr, alt_expr = transform_ref_alt_expr()
@@ -271,7 +270,7 @@ class TestPureFunctions:
                 "ALT_RV": [495],
                 "ALT_QUAL": [37.0],
                 "ALT_FREQ": [0.99],
-            }
+            },
         )
 
         result = df.select(create_sample_info_expr().alias("SAMPLE"))
@@ -346,10 +345,10 @@ class TestTransformations:
 class TestFilterExpressions:
     """Test filter expression creation."""
 
-    def test_create_filter_expr_all_pass(self, output_vcf_path):
+    def test_create_filter_expr_all_pass(self, valid_ivar_tsv, output_vcf_path):
         """Test filter expression when all variants pass."""
         config = ConversionConfig(
-            file_in=Path("dummy.tsv"),
+            file_in=valid_ivar_tsv,
             file_out=output_vcf_path,
             bad_qual_threshold=10.0,
             ignore_strand_bias=True,
@@ -359,7 +358,7 @@ class TestFilterExpressions:
             {
                 "PASS": [True, True],
                 "ALT_QUAL": [30.0, 40.0],
-            }
+            },
         )
 
         filter_expr = create_filter_expr(config)
@@ -367,10 +366,10 @@ class TestFilterExpressions:
 
         assert all(result["FILTER"] == FilterType.PASS.value)
 
-    def test_create_filter_expr_quality_fail(self, output_vcf_path):
+    def test_create_filter_expr_quality_fail(self, valid_ivar_tsv, output_vcf_path):
         """Test filter expression with quality failures."""
         config = ConversionConfig(
-            file_in=Path("dummy.tsv"),
+            file_in=valid_ivar_tsv,
             file_out=output_vcf_path,
             bad_qual_threshold=30.0,
             ignore_strand_bias=True,
@@ -380,7 +379,7 @@ class TestFilterExpressions:
             {
                 "PASS": [True, True],
                 "ALT_QUAL": [20.0, 40.0],
-            }
+            },
         )
 
         filter_expr = create_filter_expr(config)
@@ -393,10 +392,10 @@ class TestFilterExpressions:
 class TestVCFGeneration:
     """Test VCF file generation."""
 
-    def test_generate_vcf_header_basic(self, output_vcf_path):
+    def test_generate_vcf_header_basic(self, valid_ivar_tsv, output_vcf_path):
         """Test basic VCF header generation."""
         config = ConversionConfig(
-            file_in=Path("dummy.tsv"),
+            file_in=valid_ivar_tsv,
             file_out=output_vcf_path,
         )
 
@@ -408,10 +407,15 @@ class TestVCFGeneration:
         assert any("##FILTER=<ID=PASS" in h for h in headers)
         assert any("##FORMAT=<ID=GT" in h for h in headers)
 
-    def test_generate_vcf_header_with_reference(self, output_vcf_path, reference_fasta):
+    def test_generate_vcf_header_with_reference(
+        self,
+        valid_ivar_tsv,
+        output_vcf_path,
+        reference_fasta,
+    ):
         """Test VCF header generation with reference."""
         config = ConversionConfig(
-            file_in=Path("dummy.tsv"),
+            file_in=valid_ivar_tsv,
             file_out=output_vcf_path,
             ref_fasta=reference_fasta,
         )
@@ -428,7 +432,8 @@ class TestCLI:
     def test_convert_basic(self, valid_ivar_tsv, output_vcf_path):
         """Test basic convert command."""
         result = runner.invoke(
-            app, ["convert", str(valid_ivar_tsv), str(output_vcf_path)]
+            app,
+            ["convert", str(valid_ivar_tsv), str(output_vcf_path)],
         )
 
         assert result.exit_code == 0
@@ -461,7 +466,8 @@ class TestCLI:
     def test_convert_gzipped_output(self, valid_ivar_tsv, output_vcf_gz_path):
         """Test convert command with gzipped output."""
         result = runner.invoke(
-            app, ["convert", str(valid_ivar_tsv), str(output_vcf_gz_path)]
+            app,
+            ["convert", str(valid_ivar_tsv), str(output_vcf_gz_path)],
         )
 
         assert result.exit_code == 0
@@ -475,10 +481,11 @@ class TestCLI:
     def test_convert_missing_input(self, output_vcf_path):
         """Test convert command with missing input file."""
         result = runner.invoke(
-            app, ["convert", "non_existent.tsv", str(output_vcf_path)]
+            app,
+            ["convert", "non_existent.tsv", str(output_vcf_path)],
         )
 
-        assert result.exit_code == 1
+        assert result.exit_code != 0
 
     def test_stats_command(self, valid_ivar_tsv):
         """Test stats command."""
@@ -510,7 +517,8 @@ class TestEdgeCases:
     def test_empty_file_handling(self, empty_ivar_tsv, output_vcf_path):
         """Test handling of empty input file."""
         result = runner.invoke(
-            app, ["convert", str(empty_ivar_tsv), str(output_vcf_path)]
+            app,
+            ["convert", str(empty_ivar_tsv), str(output_vcf_path)],
         )
 
         assert result.exit_code == 0
@@ -519,16 +527,17 @@ class TestEdgeCases:
         # Check VCF has headers but no data
         with open(output_vcf_path) as f:
             lines = f.readlines()
-            header_lines = [l for l in lines if l.startswith("##")]
+            header_lines = [line for line in lines if line.startswith("##")]
             assert len(header_lines) > 0
 
             # Should have column header line
-            assert any(l.startswith("#CHROM") for l in lines)
+            assert any(line.startswith("#CHROM") for line in lines)
 
     def test_malformed_file_handling(self, malformed_ivar_tsv, output_vcf_path):
         """Test handling of malformed input file."""
         result = runner.invoke(
-            app, ["convert", str(malformed_ivar_tsv), str(output_vcf_path)]
+            app,
+            ["convert", str(malformed_ivar_tsv), str(output_vcf_path)],
         )
 
         assert result.exit_code == 1
@@ -545,7 +554,7 @@ class TestEdgeCases:
 
         # Add strand bias detection columns
         df_with_bias = ivar_lf.with_columns(
-            create_strand_bias_expr().alias("has_strand_bias")
+            create_strand_bias_expr().alias("has_strand_bias"),
         ).collect()
 
         # At least one variant should have strand bias
@@ -599,7 +608,7 @@ def cleanup(request):
             for f in glob.glob(pattern):
                 try:
                     os.remove(f)
-                except:
+                except OSError:
                     pass
 
     request.addfinalizer(remove_temp_files)

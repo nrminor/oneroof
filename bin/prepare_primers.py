@@ -492,7 +492,10 @@ def generate_splice_combinations(
 
     result: list[tuple[BedRecord, str]] = []
 
-    for splice_idx, ((fwd_rec, fwd_name), (rev_rec, rev_name)) in enumerate(all_pairs, 1):
+    for splice_idx, ((fwd_rec, fwd_name), (rev_rec, rev_name)) in enumerate(
+        all_pairs,
+        1,
+    ):
         # Strip the index suffix and add splice identifier
         fwd_base = fwd_name.rsplit("-", 1)[0]
         rev_base = rev_name.rsplit("-", 1)[0]

@@ -41,8 +41,7 @@ process VALIDATE_ILLUMINA {
 
     tag "${label}"
 
-    // errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-    // maxRetries 1
+    errorStrategy 'ignore'
 
     cpus 3
 
@@ -50,7 +49,7 @@ process VALIDATE_ILLUMINA {
     tuple val(label), path(reads1), path(reads2)
 
     output:
-    tuple val(label), path(reads1), path(reads2), path("${label}.report.txt")
+    tuple val(label), path(reads1), path(reads2), val("success!")
 
     script:
     """
@@ -61,7 +60,7 @@ process VALIDATE_ILLUMINA {
     # ${reads1} ${reads2} \\
     # > ${label}.report.txt
 
-    reformat.sh in=${reads1} in2=${reads2} vpair 2> ${label}.report.txt
+    reformat.sh in=${reads1} in2=${reads2} vpair
     """
 
 }

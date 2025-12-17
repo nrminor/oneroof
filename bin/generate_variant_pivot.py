@@ -44,7 +44,7 @@ def main() -> None:
         separator="\t",
         has_header=False,
         skip_rows=1,
-        columns=[
+        new_columns=[
             "contig",
             "ref",
             "pos",
@@ -60,7 +60,7 @@ def main() -> None:
             "aa_pos",
         ],
     ).with_columns(pl.col("aa_effect").str.replace(".p", "").alias("aa_effect"))
-    logger.info("Hi mom!")
+    logger.info("Pivot implementation coming soon!")
 
 
 if __name__ == "__main__":

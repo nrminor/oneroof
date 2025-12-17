@@ -4391,7 +4391,7 @@ packages:
 - pypi: ./
   name: oneroof
   version: 2.0.0
-  sha256: 14fe54f3c76c8c14399260663db3ff42b0a4f57474eca2ca2e4dae49283aa245
+  sha256: 55465aa527a1a5a4197b9d2d3556ae70e2f5c3ce7782966591ca4700f5798f8f
   requires_dist:
   - biopython>=1.84
   - pysam>=0.22.1

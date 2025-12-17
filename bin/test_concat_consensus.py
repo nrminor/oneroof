@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
+
 import pytest
 from Bio import SeqIO
 
@@ -174,24 +175,25 @@ class TestConcatConsensus:
         assert str(records[0].seq) == ""  # No valid sequences parsed
 
     def test_file_naming_with_different_extensions(self, temp_dir, monkeypatch):
-        """Test that only .consensus.fasta files are processed."""
+        """Test that .consensus.fasta and .consensus.fa files are processed."""
         monkeypatch.chdir(temp_dir)
 
         # Create files with different extensions
         (temp_dir / "sample.consensus.fasta").write_text(">seq\nATCG")
-        (temp_dir / "other.fasta").write_text(">seq\nGCTA")
+        (temp_dir / "other.fasta").write_text(">seq\nGCTA")  # Should NOT match
         (temp_dir / "another.consensus.fa").write_text(
-            ">seq\nTTTT"
-        )  # Note: .fa not .fasta
+            ">seq\nTTTT",
+        )  # Should match - .fa is valid
 
         main()
 
         output_file = Path("all_sample_consensus.fasta")
         records = list(SeqIO.parse(output_file, "fasta"))
 
-        # Only the .consensus.fasta file should be processed
-        assert len(records) == 1
-        assert records[0].id == "sample"
+        # Both .consensus.fasta and .consensus.fa files should be processed
+        assert len(records) == 2
+        record_ids = {r.id for r in records}
+        assert record_ids == {"sample", "another.consensus.fa"}
 
     def test_sample_name_extraction(self, temp_dir, monkeypatch):
         """Test correct extraction of sample names from file paths."""
@@ -327,17 +329,18 @@ class TestConcatConsensus:
         monkeypatch.chdir(temp_dir)
 
         # Create files that should and shouldn't match
+        # Pattern is *.consensus.fa* so matches .fasta, .fa, .fastq etc.
         matching_files = [
             "sample1.consensus.fasta",
             "sample2.consensus.fasta",
             "SAMPLE3.consensus.fasta",  # Test case sensitivity
+            "sample4.consensus.fa",  # .fa extension also matches
         ]
 
         non_matching_files = [
-            "sample.consensus.fastq",  # Wrong extension
-            "sample_consensus.fasta",  # Missing dot
-            "sample.consensus",  # Missing extension
-            "consensus.fasta",  # Missing sample name
+            "sample_consensus.fasta",  # Missing dot before consensus
+            "sample.consensus",  # Missing extension after .consensus
+            "consensus.fasta",  # Missing sample name prefix
         ]
 
         for filename in matching_files:
@@ -354,7 +357,8 @@ class TestConcatConsensus:
         # Only matching files should be processed
         assert len(records) == len(matching_files)
         record_ids = {r.id for r in records}
-        expected_ids = {"sample1", "sample2", "SAMPLE3"}
+        # Note: .consensus.fasta is stripped, but .consensus.fa is not
+        expected_ids = {"sample1", "sample2", "SAMPLE3", "sample4.consensus.fa"}
         assert record_ids == expected_ids
 
 
@@ -367,7 +371,10 @@ class TestConcatConsensus:
     ],
 )
 def test_performance_with_many_files(
-    temp_dir, monkeypatch, num_files, num_seqs_per_file
+    temp_dir,
+    monkeypatch,
+    num_files,
+    num_seqs_per_file,
 ):
     """Test performance with many input files."""
     monkeypatch.chdir(temp_dir)

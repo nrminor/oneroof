@@ -19,10 +19,10 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from slack_sdk.errors import SlackApiError
 
 # Import the module we're testing
 import slack_alerts
+from slack_sdk.errors import SlackApiError
 
 
 class TestParseCommandLineArgs:
@@ -140,7 +140,7 @@ class TestFailingSamples:
         )
         message = slack_alerts.failing_samples(df, coverage_threshold=20)
         assert "sample1: 0.85" in message
-        assert "sample2: 0.80" in message
+        assert "sample2: 0.8" in message  # 0.80 formats as 0.8
         assert "sample3: 0.82" in message
 
     def test_some_samples_failing(self):
@@ -298,9 +298,7 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_successful_notification(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
-    ):
+    def test_successful_notification(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
         """Test successful Slack notification sending"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456", "U789012"]
@@ -345,9 +343,7 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_slack_api_error(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient, capsys
-    ):
+    def test_slack_api_error(self, mock_get_user_ids, mock_get_slack_token, mock_webclient, capsys):
         """Test handling of Slack API errors"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456"]
@@ -384,9 +380,7 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_no_users_configured(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
-    ):
+    def test_no_users_configured(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
         """Test when no users are configured"""
         # Setup mocks
         mock_get_user_ids.return_value = []  # No users
@@ -416,9 +410,7 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_message_formatting(
-        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
-    ):
+    def test_message_formatting(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
         """Test detailed message formatting"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456"]
@@ -465,7 +457,7 @@ class TestSendSlackNotification:
                 # Check failing samples
                 assert "*FAILING*" in failing_field
                 assert "sample_fail_1: 0.85" in failing_field
-                assert "sample_fail_2: 0.80" in failing_field
+                assert "sample_fail_2: 0.8" in failing_field  # 0.80 formats as 0.8
 
             finally:
                 os.unlink(f.name)

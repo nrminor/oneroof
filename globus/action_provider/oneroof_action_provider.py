@@ -37,7 +37,7 @@ def load_config() -> dict[str, Any]:
         "ONEROOF_PATH": os.environ.get(
             "ONEROOF_PATH",
             os.path.dirname(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             ),
         ),
         "WORK_BASE_DIR": os.environ.get("ONEROOF_WORK_DIR", "/tmp/oneroof_runs"),
@@ -171,7 +171,7 @@ def run_pipeline(data: dict[str, Any]) -> dict[str, Any]:
             str(work_dir / "output"),
             "-work-dir",
             str(work_dir / "work"),
-        ]
+        ],
     )
 
     # Add profile
@@ -250,7 +250,7 @@ def collect_logs(data: dict[str, Any]) -> dict[str, Any]:
     if "nextflow" in logs:
         # Try to extract error from log
         lines = logs["nextflow"].split("\n")
-        error_lines = [l for l in lines if "ERROR" in l or "WARN" in l]
+        error_lines = [line for line in lines if "ERROR" in line or "WARN" in line]
         if error_lines:
             message += "\nRecent errors:\n" + "\n".join(error_lines[-10:])
 

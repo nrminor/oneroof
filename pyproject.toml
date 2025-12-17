@@ -62,6 +62,9 @@ dependencies = [
 channels = ["conda-forge", "bioconda", "anaconda"]
 platforms = ["osx-64", "linux-64", "osx-arm64"]
 
+[tool.pixi.activation]
+env = { RUSTFLAGS = "-C target-cpu=native" }
+
 [tool.pixi.dependencies]
 nextflow = ">=24.4.2,<24.5"
 bbmap = ">=39.1,<40"
@@ -91,8 +94,8 @@ fq = { version = ">=0.12,<0.13", channel = "bioconda" }
 [tool.pixi.target.linux-64.dependencies]
 fq = { version = ">=0.12,<0.13", channel = "bioconda" }
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
   "basedpyright>=1.21.0",
   "ipykernel>=6.29.5",
   "ipython>=8.12.3",
@@ -106,6 +109,8 @@ dev-dependencies = [
   "tox>=4.18.1",
   "ty>=0.0.0a8",
 ]
+
+[tool.uv]
 compile-bytecode = true
 
 [build-system]
