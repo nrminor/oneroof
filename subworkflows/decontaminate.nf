@@ -3,7 +3,6 @@ include { RUN_DEACON         } from "../modules/deacon"
 
 workflow DECONTAMINATE {
     take:
-    contam_fasta
     ch_fastqs
 
     main:
@@ -12,6 +11,14 @@ workflow DECONTAMINATE {
 
     RUN_DEACON(ch_fastqs.combine(INDEX_CONTAMINANTS.out))
 
+    GET_INDEX()
+
+    DECON (
+        ch_fastqs.combine(GET_INDEX.out)
+    )
+
+    }
+    
     emit:
     RUN_DEACON.out
 }

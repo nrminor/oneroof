@@ -8,12 +8,14 @@ process INDEX_CONTAMINANTS {
 	cpus 1
 
     input:
-    path contam_fasta
+    // tuple path(contam_fasta), val(sample_id)
+    tuple path(contam_fasta)
 
     output:
     path "*.idx"
 
     script:
+
     def dbName = file(contam_fasta).getSimpleName()
     """
     deacon index build ${contam_fasta} > ${dbName}.idx

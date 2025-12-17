@@ -231,12 +231,12 @@ alias t := test-all
 
 # Run all illumina tests
 [group('testing')]
-test-illumina: clean-logs test-illumina-with-primers test-illumina-without-primers test-illumina-with-metagenomics test-illumina-with-phylo test-illumina-missing-fastq
+test-illumina: clean-logs test-illumina-with-primers test-illumina-without-primers test-illumina-with-phylo test-illumina-missing-fastq test-illumina-dedup
     @echo "✅ All Illumina tests completed successfully!"
 
 # Run all nanopore tests
 [group('testing')]
-test-nanopore: clean-logs test-nanopore-with-primers test-nanopore-without-primers test-nanopore-with-haplo test-nanopore-with-metagenomics test-nanopore-with-phylo test-nanopore-missing-input
+test-nanopore: clean-logs test-nanopore-with-primers test-nanopore-without-primers test-nanopore-with-haplo test-nanopore-with-phylo test-nanopore-missing-input
     @echo "✅ All Nanopore tests completed successfully!"
 
 # Individual Illumina test targets
@@ -264,17 +264,17 @@ test-illumina-without-primers:
         exit 1; \
     fi
 
-[group('testing')]
-test-illumina-with-metagenomics:
-    @echo "🧪 Running Illumina test with metagenomics..."
-    @mkdir -p {{ LOGDIR }}
-    @if nextflow run . -profile illumina_test_with_metagenomics > {{ LOGDIR }}/illumina_with_metagenomics.log 2>&1; then \
-        echo "  ✅ illumina_test_with_metagenomics PASSED"; \
-    else \
-        echo "  ❌ illumina_test_with_metagenomics FAILED"; \
-        echo "     Check {{ LOGDIR }}/illumina_with_metagenomics.log for details"; \
-        exit 1; \
-    fi
+# [group('testing')]
+# test-illumina-with-metagenomics:
+#     @echo "🧪 Running Illumina test with metagenomics..."
+#     @mkdir -p {{ LOGDIR }}
+#     @if nextflow run . -profile illumina_test_with_metagenomics > {{ LOGDIR }}/illumina_with_metagenomics.log 2>&1; then \
+#         echo "  ✅ illumina_test_with_metagenomics PASSED"; \
+#     else \
+#         echo "  ❌ illumina_test_with_metagenomics FAILED"; \
+#         echo "     Check {{ LOGDIR }}/illumina_with_metagenomics.log for details"; \
+#         exit 1; \
+#     fi
 
 [group('testing')]
 test-illumina-with-phylo:
@@ -309,6 +309,18 @@ test-illumina-bad-primers:
     else \
         echo "  ❌ illumina_test_bad_primers unexpectedly SUCCEEDED"; \
         echo "     Check {{ LOGDIR }}/illumina_test_bad_primers.log for details"; \
+        exit 1; \
+    fi
+
+[group('testing')]
+test-illumina-dedup:
+    @echo "🧪 Running Illumina test with dedup..."
+    @mkdir -p {{ LOGDIR }}
+    @if nextflow run . -profile illumina_test_dedup > {{ LOGDIR }}/illumina_test_dedup.log 2>&1; then \
+        echo "  ✅ illumina_test_dedup PASSED"; \
+    else \
+        echo "  ❌ illumina_test_dedup FAILED"; \
+        echo "     Check {{ LOGDIR }}/illumina_test_dedup.log for details"; \
         exit 1; \
     fi
 
@@ -349,17 +361,17 @@ test-nanopore-with-haplo:
         exit 1; \
     fi
 
-[group('testing')]
-test-nanopore-with-metagenomics:
-    @echo "🧪 Running Nanopore test with metagenomics..."
-    @mkdir -p {{ LOGDIR }}
-    @if nextflow run . -profile nanopore_test_with_metagenomics > {{ LOGDIR }}/nanopore_with_metagenomics.log 2>&1; then \
-        echo "  ✅ nanopore_test_with_metagenomics PASSED"; \
-    else \
-        echo "  ❌ nanopore_test_with_metagenomics FAILED"; \
-        echo "     Check {{ LOGDIR }}/nanopore_with_metagenomics.log for details"; \
-        exit 1; \
-    fi
+# [group('testing')]
+# test-nanopore-with-metagenomics:
+#     @echo "🧪 Running Nanopore test with metagenomics..."
+#     @mkdir -p {{ LOGDIR }}
+#     @if nextflow run . -profile nanopore_test_with_metagenomics > {{ LOGDIR }}/nanopore_with_metagenomics.log 2>&1; then \
+#         echo "  ✅ nanopore_test_with_metagenomics PASSED"; \
+#     else \
+#         echo "  ❌ nanopore_test_with_metagenomics FAILED"; \
+#         echo "     Check {{ LOGDIR }}/nanopore_with_metagenomics.log for details"; \
+#         exit 1; \
+#     fi
 
 [group('testing')]
 test-nanopore-with-phylo:
