@@ -503,7 +503,7 @@ def generate_nextflow_command(args: argparse.Namespace) -> str:
     params_str = " ".join(nextflow_params)
 
     # Construct and return the full Nextflow command
-    return f"nextflow run . {params_str}"
+    return f"nextflow run {HERE} {params_str}"
 
 
 def run_nextflow(run_command: str) -> None:
@@ -519,20 +519,19 @@ def run_nextflow(run_command: str) -> None:
         None
 
     The function performs the following steps:
-    1. Writes the run command to a '.nfresume' file, appending '-resume' if not already present.
-    2. If the command ends with '-resume', it only writes to the file and returns.
-    3. Splits the command into a list and executes it using subprocess.run().
+    1. Writes the resume-enabled version of the command to '.nfresume' for future use.
+    2. Executes the command (with -resume appended if not already present).
     """
+    if run_command.endswith("-resume"):
+        resume_command = run_command
+    else:
+        resume_command = f"{run_command} -resume"
 
     with Path(".nfresume").open("w", encoding="utf8") as resume_handle:
-        if run_command.endswith("-resume"):
-            resume_handle.write(run_command)
-            return
-        resume_handle.write(f"{run_command} -resume")
+        resume_handle.write(resume_command)
 
-    split_command = run_command.split("")
+    split_command = shlex.split(resume_command)
     subprocess.run(split_command, check=True)  # noqa: S603
-    return
 
 
 def resume_nextflow() -> None:
