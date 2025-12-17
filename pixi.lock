@@ -4390,8 +4390,8 @@ packages:
   timestamp: 1763350985482
 - pypi: ./
   name: oneroof
-  version: 1.0.0
-  sha256: d0fd834290bd1ebd5d493eb72bd2f8bd7a66ed3bd5ecfc87daa4e77ac96feee2
+  version: 2.0.0
+  sha256: 14fe54f3c76c8c14399260663db3ff42b0a4f57474eca2ca2e4dae49283aa245
   requires_dist:
   - biopython>=1.84
   - pysam>=0.22.1

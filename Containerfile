@@ -55,7 +55,7 @@ RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash
 # 3) make sure pixi and pixi installs are on the $PATH
 ENV PATH=$PATH:$HOME/.pixi/bin
 
-# 4) install everything else with pixi
+# 4) install everything else with pixi (rust-script brings in the full Rust toolchain)
 RUN cd $HOME && pixi install --verbose --color=always --frozen && pixi clean cache --assume-yes
 
 # 5) modify the shell config so that each container launches within the pixi env
@@ -69,8 +69,12 @@ RUN echo "export NXF_HOME=/scratch" >> $HOME/.bashrc
 # --------------------------------
 # This avoids rust-script JIT compilation overhead on every process invocation.
 # Local (non-container) runs still use rust-script directly via the .rs files.
+# Note: rust-script depends on the full Rust toolchain, so cargo is available.
+# We must add the pixi bin to PATH so cargo can find rustc.
 COPY Cargo.toml $HOME/Cargo.toml
 COPY Cargo.lock $HOME/Cargo.lock
 COPY bin/find_and_trim_amplicons.rs $HOME/bin/find_and_trim_amplicons.rs
-RUN cd $HOME && $HOME/.pixi/envs/default/bin/cargo build --release && \
+RUN cd $HOME && \
+    export PATH="$HOME/.pixi/envs/default/bin:$PATH" && \
+    cargo build --release && \
     cp $HOME/target/release/find_and_trim_amplicons $HOME/.pixi/envs/default/bin/
