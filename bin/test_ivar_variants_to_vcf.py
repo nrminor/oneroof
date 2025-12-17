@@ -535,7 +535,7 @@ class TestEdgeCases:
 
     def test_strand_bias_detection(self, strand_bias_ivar_tsv, output_vcf_path):
         """Test strand bias detection."""
-        config = ConversionConfig(
+        ConversionConfig(
             file_in=strand_bias_ivar_tsv,
             file_out=output_vcf_path,
             ignore_strand_bias=False,

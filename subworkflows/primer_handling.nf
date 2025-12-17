@@ -21,7 +21,7 @@ include {
     AMPLICON_STATS
 } from "../modules/seqkit"
 include { FILTER_WITH_CHOPPER      } from "../modules/chopper"
-include { RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
+include { READ_DOWNSAMPLING } from "../modules/rasusa"
 
 
 workflow PRIMER_HANDLING {
@@ -130,12 +130,12 @@ workflow PRIMER_HANDLING {
             .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
-    RASUSA_READ_DOWNSAMPLING(
+    READ_DOWNSAMPLING(
         FAIDX.out
     )
 
     AMPLICON_STATS(
-        RASUSA_READ_DOWNSAMPLING.out.groupTuple(by: 0)
+        READ_DOWNSAMPLING.out.groupTuple(by: 0)
     )
 
     CREATE_AMPLICON_TSV(
@@ -144,7 +144,7 @@ workflow PRIMER_HANDLING {
     )
 
     MERGE_BY_SAMPLE(
-        RASUSA_READ_DOWNSAMPLING.out.groupTuple(by: 0)
+        READ_DOWNSAMPLING.out.groupTuple(by: 0)
     )
 
     emit:

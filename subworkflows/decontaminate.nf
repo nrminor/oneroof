@@ -1,24 +1,20 @@
-include { INDEX_CONTAMINANTS } from "../modules/deacon"
-include { RUN_DEACON         } from "../modules/deacon"
+include { INDEX_CONTAMINANTS ; RUN_DEACON ; GET_INDEX } from "../modules/deacon"
 
 workflow DECONTAMINATE {
     take:
     ch_fastqs
+    ch_contam_fasta
 
     main:
 
-    INDEX_CONTAMINANTS(contam_fasta)
+    INDEX_CONTAMINANTS(ch_contam_fasta)
 
     RUN_DEACON(ch_fastqs.combine(INDEX_CONTAMINANTS.out))
 
     GET_INDEX()
 
-    DECON (
-        ch_fastqs.combine(GET_INDEX.out)
-    )
+    RUN_DEACON(ch_fastqs.combine(GET_INDEX.out))
 
-    }
-    
     emit:
     RUN_DEACON.out
 }

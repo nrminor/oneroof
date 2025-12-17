@@ -123,10 +123,15 @@ class Utils {
                 Permitted primer mismatches : ${params.max_mismatch}
                 Forward primer search window: ${params.forward_window != 0 ? params.forward_window + " bp" : "Entire read"}
                 Reverse primer search window: ${params.reverse_window != 0 ? params.reverse_window + " bp" : "Entire read"}
+                Early downsampling          : ${params.early_downsample_to != 0 ? params.early_downsample_to + "X" : "No early downsampling"}
                 Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to + "X" : "No downsampling"}
                 Secondary alignments        : ${params.secondary ? "on" : "off"}
+                Deduplication               : ${params.dedup ? "on" : "off"}
+                Low memory mode             : ${params.low_memory ? "on" : "off"}
                 Minimum coverage            : ${params.min_depth_coverage}X
                 Minimum consensus frequency : ${params.min_consensus_freq}
+                Min. haplotype reads        : ${params.min_haplo_reads}
+                Haplotype phasing preset    : ${params.devider_preset ?: ""}
                 NextClade Dataset           : ${params.nextclade_dataset ?: ""}
 
                 User-provided inputs and outputs:
@@ -134,6 +139,8 @@ class Utils {
                 Primer BED file             : ${params.primer_bed ?: ""}
                 Reference sequence FASTA    : ${params.refseq}
                 Reference sequence GBK      : ${params.ref_gbk ?: ""}
+                Metagenomics reference      : ${params.meta_ref ?: ""}
+                Decontamination reference   : ${params.contam_fasta ?: ""}
                 File watcher config         : ${params.file_watcher_config ?: ""}
                 Remote POD5 directory       : ${params.remote_pod5_location ?: ""}
                 Local POD5 directory        : ${params.pod5_dir ?: ""}

@@ -1,59 +1,123 @@
+/*
+ * Metagenomics subworkflow
+ *
+ * Performs metagenomic profiling using Sylph and optionally adds
+ * taxonomic annotations using sylph-tax.
+ *
+ * Input options for the reference database:
+ *   - Pre-built .syldb file (params.meta_ref)
+ *   - Custom FASTA to be sketched (params.meta_ref)
+ *   - URL to download a .syldb (params.sylph_db_link)
+ *
+ * Taxonomy is added if params.sylph_tax_db is set to a valid
+ * taxonomy identifier (e.g., "GTDB_r220", "IMGVR_4.1").
+ */
+
 include {
-    SKETCH_DATABASE_KMERS ;
-    SKETCH_SAMPLE_KMERS ;
-    CLASSIFY_SAMPLE ;
-    OVERLAY_TAXONOMY ;
-    SYLPH_TAX_DOWNLOAD ;
-    MERGE_TAXONOMY ;
-    DOWNLOAD_DB_LINK
+    DOWNLOAD_SYLPH_DB ;
+    SKETCH_DATABASE ;
+    SKETCH_SAMPLES ;
+    PROFILE_SAMPLES ;
+    DOWNLOAD_TAXONOMY ;
+    ADD_TAXONOMY ;
+    MERGE_TAXONOMY
 } from "../modules/sylph"
 
+
 workflow METAGENOMICS {
+
     take:
-    ch_metagenome_ref
-    ch_sylph_tax_db
-    ch_meta_ref_link
-    ch_sample_reads
+    ch_sample_reads      // tuple(sample_id, reads)
+    ch_meta_ref          // path to .syldb or .fasta, or empty channel
+    ch_sylph_db_link     // URL string to download .syldb, or empty channel
+    ch_sylph_tax_db      // taxonomy identifier string (e.g., "GTDB_r220"), or empty channel
 
     main:
 
-    if (params.sylph_db_link) {
-        // This captures the output from the process into a new variable
-        ch_metagenome_link = DOWNLOAD_DB_LINK(ch_meta_ref_link)
-        ch_prebuilt_ref = ch_metagenome_link.filter { fa ->
-            !file(fa).getBaseName().endsWith("fasta") || !file(fa).getBaseName().endsWith("fasta")
+    // -------------------------------------------------------------------------
+    // Step 1: Resolve the sylph database
+    // -------------------------------------------------------------------------
+    // Three options:
+    //   a) Download from URL if sylph_db_link is provided
+    //   b) Use pre-built .syldb file directly
+    //   c) Sketch custom FASTA into .syldb
+
+    ch_downloaded_db = params.sylph_db_link
+        ? DOWNLOAD_SYLPH_DB(ch_sylph_db_link)
+        : Channel.empty()
+
+    // Branch the meta_ref channel by file type
+    ch_meta_ref
+        .branch { ref ->
+            prebuilt: ref.name.endsWith('.syldb')
+            custom: true  // .fasta, .fa, .fna, etc.
         }
-    }
-    else {
-        ch_prebuilt_ref = ch_metagenome_ref.filter { fa ->
-            !file(fa).getBaseName().endsWith("fasta") || !file(fa).getBaseName().endsWith("fasta")
-        }
-    }
+        .set { ch_ref_branched }
 
-    ch_custom_ref = ch_metagenome_ref.filter { fa ->
-        file(fa).getBaseName().endsWith("fasta") || file(fa).getBaseName().endsWith("fasta")
-    }
+    // Sketch custom FASTA references
+    ch_sketched_db = SKETCH_DATABASE(ch_ref_branched.custom)
 
-    SKETCH_DATABASE_KMERS(ch_custom_ref)
+    // Combine all database sources into one channel
+    ch_syldb = ch_downloaded_db
+        .mix(ch_ref_branched.prebuilt)
+        .mix(ch_sketched_db)
 
-    ch_sylph_db_queue = SKETCH_DATABASE_KMERS.out.mix(ch_prebuilt_ref)
+    // -------------------------------------------------------------------------
+    // Step 2: Sketch sample reads (only if we have a database to profile against)
+    // -------------------------------------------------------------------------
+    // Combine samples with database first - if ch_syldb is empty, nothing runs
+    ch_samples_with_db = ch_sample_reads.combine(ch_syldb)
 
-    SKETCH_SAMPLE_KMERS(ch_sample_reads)
-
-    CLASSIFY_SAMPLE(
-        SKETCH_SAMPLE_KMERS.out.combine(ch_sylph_db_queue)
+    SKETCH_SAMPLES(
+        ch_samples_with_db.map { sample_id, reads, _syldb -> tuple(sample_id, reads) }
     )
 
-    ch_classified = CLASSIFY_SAMPLE.out.filter { _id, sketch -> file(sketch).countLines() > 1 }
+    // -------------------------------------------------------------------------
+    // Step 3: Profile samples against database
+    // -------------------------------------------------------------------------
+    // Rejoin sketches with database for profiling
+    ch_sketches_with_db = SKETCH_SAMPLES.out.sketch
+        .combine(ch_syldb)
+
+    PROFILE_SAMPLES(ch_sketches_with_db)
+
+    // Filter out empty results (only header line)
+    ch_profiles = PROFILE_SAMPLES.out.profile
+        .filter { _sample_id, tsv -> tsv.countLines() > 1 }
+
+    // -------------------------------------------------------------------------
+    // Step 4: Add taxonomy (optional)
+    // -------------------------------------------------------------------------
+    ch_taxprofiles = Channel.empty()
+    ch_merged = Channel.empty()
 
     if (params.sylph_tax_db) {
+        // Download taxonomy metadata (cached via storeDir)
+        DOWNLOAD_TAXONOMY()
 
-    SYLPH_TAX_DOWNLOAD(sylph_tax_trig_ch)
-
-    ch_sylph_taxonomy_dir = SYLPH_TAX_DOWNLOAD.out
-
-        MERGE_TAXONOMY(
-            OVERLAY_TAXONOMY.out
+        // Add taxonomy to each profile
+        ADD_TAXONOMY(
+            ch_profiles,
+            DOWNLOAD_TAXONOMY.out.taxonomy_dir,
+            ch_sylph_tax_db
         )
+
+        ch_taxprofiles = ADD_TAXONOMY.out.taxprofile
+
+        // -------------------------------------------------------------------------
+        // Step 5: Merge all taxonomy profiles
+        // -------------------------------------------------------------------------
+        MERGE_TAXONOMY(
+            ch_taxprofiles
+                .map { _sample_id, sylphmpa -> sylphmpa }
+                .collect()
+        )
+
+        ch_merged = MERGE_TAXONOMY.out.merged
     }
+
+    emit:
+    profiles = ch_profiles
+    taxonomy = ch_taxprofiles
+    merged   = ch_merged
 }

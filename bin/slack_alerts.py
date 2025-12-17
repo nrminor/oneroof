@@ -148,7 +148,7 @@ def send_slack_notification(
         try:
             client = WebClient(token=slack_token)
             # Send the message to a channel
-            response = client.chat_postMessage(
+            client.chat_postMessage(
                 channel=user_id,  # or a user ID like "U12345678"
                 blocks=block,
             )

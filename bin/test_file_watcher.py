@@ -16,9 +16,6 @@ from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
 import pytest
-import yaml
-from paramiko.client import SSHClient
-
 from file_watcher import (
     Credentials,
     TransferRunner,
@@ -30,7 +27,7 @@ from file_watcher import (
     try_access_env_setting,
     try_access_setting,
 )
-
+from paramiko.client import SSHClient
 
 # =============================================================================
 # Fixtures

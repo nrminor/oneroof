@@ -1,10 +1,8 @@
-#!/usr/bin/env nextflow
-
-include { REPORT_REFERENCES       } from "../modules/reporting"
-include { ALIGN_WITH_PRESET       } from "../modules/minimap2"
+include { REPORT_REFERENCES      } from "../modules/reporting"
+include { ALIGN_WITH_PRESET      } from "../modules/minimap2"
 include { CONVERT_AND_SORT ; SORT_BAM ; INDEX } from "../modules/samtools"
-include { RASUSA_ALN_DOWNSAMPLING } from "../modules/rasusa"
-include { BEDTOOLS_GENOMECOV      } from "../modules/bedtools"
+include { ALIGNMENT_DOWNSAMPLING } from "../modules/rasusa"
+include { BEDTOOLS_GENOMECOV     } from "../modules/bedtools"
 include { PLOT_COVERAGE ; MULTI_SAMPLE_PLOT ; COVERAGE_SUMMARY } from "../modules/plot_coverage"
 
 
@@ -28,12 +26,12 @@ workflow ALIGNMENT {
         ALIGN_WITH_PRESET.out
     )
 
-    RASUSA_ALN_DOWNSAMPLING(
+    ALIGNMENT_DOWNSAMPLING(
         CONVERT_AND_SORT.out
     )
 
     SORT_BAM(
-        RASUSA_ALN_DOWNSAMPLING.out
+        ALIGNMENT_DOWNSAMPLING.out
     )
 
     INDEX(
@@ -49,14 +47,14 @@ workflow ALIGNMENT {
     )
 
     MULTI_SAMPLE_PLOT(
-        BEDTOOLS_GENOMECOV.out.map { _sample_id, bed_file -> bed_file }.collect(),
+        BEDTOOLS_GENOMECOV.out.map { _sample_id, bed_file -> bed_file }.collect()
     )
-    
+
     COVERAGE_SUMMARY(
         PLOT_COVERAGE.out.passing_cov.collect()
     )
 
     emit:
-    index = INDEX.out
+    index            = INDEX.out
     coverage_summary = COVERAGE_SUMMARY.out
 }

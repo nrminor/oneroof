@@ -1,171 +1,192 @@
-process SKETCH_DATABASE_KMERS {
-
-	/* */
-
-	// storeDir params.db_cache
-
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
-
-    cpus 6
-
-	input:
-	path input_db
-
-	output:
-	path "*.syldb"
-
-	when:
-    params.meta_ref
-
-	script:
-	"""
-	sylph sketch -t ${task.cpus} -k 31 -i -c 200 -g ${input_db} -o ${input_db}.syldb
-	"""
-}
-
-process SKETCH_SAMPLE_KMERS {
-
-	/*
-	-c is the subsampling rate, also referred to as the compression parameter.
-	A higher -c is faster but less sensitive at low coverage 
-	*/
-
-	tag "${sample_id}"
-
-	errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	maxRetries 1
-
-	cpus 4
-
-	input:
-	tuple val(sample_id), path(reads)
-
-	output:
-	tuple val(sample_id), path("${reads}.sylsp")
-
-	when:
-    params.meta_ref
-
-	script:
-	"""
-	sylph sketch -t ${task.cpus} -k ${params.k} -c 100 -r ${reads} -o ${sample_id}
-	"""
-}
-
-process CLASSIFY_SAMPLE {
-
-    publishDir params.metagenomics, mode: 'copy'
-
-    tag "${sample_id}"
-
-    //errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-    maxRetries 1
-
-    input:
-    tuple val(sample_id), path(sample_sketches), path(syldb)
-
-    output:
-    // tuple val(sample_id), path("sylph_results/${sample_id}_sylph_results.tsv")
-	tuple val(sample_id), path("${sample_id}_sylph_results.tsv")
-
-    script:
-    """
-
-    sylph profile \\
-        -t ${task.cpus} --minimum-ani 90 --estimate-unknown -M 3 -c 10 --read-seq-id 0.80 \\
-        ${sample_sketches} ${syldb} > ${sample_id}_sylph_results.tsv
-    """
-}
+/*
+ * Sylph metagenomic profiling processes
+ *
+ * Sylph is an ultrafast tool for metagenomic profiling that uses k-mer sketching.
+ * Sylph-tax adds taxonomic annotations to sylph output.
+ *
+ * Workflow:
+ *   1. Sketch database (FASTA → .syldb) OR use pre-built .syldb
+ *   2. Sketch sample reads (FASTQ → .sylsp)
+ *   3. Profile samples against database (→ TSV)
+ *   4. Optionally add taxonomy with sylph-tax (→ .sylphmpa)
+ *   5. Optionally merge taxonomy profiles (→ merged TSV)
+ */
 
 
+// Download a pre-built sylph database from a URL
+process DOWNLOAD_SYLPH_DB {
 
-process SYLPH_TAX_DOWNLOAD {
+    tag "${db_url}"
 
-	// errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	// maxRetries 1
-    input: 
-	val(reads)
-
-	output:
-	val "ready"
-
-	script:
-	results = params.results
-	"""
-	cd ${results}
-	mkdir -p sylph_tax_databases
-	sylph-tax download --download-to sylph_tax_databases
-	"""
-}
-
-process OVERLAY_TAXONOMY {
-
-    publishDir params.metagenomics, mode: 'copy'
-    tag "${sample_id}"
-    
-    input:
-    tuple val(sample_id), path(tsv_path), val ("ready"), path(input_db)
-    
-    output:
-    tuple val(sample_id), path("${sample_id}*.sylphmpa")
-    
-    script:
-    """
-	echo ${tsv_path}
-    mkdir -p sylph_tax_results
-
-	conflict_file=\$(find sylph_tax_results -type f -name '${sample_id}*.sylphmpa')
-	if [[ -n "\$conflict_file" ]]; then
-	echo "Removing conflicting file: \$conflict_file"
-	rm -f "\$conflict_file"
-	fi
-
-	sylph-tax taxprof ${tsv_path} -t ${input_db} --add-folder-information -o ${sample_id}
-    """
-}
-
-
-
-process MERGE_TAXONOMY {
-
-    publishDir params.metagenomics, mode: 'copy'
-
-    tag "merge"
+    storeDir "${params.results}/sylph_cache"
 
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
     maxRetries 1
 
     input:
-    tuple val(sample_id), path(input_dir)
+    val db_url
 
-	output:
-	path "merged_taxonomy.tsv"
+    output:
+    path "*.syldb", emit: syldb
 
     script:
     """
-	sylph-tax merge ${input_dir} --column relative_abundance -o merged_taxonomy.tsv
-
+    wget -q "${db_url}" -O database.syldb
     """
 }
 
-process DOWNLOAD_DB_LINK {
 
-	tag "download"
+// Sketch a custom FASTA into a sylph database
+process SKETCH_DATABASE {
 
-	input: 
-	val db_link
+    tag "${fasta.baseName}"
 
-	output:
+    storeDir "${params.results}/sylph_cache"
 
-	path "*.syldb"
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
 
-	script: 
-	// this should just download into cwd 
-	"""
-	wget ${db_link} -O database.syldb
-	"""
+    cpus 6
 
+    input:
+    path fasta
+
+    output:
+    path "*.syldb", emit: syldb
+
+    script:
+    """
+    sylph sketch \\
+        -t ${task.cpus} \\
+        -k ${params.k} \\
+        -c 200 \\
+        ${fasta} \\
+        -o ${fasta.baseName}
+    """
 }
 
 
+// Sketch sample reads into a sylph sample sketch
+process SKETCH_SAMPLES {
+
+    tag "${sample_id}"
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    cpus 4
+
+    input:
+    tuple val(sample_id), path(reads)
+
+    output:
+    tuple val(sample_id), path("${sample_id}.sylsp"), emit: sketch, optional: true
+
+    script:
+    """
+    sylph sketch \\
+        -t ${task.cpus} \\
+        -k ${params.k} \\
+        -c 100 \\
+        -r ${reads} \\
+        -o ${sample_id}
+    """
+}
+
+
+// Profile samples against a sylph database
+process PROFILE_SAMPLES {
+
+    tag "${sample_id}"
+
+    publishDir params.metagenomics, mode: 'copy'
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    cpus 4
+
+    input:
+    tuple val(sample_id), path(sample_sketch), path(syldb)
+
+    output:
+    tuple val(sample_id), path("${sample_id}_sylph.tsv"), emit: profile, optional: true
+
+    script:
+    """
+    sylph profile \\
+        -t ${task.cpus} \\
+        --minimum-ani 90 \\
+        --estimate-unknown \\
+        ${sample_sketch} ${syldb} \\
+        > ${sample_id}_sylph.tsv
+    """
+}
+
+
+// Download sylph-tax taxonomy metadata (one-time, cached)
+process DOWNLOAD_TAXONOMY {
+
+    storeDir "${params.results}/sylph_cache"
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    output:
+    path "sylph_taxonomy", emit: taxonomy_dir
+
+    script:
+    """
+    mkdir -p sylph_taxonomy
+    sylph-tax --no-config download --download-to sylph_taxonomy
+    """
+}
+
+
+// Add taxonomy annotations to sylph profile results
+process ADD_TAXONOMY {
+
+    tag "${sample_id}"
+
+    publishDir params.metagenomics, mode: 'copy'
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    input:
+    tuple val(sample_id), path(profile_tsv)
+    path taxonomy_dir
+    val db_identifier  // e.g., "GTDB_r220", "IMGVR_4.1"
+
+    output:
+    tuple val(sample_id), path("${sample_id}*.sylphmpa"), emit: taxprofile
+
+    script:
+    """
+    sylph-tax --no-config --taxonomy-dir ${taxonomy_dir} \\
+        taxprof ${profile_tsv} \\
+        -t ${db_identifier} \\
+        -o ${sample_id}
+    """
+}
+
+
+// Merge all taxonomy profiles into a single table
+process MERGE_TAXONOMY {
+
+    publishDir params.metagenomics, mode: 'copy'
+
+    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
+    maxRetries 1
+
+    input:
+    path taxprofiles  // collected .sylphmpa files
+
+    output:
+    path "merged_taxonomy.tsv", emit: merged
+
+    script:
+    """
+    sylph-tax merge ${taxprofiles} --column relative_abundance -o merged_taxonomy.tsv
+    """
+}

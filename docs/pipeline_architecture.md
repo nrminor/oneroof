@@ -1,6 +1,6 @@
 # OneRoof Pipeline Architecture
 OneRoof Development Team
-2025-07-08
+2025-12-16
 
 - [Main Workflow Entry Point](#main-workflow-entry-point)
   - [main.nf](#mainnf)
@@ -45,14 +45,17 @@ This document provides a comprehensive map of the OneRoof Nextflow pipeline stru
 
 **Input Channels**:
 
-- `ch_primer_bed`: Optional primer BED file
-- `ch_refseq`: Required reference FASTA
-- `ch_ref_gbk`: Optional GenBank file for annotation
-- `ch_contam_fasta`: Optional contamination sequences
-- `ch_metagenomics_ref`: Optional metagenomics reference
-- `ch_snpeff_config`: Optional SnpEff configuration
-- `ch_primer_tsv`: Optional primer TSV file
-- `ch_sylph_tax_db`: Optional Sylph taxonomy database
+| Channel | Parameter | Description |
+|---------|-----------|-------------|
+| `ch_primer_bed` | `--primer_bed` | Optional primer BED file |
+| `ch_refseq` | `--refseq` | Required reference FASTA |
+| `ch_ref_gbk` | `--ref_gbk` | Optional GenBank file for annotation |
+| `ch_contam_fasta` | `--contam_fasta` | Optional contamination sequences for dehosting |
+| `ch_metagenomics_ref` | `--meta_ref` | Optional metagenomics reference (.syldb or FASTA) |
+| `ch_snpeff_config` | `--snpEff_config` | Optional SnpEff configuration |
+| `ch_primer_tsv` | `--primer_tsv` | Optional primer TSV file (alternative to BED) |
+| `ch_sylph_tax_db` | `--sylph_tax_db` | Optional Sylph taxonomy identifier (e.g., "GTDB_r220") |
+| `ch_meta_ref_link` | `--sylph_db_link` | Optional URL to download Sylph database |
 
 ## Platform-Specific Workflows
 
@@ -63,15 +66,22 @@ This document provides a comprehensive map of the OneRoof Nextflow pipeline stru
 ``` mermaid
 graph TD
     A[GATHER_NANOPORE] --> B[PRIMER_HANDLING]
-    B --> C[ALIGNMENT]
+    A --> C[ALIGNMENT]
+    B --> C
+    B --> G[METAGENOMICS]
+    A --> G
     C --> D[CONSENSUS]
     C --> E[VARIANTS]
     C --> F[HAPLOTYPING]
-    C --> G[METAGENOMICS]
     D --> H[PHYLO]
-    E --> I[SLACK_ALERT]
+    D --> I[SLACK_ALERT]
+    E --> I
+    C --> I
 
     style B fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style F fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style G fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style H fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
 > [!NOTE]
@@ -83,6 +93,7 @@ graph TD
 - `platform = "ont"`
 - `min_variant_frequency = 0.2`
 - `min_qual = 10`
+- `max_mismatch = 2` (higher tolerance for Nanopore error rate)
 
 ### ILLUMINA Workflow (workflows/illumina.nf)
 
@@ -92,15 +103,20 @@ graph TD
 graph TD
     A[GATHER_ILLUMINA] --> B[ILLUMINA_CORRECTION]
     B --> C[PRIMER_HANDLING]
-    C --> D[ALIGNMENT]
+    B --> D[ALIGNMENT]
+    C --> D
+    B --> G[METAGENOMICS]
+    C --> G
     D --> E[CONSENSUS]
     D --> F[VARIANTS]
-    D --> G[PHYLO]
-    D --> H[METAGENOMICS]
-    E --> I[SLACK_ALERT]
+    E --> H[PHYLO]
+    D --> I[SLACK_ALERT]
+    E --> I
     F --> I
 
     style C fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style G fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style H fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
 **Key Parameters**:
@@ -108,6 +124,7 @@ graph TD
 - `platform = "illumina"`
 - `min_variant_frequency = 0.05`
 - `min_qual = 20`
+- `max_mismatch = 0` (exact matching for Illumina's low error rate)
 
 ## Sub-workflows and Dependencies
 
@@ -136,9 +153,12 @@ graph LR
     F[Pre-called Input] --> G[VALIDATE_NANOPORE]
     E --> G
     G --> H[FILTER_WITH_CHOPPER]
-    H --> I[COMPRESS_TO_SORTED_FASTA]
-    I --> J[FAIDX]
-    J --> K[EARLY_RASUSA_READ_DOWNSAMPLING]
+    H --> I[DECONTAMINATE]
+    I --> J[COMPRESS_TO_SORTED_FASTA]
+    J --> K[FAIDX]
+    K --> L[EARLY_RASUSA_READ_DOWNSAMPLING]
+
+    style I fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
 #### GATHER_ILLUMINA (subworkflows/gather_illumina.nf)
@@ -175,23 +195,36 @@ graph TD
 
 #### PRIMER_HANDLING (subworkflows/primer_handling.nf)
 
-**Purpose**: Validate primers and extract complete amplicons
+**Purpose**: Validate primers and extract complete amplicons using the high-performance Rust-based amplicon finder
 
 **Input Options**:
 
-1.  Primer BED file
-2.  Primer TSV file
+1.  Primer BED file (`--primer_bed`)
+2.  Primer TSV file (`--primer_tsv`)
 
 **Process Flow**:
 
 ``` mermaid
 graph TD
-    A[ORIENT_READS] --> B[GET_PRIMER_PATTERNS]
-    B --> C[FIND_COMPLETE_AMPLICONS]
-    B --> D[TRIM_ENDS_TO_PRIMERS]
-    D --> E[PER_AMPLICON_FILTERS]
-    E --> F[MERGE_BY_SAMPLE]
+    A[VALIDATE_PRIMER_BED] --> B[RESPLICE_PRIMERS]
+    B --> C[SPLIT_PRIMER_COMBOS]
+    C --> D[GET_PRIMER_SEQS]
+    D --> E[GET_PRIMER_PATTERNS]
+    D --> F[CREATE_PRIMER_TSV]
+    F --> G[COLLECT_PRIMER_TSV]
+    E --> H[FIND_AND_TRIM_AMPLICONS]
+    H --> I[FAIDX]
+    I --> J[READ_DOWNSAMPLING]
+    J --> K[AMPLICON_STATS]
+    J --> L[MERGE_BY_SAMPLE]
+    K --> M[CREATE_AMPLICON_TSV]
 ```
+
+**Key Component**: `FIND_AND_TRIM_AMPLICONS` uses a high-performance Rust script (`bin/find_and_trim_amplicons.rs`) that:
+- Performs fuzzy primer matching with configurable mismatch tolerance
+- Supports windowed search for performance optimization on long reads
+- Handles both forward and reverse orientations
+- Outputs trimmed amplicons in FASTA format
 
 #### ALIGNMENT (subworkflows/alignment.nf)
 
@@ -241,6 +274,8 @@ graph LR
 
 **Purpose**: Phylogenetic analysis using Nextclade
 
+**Condition**: Requires `--nextclade_dataset` parameter
+
 **Process Flow**:
 
 ``` mermaid
@@ -251,26 +286,68 @@ graph LR
 
 #### METAGENOMICS (subworkflows/metagenomics.nf)
 
-**Purpose**: Metagenomic classification using Sylph
+**Purpose**: Metagenomic profiling using Sylph with optional taxonomic annotation via sylph-tax
+
+**Condition**: Requires `--meta_ref` or `--sylph_db_link` parameter
+
+**Input Options**:
+1. Pre-built `.syldb` file (`--meta_ref`)
+2. Custom FASTA to be sketched (`--meta_ref`)
+3. URL to download `.syldb` (`--sylph_db_link`)
 
 **Process Flow**:
 
 ``` mermaid
 graph TD
-    A[SKETCH_DATABASE_KMERS] --> C[CLASSIFY_SAMPLE]
-    B[SKETCH_SAMPLE_KMERS] --> C
-    C --> D[OVERLAY_TAXONOMY]
-    D --> E[MERGE_TAXONOMY]
+    A[DOWNLOAD_SYLPH_DB] --> D[PROFILE_SAMPLES]
+    B[SKETCH_DATABASE] --> D
+    C[SKETCH_SAMPLES] --> D
+    D --> E[ADD_TAXONOMY]
+    E --> F[MERGE_TAXONOMY]
 
-    style D fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style A fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style B fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
     style E fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style F fill:#f9f,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
 ```
+
+**Key Features**:
+- Automatic database type detection (pre-built vs custom FASTA)
+- Optional taxonomy overlay using sylph-tax with `--no-config` for container compatibility
+- Supports taxonomy identifiers like `GTDB_r220`, `IMGVR_4.1`, etc.
 
 #### HAPLOTYPING (subworkflows/haplotyping.nf)
 
-**Purpose**: Viral haplotype reconstruction (Nanopore only)
+**Purpose**: Viral haplotype reconstruction using devider (Nanopore only)
 
 **Condition**: Number of reference sequences equals number of amplicons
+
+**Process Flow**:
+
+``` mermaid
+graph TD
+    A[SPLIT_SEGMENTS] --> B[COMPRESS_AND_INDEX_VCF]
+    A --> C[PHASE_READS_WITH_DEVIDER]
+    B --> C
+```
+
+**Key Parameters**:
+- `--devider_preset`: Phasing preset (`nanopore-r9`, `nanopore-r10`, `hi-fi`, `old-long-reads`)
+- `--min_haplo_reads`: Minimum read support for haplotype reporting
+
+#### DECONTAMINATE (subworkflows/decontaminate.nf)
+
+**Purpose**: Remove host/contaminant reads from samples
+
+**Condition**: Requires `--contam_fasta` parameter
+
+**Process Flow**:
+
+``` mermaid
+graph LR
+    A[Input Reads] --> B[DEACON]
+    B --> C[Filtered Reads]
+```
 
 ## Key Modules/Processes
 
@@ -283,6 +360,10 @@ graph TD
 - `DOWNLOAD_MODELS`: Model caching
 - `BASECALL`: GPU-based basecalling
 - `DEMULTIPLEX`: Barcode demultiplexing
+
+#### find_and_trim_amplicons.nf
+
+- `FIND_AND_TRIM_AMPLICONS`: High-performance Rust-based primer finding and amplicon trimming
 
 #### minimap2.nf
 
@@ -298,6 +379,21 @@ graph TD
 
 - `CONVERT_AND_SORT`: BAM processing
 - `INDEX`: BAM indexing
+- `SPLIT_SEGMENTS`: Split BAM by reference segment (for haplotyping)
+
+#### sylph.nf
+
+- `DOWNLOAD_SYLPH_DB`: Download pre-built database from URL
+- `SKETCH_DATABASE`: Sketch custom FASTA into sylph database
+- `SKETCH_SAMPLES`: Sketch sample reads
+- `PROFILE_SAMPLES`: Metagenomic profiling
+- `DOWNLOAD_TAXONOMY`: Download sylph-tax metadata
+- `ADD_TAXONOMY`: Add taxonomic annotations
+- `MERGE_TAXONOMY`: Merge taxonomy profiles across samples
+
+#### devider.nf
+
+- `PHASE_READS_WITH_DEVIDER`: Haplotype phasing
 
 #### validate.nf
 
@@ -312,12 +408,12 @@ graph TD
 ### Minimal Test Path (No Primers)
 
 1.  **Nanopore**: POD5/FASTQ → Basecall → Align → Consensus/Variants
-2.  **Illumina**: Paired FASTQs → Merge → Align → Consensus/Variants
+2.  **Illumina**: Paired FASTQs → Merge → Correct → Align → Consensus/Variants
 
 ### Full Test Path (With Primers)
 
 1.  Input validation
-2.  Primer handling and amplicon extraction
+2.  Primer handling and amplicon extraction (Rust-based)
 3.  Alignment and coverage analysis
 4.  Variant calling and annotation
 5.  Consensus generation
@@ -341,8 +437,10 @@ graph TD
 > - Primer BED file (`--primer_bed`) or TSV (`--primer_tsv`)
 > - Reference GenBank (`--ref_gbk`) for annotation
 > - SnpEff config for variant annotation
-> - Contamination FASTA for decontamination
-> - Metagenomics database for classification
+> - Contamination FASTA (`--contam_fasta`) for decontamination
+> - Metagenomics database (`--meta_ref` or `--sylph_db_link`) for classification
+> - Taxonomy identifier (`--sylph_tax_db`) for taxonomic annotation
+> - Nextclade dataset (`--nextclade_dataset`) for phylogenetics
 
 ## Output Structure
 
@@ -351,13 +449,25 @@ graph TD
 ``` bash
 nanopore/
 ├── 01_basecalled_demuxed/
+│   ├── bams/
+│   └── fastqs/
 ├── 02_primer_handling/
+│   ├── 01_respliced_primers/
+│   ├── 02_complete_amplicons/
+│   └── 03_merged_by_sample/
 ├── 03_alignments/
+│   ├── 01_genomecov/
+│   └── 02_coverage_plots/
 ├── 04_consensus_seqs/
 ├── 05_variants/
+│   ├── 01_ivar_tables/
+│   ├── 02_annotated_vcfs/
+│   ├── 03_variant_tsv/
+│   └── 04_haplotypes/
 ├── 06_QC/
 ├── 07_phylo/
-├── metagenomics/
+│   └── 01_nextclade/
+├── 08_metagenomics/
 └── haplotyping/
 ```
 
@@ -367,12 +477,21 @@ nanopore/
 illumina/
 ├── 01_merged_reads/
 ├── 02_primer_handling/
+│   ├── 01_respliced_primers/
+│   ├── 02_complete_amplicons/
+│   └── 03_merged_by_sample/
 ├── 03_alignments/
+│   ├── 01_genomecov/
+│   └── 02_coverage_plots/
 ├── 04_consensus_seqs/
 ├── 05_variants/
+│   ├── 01_ivar_tables/
+│   ├── 02_annotated_vcfs/
+│   └── 03_variant_tsv/
 ├── 06_QC/
 ├── 07_phylo/
-└── metagenomics/
+│   └── 01_nextclade/
+└── 08_metagenomics/
 ```
 
 ## Configuration and Parameters
@@ -383,14 +502,20 @@ illumina/
 |-------------------------|-----------|----------|
 | `min_variant_frequency` | 0.2       | 0.05     |
 | `min_qual`              | 10        | 20       |
+| `max_mismatch`          | 2         | 0        |
 | Alignment preset        | `map-ont` | `sr`     |
 
 ### Resource Management
 
-- `pod5_batch_size`: Controls GPU memory usage
-- `downsample_to`: Coverage depth limiting
-- `basecall_max`: Parallel basecalling instances
-- `low_memory`: Resource-constrained mode
+| Parameter | Description |
+|-----------|-------------|
+| `pod5_batch_size` | Controls GPU memory usage during basecalling |
+| `downsample_to` | Coverage depth limiting (post-alignment) |
+| `early_downsample_to` | Coverage depth limiting (pre-alignment) |
+| `basecall_max` | Parallel basecalling instances |
+| `low_memory` | Resource-constrained mode |
+| `forward_window` | Limit forward primer search to first N bases |
+| `reverse_window` | Limit reverse primer search to last N bases |
 
 ### Key Process Labels
 
@@ -423,10 +548,11 @@ This provides resilience against transient failures while preventing infinite lo
 - Empty input files
 - No reads passing filters
 - Missing optional inputs
-- Primer mismatches
+- Primer mismatches beyond tolerance
 - Low coverage regions
 - Multiple reference sequences
 - Remote file watching timeout
+- Pre-built vs custom metagenomics databases
 
 ### Integration Test Scenarios
 
@@ -435,3 +561,5 @@ This provides resilience against transient failures while preventing infinite lo
 3.  **Real-time processing**: file watching
 4.  **Multi-sample processing**
 5.  **Platform switching**: same data, different platforms
+6.  **Metagenomics with taxonomy**: sylph + sylph-tax integration
+7.  **Haplotyping**: multi-segment reference with primers

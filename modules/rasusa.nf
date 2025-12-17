@@ -1,4 +1,4 @@
-process RASUSA_READ_DOWNSAMPLING {
+process READ_DOWNSAMPLING {
 
 	/* */
 
@@ -35,7 +35,7 @@ process RASUSA_READ_DOWNSAMPLING {
 
 }
 
-process EARLY_RASUSA_READ_DOWNSAMPLING {
+process EARLY_READ_DOWNSAMPLING {
 
 	/* */
 
@@ -72,7 +72,7 @@ process EARLY_RASUSA_READ_DOWNSAMPLING {
 
 }
 
-process RASUSA_ALN_DOWNSAMPLING {
+process ALIGNMENT_DOWNSAMPLING {
 
 	/* */
 

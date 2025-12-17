@@ -23,6 +23,23 @@ process INDEX_CONTAMINANTS {
 
 }
 
+
+process GET_INDEX {
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
+
+	cpus 1
+
+    output: 
+    path "index_for_deacon.idx"
+
+    script: 
+    """
+    wget ${params.contam_link} -O index_for_deacon.idx
+    """
+}
+
 process RUN_DEACON {
 
     /* */

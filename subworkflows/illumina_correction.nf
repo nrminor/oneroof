@@ -2,7 +2,7 @@ include { CORRECT_WITH_FASTP } from "../modules/fastp"
 include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { COMPRESS_TO_SORTED_FASTA } from "../modules/seqkit"
 include { FAIDX             } from "../modules/samtools"
-include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
+include { EARLY_READ_DOWNSAMPLING } from "../modules/rasusa"
 
 workflow ILLUMINA_CORRECTION {
     take:
@@ -30,10 +30,10 @@ workflow ILLUMINA_CORRECTION {
             .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
     )
 
-    EARLY_RASUSA_READ_DOWNSAMPLING(
+    EARLY_READ_DOWNSAMPLING(
         FAIDX.out
     )
 
     emit:
-    EARLY_RASUSA_READ_DOWNSAMPLING.out
+    EARLY_READ_DOWNSAMPLING.out
 }
