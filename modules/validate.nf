@@ -65,25 +65,3 @@ process VALIDATE_ILLUMINA {
     """
 
 }
-
-process VALIDATE_PRIMER_BED {
-
-    errorStrategy "finish"
-
-    input:
-    path primer_bed
-
-    output:
-    path "${bed_name}_validated.bed"
-
-    script:
-    bed_name = file(primer_bed).getSimpleName()
-    """
-    validate_primer_bed.py \
-    --input_bed ${primer_bed} \
-    --output_prefix ${bed_name}_validated \
-    --fwd_suffix ${params.fwd_suffix} \
-    --rev_suffix ${params.rev_suffix}
-    """
-
-}

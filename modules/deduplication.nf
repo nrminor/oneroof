@@ -1,5 +1,8 @@
+process DEDUPLICATE_READS {
+    tag "${sample_id}"
 
-process DEDUP {
+	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+	maxRetries 2
 
     input:
     tuple val(sample_id), path(reads1), path(reads2), path("${sample_id}.report.txt")

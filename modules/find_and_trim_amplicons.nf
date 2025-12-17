@@ -1,26 +1,27 @@
 process FIND_AND_TRIM_AMPLICONS {
+    /*
+    Find and trim amplicon sequences from reads using primer sequences.
+    
+    Takes primer sequences directly as values (from primer_pairs.tsv),
+    eliminating the need for intermediate pattern files.
+    */
 
-	tag "${barcode}, ${amplicon}"
+    tag "${sample_id}, ${amplicon_name}"
 
-	errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-	maxRetries 2
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
-	cpus 4
+    cpus 4
 
     input:
-	tuple path(reads), path(patterns)
+    tuple val(sample_id), path(reads), val(amplicon_name), val(fwd_sequence), val(rev_sequence)
 
     output:
-    tuple val(barcode), path("${barcode}.${amplicon}.fasta.gz")
+    tuple val(sample_id), path("${sample_id}.${amplicon_name}.fasta.gz")
 
     script:
-	barcode = file(reads).getSimpleName()
-	amplicon = file(patterns).getSimpleName()
     """
-	export RUST_LOG=find_and_trim_amplicons=info
-
-    FORWARD_PATTERN=\$(head -n 1 ${patterns})
-    REVERSE_PATTERN=\$(tail -n 1 ${patterns})
+    export RUST_LOG=find_and_trim_amplicons=info
 
     # Use pre-compiled binary in container, fall back to rust-script locally
     if command -v find_and_trim_amplicons &> /dev/null; then
@@ -30,20 +31,19 @@ process FIND_AND_TRIM_AMPLICONS {
     fi
 
     \$TRIM_CMD \\
-    --input ${reads} \\
-    --forward \${FORWARD_PATTERN} \\
-    --reverse \${REVERSE_PATTERN} \\
-    --max-mismatch ${params.max_mismatch} \\
-    --min-len ${params.min_len} \\
-    --max-len ${params.max_len} \\
-    --forward-window ${params.forward_window} \\
-    --reverse-window ${params.reverse_window} \\
-    --threads ${task.cpus} \\
-    --format fasta \\
-	--no-compress \\
-    --stats stats.txt \\
-	--output /dev/stdout \\
-	| bgzip -c > ${barcode}.${amplicon}.fasta.gz
+        --input ${reads} \\
+        --forward ${fwd_sequence} \\
+        --reverse ${rev_sequence} \\
+        --max-mismatch ${params.max_mismatch} \\
+        --min-len ${params.min_len} \\
+        --max-len ${params.max_len} \\
+        --forward-window ${params.forward_window} \\
+        --reverse-window ${params.reverse_window} \\
+        --threads ${task.cpus} \\
+        --format fasta \\
+        --no-compress \\
+        --stats stats.txt \\
+        --output /dev/stdout \\
+    | bgzip -c > ${sample_id}.${amplicon_name}.fasta.gz
     """
-
 }

@@ -1,152 +1,116 @@
-include { VALIDATE_PRIMER_BED      } from "../modules/validate"
-include { REPORT_REFERENCES        } from "../modules/reporting"
-include { RESPLICE_PRIMERS;
-          SPLIT_PRIMER_COMBOS
-} from "../modules/resplice_primers"
-include { GET_PRIMER_PATTERNS;
-          WRITE_PRIMER_FASTA;
-          CREATE_PRIMER_TSV;
-          COLLECT_PRIMER_TSV;
-          CREATE_AMPLICON_TSV;
-} from "../modules/primer_patterns"
-include { FIND_AND_TRIM_AMPLICONS  } from "../modules/find_and_trim_amplicons"
-include { GET_PRIMER_SEQS          } from "../modules/bedtools"
-include { FAIDX                    } from "../modules/samtools"
-// include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
+/*
+ * PRIMER_HANDLING: Amplicon-based read processing workflow
+ *
+ * This subworkflow handles primer preparation, amplicon finding/trimming,
+ * and per-sample read merging for amplicon sequencing data.
+ *
+ * Supports two input modes:
+ *   1. BED + Reference FASTA: Full validation, spike-in resplicing, sequence extraction
+ *   2. Primer TSV: Direct use of pre-computed primer sequences
+ *
+ * The consolidated PREPARE_PRIMERS process replaces what was previously 8 separate
+ * processes (VALIDATE_PRIMER_BED, RESPLICE_PRIMERS, SPLIT_PRIMER_COMBOS,
+ * GET_PRIMER_SEQS, CREATE_PRIMER_TSV, COLLECT_PRIMER_TSV, GET_PRIMER_PATTERNS).
+ */
+
 include {
-    // FIND_COMPLETE_AMPLICONS ;
-    // TRIM_ENDS_TO_PRIMERS ;
-    // PER_AMPLICON_FILTERS ;
+    PREPARE_PRIMERS ;
+    PREPARE_PRIMERS_FROM_TSV
+} from "../modules/prepare_primers"
+include { REPORT_REFERENCES        } from "../modules/reporting"
+include { FIND_AND_TRIM_AMPLICONS  } from "../modules/find_and_trim_amplicons"
+include { FAIDX                    } from "../modules/samtools"
+include {
     MERGE_BY_SAMPLE ;
     AMPLICON_STATS
 } from "../modules/seqkit"
-include { FILTER_WITH_CHOPPER      } from "../modules/chopper"
-include { READ_DOWNSAMPLING } from "../modules/rasusa"
+include { READ_DOWNSAMPLING        } from "../modules/rasusa"
+include { CREATE_AMPLICON_TSV      } from "../modules/primer_patterns"
 
 
 workflow PRIMER_HANDLING {
     take:
-    ch_basecalls
-    ch_primer_bed
-    ch_refseq
-    ch_primer_tsv
+    ch_basecalls // tuple(sample_id, reads_path)
+    ch_primer_bed // path to primer BED file (optional)
+    ch_refseq // path to reference FASTA (required if using BED)
+    ch_primer_tsv // path to primer TSV file (optional, alternative to BED)
 
     main:
 
+    // Filter out samples with too few reads
     ch_filtered_basecalls = ch_basecalls
-        .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFasta()) }
+        .map { sample_id, reads -> tuple(sample_id, file(reads), file(reads).countFasta()) }
         .filter { item -> item[2] > 10 }
-        .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) }
+        .map { sample_id, reads, _count -> tuple(sample_id, file(reads)) }
 
-    if (params.primer_bed && params.primer_bed  != "") {
+    // Prepare primers based on input type
+    if (params.primer_bed && params.primer_bed != "") {
+        // BED + FASTA input: full validation and resplicing
+        PREPARE_PRIMERS(ch_primer_bed, ch_refseq)
 
-        VALIDATE_PRIMER_BED(
-            ch_primer_bed
-        )
+        ch_primer_pairs = PREPARE_PRIMERS.out.primer_pairs
+        ch_respliced_bed = PREPARE_PRIMERS.out.respliced_bed
 
-        REPORT_REFERENCES(
-            VALIDATE_PRIMER_BED.out
-        )
-
-        RESPLICE_PRIMERS(
-            VALIDATE_PRIMER_BED.out
-        )
-
-        SPLIT_PRIMER_COMBOS(
-            RESPLICE_PRIMERS.out
-        )
-
-        GET_PRIMER_SEQS(
-            SPLIT_PRIMER_COMBOS.out.flatten(),
-            ch_refseq,
-        )
-
-        CREATE_PRIMER_TSV(
-            GET_PRIMER_SEQS.out
-        )
-
-        COLLECT_PRIMER_TSV(
-            CREATE_PRIMER_TSV.out.primer_pair.collect()
-        )
-
-        GET_PRIMER_PATTERNS(
-            GET_PRIMER_SEQS.out
-        )
-
-    } else if (params.primer_tsv && params.primer_tsv != "") {
-        ch_tsv_to_fasta = ch_primer_tsv
-            .splitCsv(header:true, sep:'\t', strip: true)
-            .filter { row ->
-                row.amplicon_name && row.fwd_sequence && row.reverse_sequence
-            }
-            .map { row ->
-                def name = row.amplicon_name
-                def fwd = row.fwd_sequence
-                def rev = row.reverse_sequence
-
-                assert rev : "Missing reverse sequence for ${name}"
-                assert fwd : "Missing forward sequence for ${name}"
-
-                def header1 = ">${name}:0-${fwd.size() - 1}"
-                def header2 = ">${name}:${fwd.size()}-${fwd.size() + rev.size() - 1}"
-
-                def fasta = "${header1}\n${fwd}\n${header2}\n${rev}"
-
-                tuple(name, fasta)
-          }
-
-        WRITE_PRIMER_FASTA(
-            ch_tsv_to_fasta
-        )
-
-         GET_PRIMER_PATTERNS(
-            WRITE_PRIMER_FASTA.out
-        )
+        // Copy reference assets for provenance
+        REPORT_REFERENCES(ch_primer_bed.mix(ch_refseq))
     }
-    
-    FIND_AND_TRIM_AMPLICONS(
-        ch_filtered_basecalls.map { _barcode, reads -> reads }.combine(GET_PRIMER_PATTERNS.out)
-    )
+    else if (params.primer_tsv && params.primer_tsv != "") {
+        // TSV input: validation and passthrough
+        PREPARE_PRIMERS_FROM_TSV(ch_primer_tsv)
 
-    // FIND_COMPLETE_AMPLICONS(
-    //     ORIENT_READS.out.map { _barcode, fastq -> fastq }.combine(GET_PRIMER_PATTERNS.out)
-    // )
+        ch_primer_pairs = PREPARE_PRIMERS_FROM_TSV.out.primer_pairs
+        ch_respliced_bed = Channel.empty()
+    }
 
-    // TRIM_ENDS_TO_PRIMERS(
-    //     FIND_COMPLETE_AMPLICONS.out
-    // )
+    // Split primer pairs TSV into channel of amplicon tuples
+    // Each row becomes: (amplicon_name, fwd_sequence, rev_sequence)
+    ch_amplicons = ch_primer_pairs
+        .splitCsv(header: true, sep: '\t', strip: true)
+        .map { row ->
+            assert row.amplicon_name : "Missing amplicon_name in primer pairs TSV"
+            assert row.fwd_sequence : "Missing fwd_sequence for ${row.amplicon_name}"
+            assert row.rev_sequence : "Missing rev_sequence for ${row.amplicon_name}"
+            tuple(row.amplicon_name, row.fwd_sequence, row.rev_sequence)
+        }
 
-    // PER_AMPLICON_FILTERS(
-    //     TRIM_ENDS_TO_PRIMERS.out
-    //         .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
-    //         .filter { it[2] > 0 }
-    //         .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
-    // )
+    // Combine samples × amplicons for parallel processing
+    // Result: (sample_id, reads, amplicon_name, fwd_sequence, rev_sequence)
+    ch_sample_amplicons = ch_filtered_basecalls
+        .combine(ch_amplicons)
+        .map { sample_id, reads, amplicon_name, fwd_seq, rev_seq ->
+            tuple(sample_id, reads, amplicon_name, fwd_seq, rev_seq)
+        }
 
-    FAIDX(
-        FIND_AND_TRIM_AMPLICONS.out
-            .map { id, fastq -> tuple(id, fastq, file(fastq).countFasta()) }
-            .filter { item -> item[2] > 0 }
-            .map { id, fastq, _read_count -> tuple(id, file(fastq)) }
-    )
+    // Find and trim amplicons
+    FIND_AND_TRIM_AMPLICONS(ch_sample_amplicons)
 
-    READ_DOWNSAMPLING(
-        FAIDX.out
-    )
+    // Filter empty outputs and index
+    ch_trimmed = FIND_AND_TRIM_AMPLICONS.out
+        .map { sample_id, fasta -> tuple(sample_id, fasta, file(fasta).countFasta()) }
+        .filter { item -> item[2] > 0 }
+        .map { sample_id, fasta, _count -> tuple(sample_id, file(fasta)) }
 
-    AMPLICON_STATS(
-        READ_DOWNSAMPLING.out.groupTuple(by: 0)
-    )
+    FAIDX(ch_trimmed)
 
+    // Downsample reads per amplicon
+    READ_DOWNSAMPLING(FAIDX.out)
+
+    // Compute per-amplicon statistics (grouped by sample)
+    AMPLICON_STATS(READ_DOWNSAMPLING.out.groupTuple(by: 0))
+
+    // Create amplicon summary TSV joining stats with positions
     CREATE_AMPLICON_TSV(
         AMPLICON_STATS.out.collect(),
-        RESPLICE_PRIMERS.out
+        ch_primer_pairs,
     )
 
-    MERGE_BY_SAMPLE(
-        READ_DOWNSAMPLING.out.groupTuple(by: 0)
-    )
+    // Merge all amplicons per sample
+    MERGE_BY_SAMPLE(READ_DOWNSAMPLING.out.groupTuple(by: 0))
 
     emit:
-    MERGE_BY_SAMPLE.out
+    merged_reads     = MERGE_BY_SAMPLE.out // tuple(sample_id, merged_fasta)
+    primer_pairs     = ch_primer_pairs // path to primer_pairs.tsv
+    respliced_bed    = ch_respliced_bed // path to respliced.bed (empty if TSV input)
+    amplicon_stats   = AMPLICON_STATS.out // per-sample amplicon statistics
+    amplicon_summary = CREATE_AMPLICON_TSV.out.summary_tsv // amplicon_summary.tsv
 }

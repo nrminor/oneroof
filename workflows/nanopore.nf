@@ -40,14 +40,14 @@ workflow NANOPORE {
             )
 
             METAGENOMICS(
-                PRIMER_HANDLING.out,
+                PRIMER_HANDLING.out.merged_reads,
                 ch_metagenome_ref,
                 ch_meta_ref_link,
                 ch_sylph_tax_db
             )
 
             alignment_outputs = ALIGNMENT (
-                PRIMER_HANDLING.out,
+                PRIMER_HANDLING.out.merged_reads,
                 ch_refseq
             )
 
