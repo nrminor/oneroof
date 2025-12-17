@@ -4,7 +4,6 @@ include { GATHER_NANOPORE } from "../subworkflows/gather_nanopore"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
 include { HAPLOTYPING } from "../subworkflows/haplotyping"
-include { QUALITY_CONTROL } from "../subworkflows/quality_control"
 include { CONSENSUS } from "../subworkflows/consensus_calling"
 include { VARIANTS } from "../subworkflows/variant_calling"
 include { METAGENOMICS } from "../subworkflows/metagenomics"
@@ -29,17 +28,12 @@ workflow NANOPORE {
     main:
         assert params.platform == "ont"
 
-        GATHER_NANOPORE ( )
+        GATHER_NANOPORE ( ch_contam_fasta )
 
-        QUALITY_CONTROL(
-            GATHER_NANOPORE.out,
-            ch_contam_fasta
-        )
-
-        if ( params.primer_bed && params.primer_bed != "" || params.primer_tsv && params.primer_tsv != "" ) {
+        if ( params.primer_bed || params.primer_tsv ) {
 
             PRIMER_HANDLING(
-                QUALITY_CONTROL.out,
+                GATHER_NANOPORE.out,
                 ch_primer_bed,
                 ch_refseq,
                 ch_primer_tsv
@@ -63,11 +57,11 @@ workflow NANOPORE {
                 ch_metagenome_ref,
                 ch_sylph_tax_db,
                 ch_meta_ref_link,
-                QUALITY_CONTROL.out
+                GATHER_NANOPORE.out
             )
 
             alignment_outputs = ALIGNMENT (
-                QUALITY_CONTROL.out,
+                GATHER_NANOPORE.out,
                 ch_refseq
             )
 

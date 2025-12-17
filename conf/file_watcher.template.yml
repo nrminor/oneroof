@@ -1,3 +1,8 @@
+# File Watcher Configuration
+#
+# SECURITY NOTE: Before first use, verify the remote host's SSH key fingerprint
+# by connecting manually with `ssh <user>@<host>` and accepting the key. The
+# file watcher will load system host keys and warn about unknown hosts.
 
 # absolute path on remote host where files should be watched for
 watch_path: /~
@@ -12,3 +17,6 @@ host: redacted
 # username and password for an account on the remote host
 username: redacted
 password: redacted
+
+# number of hours to watch for new files before stopping
+watch_duration: 72

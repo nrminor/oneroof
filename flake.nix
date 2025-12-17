@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
   outputs =
@@ -11,6 +12,7 @@
       self,
       nixpkgs,
       flake-utils,
+      rust-overlay,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -18,6 +20,17 @@
       let
         pkgs = import nixpkgs {
           inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+        };
+
+        # Rust toolchain with components needed for development
+        rustToolchain = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [
+            "rust-src" # Required for rust-analyzer go-to-definition on std
+            "rust-analyzer" # LSP server
+            "clippy" # Linter
+            "rustfmt" # Formatter
+          ];
         };
 
         dorado =
@@ -40,45 +53,45 @@
             null;
 
         # Build refman using cargo-binstall
-        # refman = pkgs.stdenv.mkDerivation {
-        #   name = "refman";
-        #   version = "latest";
+        refman = pkgs.stdenv.mkDerivation {
+          name = "refman";
+          version = "latest";
 
-        #   nativeBuildInputs = with pkgs; [
-        #     cargo-binstall
-        #     pkg-config
-        #     openssl
-        #     cacert
-        #   ];
+          nativeBuildInputs = with pkgs; [
+            cargo-binstall
+            pkg-config
+            openssl
+            cacert
+          ];
 
-        #   buildInputs = with pkgs; [
-        #     openssl
-        #   ];
+          buildInputs = with pkgs; [
+            openssl
+          ];
 
-        #   dontUnpack = true;
-        #   dontBuild = true;
+          dontUnpack = true;
+          dontBuild = true;
 
-        #   installPhase = ''
-        #     export HOME=$TMPDIR
-        #     export CARGO_HOME=$TMPDIR/.cargo
-        #     export RUSTUP_HOME=$TMPDIR/.rustup
-        #     export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          installPhase = ''
+            export HOME=$TMPDIR
+            export CARGO_HOME=$TMPDIR/.cargo
+            export RUSTUP_HOME=$TMPDIR/.rustup
+            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
 
-        #     # Create output directory
-        #     mkdir -p $out/bin
+            # Create output directory
+            mkdir -p $out/bin
 
-        #     # Install refman using cargo-binstall
-        #     ${pkgs.cargo-binstall}/bin/cargo-binstall \
-        #       --no-confirm \
-        #       --no-symlinks \
-        #       --root $TMPDIR \
-        #       refman
+            # Install refman using cargo-binstall
+            ${pkgs.cargo-binstall}/bin/cargo-binstall \
+              --no-confirm \
+              --no-symlinks \
+              --root $TMPDIR \
+              refman
 
-        #     # Move the binary to the output
-        #     mv $TMPDIR/bin/refman $out/bin/refman
-        #     chmod +x $out/bin/refman
-        #   '';
-        # };
+            # Move the binary to the output
+            mv $TMPDIR/bin/refman $out/bin/refman
+            chmod +x $out/bin/refman
+          '';
+        };
 
       in
       {
@@ -100,11 +113,11 @@
             pkgs.just
             pkgs.just-lsp
             pkgs.pre-commit
-            pkgs.cargo
-            pkgs.rustc
+            rustToolchain
             pkgs.cargo-binstall
-            # refman
-          ] ++ pkgs.lib.optional (dorado != null) dorado;
+            refman
+          ]
+          ++ pkgs.lib.optional (dorado != null) dorado;
 
           shellHook = ''
             ${pkgs.lib.optionalString (dorado != null) ''

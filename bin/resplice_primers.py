@@ -722,7 +722,7 @@ def main() -> None:
             "INDEX",
             "SENSE",
         ],
-    )
+    ).drop_nulls()
 
     # look through primer names before proceeding to make sure primers aren't named
     # inconsistently with respect the symbols they contain

@@ -4,7 +4,7 @@ include { REPORT_REFERENCES       } from "../modules/reporting"
 include { ALIGN_WITH_PRESET       } from "../modules/minimap2"
 include { CONVERT_AND_SORT ; SORT_BAM ; INDEX } from "../modules/samtools"
 include { RASUSA_ALN_DOWNSAMPLING } from "../modules/rasusa"
-include { MOSDEPTH                } from "../modules/mosdepth"
+include { BEDTOOLS_GENOMECOV      } from "../modules/bedtools"
 include { PLOT_COVERAGE ; MULTI_SAMPLE_PLOT ; COVERAGE_SUMMARY } from "../modules/plot_coverage"
 
 
@@ -40,16 +40,16 @@ workflow ALIGNMENT {
         SORT_BAM.out
     )
 
-    MOSDEPTH(
+    BEDTOOLS_GENOMECOV(
         INDEX.out
     )
 
     PLOT_COVERAGE(
-        MOSDEPTH.out
+        BEDTOOLS_GENOMECOV.out
     )
 
     MULTI_SAMPLE_PLOT(
-        MOSDEPTH.out.map { _sample_id, files -> files }.flatten().filter { mosdepth_file -> mosdepth_file.toString().endsWith(".per-base.bed") }.collect(),
+        BEDTOOLS_GENOMECOV.out.map { _sample_id, bed_file -> bed_file }.collect(),
     )
     
     COVERAGE_SUMMARY(

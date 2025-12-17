@@ -79,7 +79,7 @@ copy-index:
 [group('docs')]
 [private]
 fix-index-paths:
-    @lua docs/fix-index-paths.lua
+    @python docs/fix-index-paths.py
 
 # Set up the Python environment with Pixi.
 [group('setup')]
@@ -159,6 +159,58 @@ py-test-clean:
     rm -rf .pytest_cache/
     rm -rf .tox/
     find bin -name "__pycache__" -type d -exec rm -rf {} +
+
+# === Rust Development Commands ===
+
+# Check Rust code compiles without building
+[group('rust')]
+rs-check:
+    cargo check
+
+# Build Rust scripts in debug mode
+[group('rust')]
+rs-build:
+    cargo build
+
+# Build Rust scripts in release mode (with LTO)
+[group('rust')]
+rs-build-release:
+    cargo build --release
+
+# Run all Rust tests
+[group('rust')]
+rs-test:
+    cargo test
+
+# Run Rust tests with output shown
+[group('rust')]
+rs-test-verbose:
+    cargo test -- --nocapture
+
+# Run Clippy lints (strict, matching CI)
+[group('rust')]
+rs-lint:
+    cargo clippy --all-targets
+
+# Format Rust code
+[group('rust')]
+rs-format:
+    cargo fmt
+
+# Check Rust formatting without modifying
+[group('rust')]
+rs-format-check:
+    cargo fmt -- --check
+
+# Run all Rust checks (format, lint, test)
+[group('rust')]
+rust: rs-format rs-lint rs-test
+    @echo "✅ All Rust checks passed!"
+
+# Clean Rust build artifacts
+[group('rust')]
+rs-clean:
+    cargo clean
 
 # D.A.N.C.E.
 [group('fun')]
@@ -619,3 +671,17 @@ alias gc := globus-clean
 alias status := globus-status
 alias logs := globus-logs
 alias stop := globus-stop
+
+# Rust shortcuts
+
+alias cargo := rs-build
+alias clippy := rs-lint
+alias rustfmt := rs-format
+alias rsc := rs-check
+alias rsb := rs-build
+alias rsbr := rs-build-release
+alias rst := rs-test
+alias rsl := rs-lint
+alias rsf := rs-format
+alias cargotest := rs-test
+alias cargobuild := rs-build

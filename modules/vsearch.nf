@@ -87,11 +87,17 @@ process IDENTIFY_HAPLOTYPES {
 	--tabbedout tmp.tsv \
 	--strand both
 
-	csvtk add-header -t \
-	--names orig_label,clust_label,clust_index,seq_index_in_clust,clust_abundance,first_seq_label \
-	tmp.tsv \
-	| csvtk filter -t --filter "clust_abundance>=${params.min_haplo_reads}" \
-	> ${sample_id}_haplotype_metadata.tsv
+	awk \
+		-F'\t' \
+		-v OFS='\t' \
+		-v min="${params.min_haplo_reads}" \
+		'BEGIN {
+			print "orig_label", "clust_label", "clust_index", "seq_index_in_clust", "clust_abundance", "first_seq_label"
+		}
+		\$5 >= min {
+			print
+		}' \
+		tmp.tsv > ${sample_id}_haplotype_metadata.tsv
 
 	rm tmp.tsv
 	"""

@@ -622,18 +622,12 @@ Project documentation sources:
 
 ### Post-Render Scripts
 
-**fix-index-paths.lua**
+**fix-index-paths.py**
 
-- Lua script for Quarto post-render processing
+- Python script for Quarto post-render processing
 - Fixes relative paths in generated HTML
 - Copies markdown files back to docs directory
 - Ensures proper website navigation structure
-
-**fix-index-paths.py**
-
-- Python alternative to the Lua script
-- Same functionality as fix-index-paths.lua
-- Provides fallback option if Lua is unavailable
 - Uses standard library for cross-platform compatibility
 
 ### Generated Files

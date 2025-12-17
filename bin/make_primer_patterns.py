@@ -101,9 +101,9 @@ def generate_regex_patterns(
     # make sure there are only two sequences present, and thus that we are only
     # considering a single amplicon
     primer_pair_count = 2
-    assert (
-        len(seqs) == primer_pair_count
-    ), f"The provided FASTA does not contain exactly two sequences:\n{seqs}"
+    assert len(seqs) == primer_pair_count, (
+        f"The provided FASTA does not contain exactly two sequences:\n{seqs}"
+    )
 
     # pull out the start coordinates, assuming `bedtools getfasta` formatting,
     # and run an assert that checks this assumption, a corollary of which is

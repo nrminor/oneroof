@@ -87,6 +87,24 @@
 //! flate2 = "1.0"
 //! ```
 
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    clippy::nursery,
+    clippy::unwrap_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
+#![allow(
+    clippy::expect_used,
+    clippy::module_name_repetitions,
+    clippy::similar_names,
+    clippy::too_many_lines,
+    clippy::must_use_candidate,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc
+)]
+
 use anyhow::Result;
 use clap::Parser;
 use flate2::{write::GzEncoder, Compression};
@@ -107,6 +125,10 @@ use std::{
 // Type aliases for complex nested types
 type SharedWriter = Arc<Mutex<Box<dyn Write + Send>>>;
 type SharedStats = Arc<TrimStats>;
+
+/// Tiger Style: Fixed upper bound on primer matches to prevent unbounded collection growth.
+/// A degenerate primer could theoretically match many times; this limit ensures bounded memory.
+const MAX_PRIMER_MATCHES: usize = 1000;
 
 /// Command line arguments for primer trimming
 #[derive(Parser, Debug)]
@@ -193,16 +215,16 @@ fn validate_args(args: &Args) -> Result<()> {
 
     // Check input file exists
     if !args.input.exists() {
-        anyhow::bail!("Input file does not exist: {:?}", args.input);
+        anyhow::bail!("Input file does not exist: {}", args.input.display());
     }
-    debug!("Input file exists: {:?}", args.input);
+    debug!("Input file exists: {}", args.input.display());
 
     // Validate primer sequences (DNA alphabet with IUPAC codes)
     let valid_bases = b"ACGTURYSWKMBDHVNacgturyswkmbdhvn";
 
     for (name, seq) in [("forward", &args.forward), ("reverse", &args.reverse)] {
         if seq.is_empty() {
-            anyhow::bail!("{} primer cannot be empty", name);
+            anyhow::bail!("{name} primer cannot be empty");
         }
 
         for &base in seq.as_bytes() {
@@ -448,6 +470,24 @@ struct AmpliconMatch {
 
 impl AmpliconMatch {
     fn total_cost(&self) -> i32 {
+        // Tiger Style: Release assertions for invariants
+        // These run in production to catch logic errors early
+        assert!(
+            self.start <= self.end,
+            "AmpliconMatch invariant violated: start ({}) > end ({})",
+            self.start,
+            self.end
+        );
+        assert!(
+            self.fwd_cost >= 0,
+            "AmpliconMatch invariant violated: negative fwd_cost ({})",
+            self.fwd_cost
+        );
+        assert!(
+            self.rev_cost >= 0,
+            "AmpliconMatch invariant violated: negative rev_cost ({})",
+            self.rev_cost
+        );
         self.fwd_cost + self.rev_cost
     }
 }
@@ -484,12 +524,13 @@ impl TrimStats {
         Self::default()
     }
 
+    #[allow(clippy::cast_precision_loss)] // Precision loss acceptable for percentage display
     fn report(&self, output: &mut dyn Write) -> std::io::Result<()> {
         let total = self.total_reads.load(Ordering::Relaxed);
         let found = self.amplicons_found.load(Ordering::Relaxed);
 
         writeln!(output, "\nPrimer Trimming Statistics:")?;
-        writeln!(output, "  Total reads processed: {}", total)?;
+        writeln!(output, "  Total reads processed: {total}")?;
 
         if total > 0 {
             writeln!(
@@ -587,7 +628,7 @@ struct WindowedSearch {
 }
 
 impl WindowedSearch {
-    fn new(
+    const fn new(
         primers: PrimerPair,
         max_mismatch: u8,
         forward_window: usize,
@@ -604,13 +645,12 @@ impl WindowedSearch {
     /// Compute search window bounds for a given end of the read.
     ///
     /// Returns (start, end) indices for slicing the read sequence.
-    ///
-    /// # Arguments
-    ///
-    /// * `read_len` - Length of the read sequence
-    /// * `window_size` - Size of the search window (0 = no limit)
-    /// * `at_end` - If true, window is at 3' end; if false, at 5' end
-    fn window_bounds(&self, read_len: usize, window_size: usize, at_end: bool) -> (usize, usize) {
+    #[inline]
+    const fn compute_window_bounds(
+        read_len: usize,
+        window_size: usize,
+        at_end: bool,
+    ) -> (usize, usize) {
         if window_size == 0 || window_size >= read_len {
             (0, read_len)
         } else if at_end {
@@ -618,6 +658,26 @@ impl WindowedSearch {
         } else {
             (0, window_size)
         }
+    }
+
+    /// Get forward primer search window bounds.
+    ///
+    /// # Arguments
+    /// * `read_len` - Length of the read sequence
+    /// * `at_end` - If true, window is at 3' end; if false, at 5' end
+    #[inline]
+    const fn forward_window_bounds(&self, read_len: usize, at_end: bool) -> (usize, usize) {
+        Self::compute_window_bounds(read_len, self.forward_window, at_end)
+    }
+
+    /// Get reverse primer search window bounds.
+    ///
+    /// # Arguments
+    /// * `read_len` - Length of the read sequence
+    /// * `at_end` - If true, window is at 3' end; if false, at 5' end
+    #[inline]
+    const fn reverse_window_bounds(&self, read_len: usize, at_end: bool) -> (usize, usize) {
+        Self::compute_window_bounds(read_len, self.reverse_window, at_end)
     }
 
     /// Search for a primer in a windowed region, returning matches in read coordinates.
@@ -629,18 +689,57 @@ impl WindowedSearch {
         window_start: usize,
         window_end: usize,
     ) -> Vec<sassy::Match> {
+        // Tiger Style: Validate window bounds before slicing
+        assert!(
+            window_start <= window_end,
+            "search_primer: window_start ({window_start}) > window_end ({window_end})"
+        );
+        assert!(
+            window_end <= read_seq.len(),
+            "search_primer: window_end ({}) > read_seq.len ({})",
+            window_end,
+            read_seq.len()
+        );
+
+        // SAFETY: bounds validated by assertions above
+        #[allow(clippy::indexing_slicing)]
         let slice = &read_seq[window_start..window_end];
 
-        searcher
+        let matches: Vec<_> = searcher
             .search(primer, slice, self.max_mismatch)
             .into_iter()
+            .take(MAX_PRIMER_MATCHES)
             .map(|mut m| {
                 // Adjust coordinates from slice space to read space
                 m.text_start += window_start;
                 m.text_end += window_start;
+
+                // Tiger Style: Assert coordinate invariants after transformation
+                assert!(
+                    m.text_start <= m.text_end,
+                    "search_primer: text_start ({}) > text_end ({}) after adjustment",
+                    m.text_start,
+                    m.text_end
+                );
+                assert!(
+                    m.text_end <= read_seq.len(),
+                    "search_primer: text_end ({}) > read_seq.len ({}) after adjustment",
+                    m.text_end,
+                    read_seq.len()
+                );
+
                 m
             })
-            .collect()
+            .collect();
+
+        // Tiger Style: Warn if we hit the bounded collection limit
+        if matches.len() == MAX_PRIMER_MATCHES {
+            warn!(
+                "Hit MAX_PRIMER_MATCHES limit ({MAX_PRIMER_MATCHES}); results may be incomplete for this read"
+            );
+        }
+
+        matches
     }
 
     /// Search for forward primer in the appropriate window for the given orientation.
@@ -656,7 +755,7 @@ impl WindowedSearch {
     ) -> Vec<sassy::Match> {
         let read_len = read_seq.len();
         let at_end = matches!(orientation, Orientation::Reverse);
-        let (start, end) = self.window_bounds(read_len, self.forward_window, at_end);
+        let (start, end) = self.forward_window_bounds(read_len, at_end);
 
         let primer = match orientation {
             Orientation::Forward => &self.primers.forward,
@@ -679,7 +778,7 @@ impl WindowedSearch {
     ) -> Vec<sassy::Match> {
         let read_len = read_seq.len();
         let at_end = matches!(orientation, Orientation::Forward);
-        let (start, end) = self.window_bounds(read_len, self.reverse_window, at_end);
+        let (start, end) = self.reverse_window_bounds(read_len, at_end);
 
         let primer = match orientation {
             Orientation::Forward => &self.primers.reverse_rc,
@@ -718,6 +817,20 @@ impl PrimerTrimProcessor {
     fn write_trimmed_record<R: Record>(&self, record: &R, amplicon: &AmpliconMatch) -> Result<()> {
         let sequence = record.seq();
 
+        // Tiger Style: Pair assertions - verify amplicon invariants at point of use
+        assert!(
+            amplicon.start <= amplicon.end,
+            "write_trimmed_record: amplicon.start ({}) > amplicon.end ({})",
+            amplicon.start,
+            amplicon.end
+        );
+        assert!(
+            amplicon.start <= sequence.len(),
+            "write_trimmed_record: amplicon.start ({}) > sequence.len ({})",
+            amplicon.start,
+            sequence.len()
+        );
+
         // Validate amplicon coordinates
         if amplicon.end > sequence.len() {
             anyhow::bail!(
@@ -727,9 +840,11 @@ impl PrimerTrimProcessor {
             );
         }
 
+        // SAFETY: bounds validated by assertions (start <= end, start <= len) and bail check (end <= len)
+        #[allow(clippy::indexing_slicing)]
         let trimmed_seq = &sequence[amplicon.start..amplicon.end];
 
-        let mut writer = self.writer.lock().unwrap();
+        let mut writer = self.writer.lock().expect("writer mutex poisoned");
 
         match self.output_format {
             OutputFormat::Fastq => {
@@ -748,6 +863,9 @@ impl PrimerTrimProcessor {
                     );
                 }
 
+                // SAFETY: start <= end (asserted above), end <= quality.len() (bail check above)
+                // Therefore start <= quality.len()
+                #[allow(clippy::indexing_slicing)]
                 let trimmed_qual = &quality[amplicon.start..amplicon.end];
 
                 // Write FASTQ record
@@ -764,6 +882,7 @@ impl PrimerTrimProcessor {
                 writer.write_all(b"\n")?;
             }
         }
+        drop(writer);
 
         Ok(())
     }
@@ -787,21 +906,42 @@ impl PrimerTrimProcessor {
     /// * `Err(FailureReason)` - Specific reason why no amplicon was found
     fn find_amplicon(&mut self, read_seq: &[u8]) -> Result<AmpliconMatch, FailureReason> {
         // Pass 1: Forward orientation (fwd as-is, rev as RC)
-        match self.try_orientation(read_seq, Orientation::Forward) {
+        let result = match self.try_orientation(read_seq, Orientation::Forward) {
             Ok(amplicon) => Ok(amplicon),
             Err(reason) => {
                 // Save the failure reason from forward orientation
                 let fwd_failure = reason;
 
                 // Pass 2: Reverse orientation (fwd as RC, rev as-is)
-                match self.try_orientation(read_seq, Orientation::Reverse) {
-                    Ok(amplicon) => Ok(amplicon),
-                    // If both orientations fail, return the forward failure reason
-                    // (since forward is the expected orientation)
-                    Err(_) => Err(fwd_failure),
-                }
+                self.try_orientation(read_seq, Orientation::Reverse)
+                    .map_or(Err(fwd_failure), Ok)
             }
+        };
+
+        // Tiger Style: Post-condition assertions on successful result
+        if let Ok(ref amplicon) = result {
+            let len = amplicon.end - amplicon.start;
+            assert!(
+                amplicon.start < amplicon.end,
+                "find_amplicon post-condition: start ({}) >= end ({})",
+                amplicon.start,
+                amplicon.end
+            );
+            assert!(
+                len >= self.min_len,
+                "find_amplicon post-condition: length ({}) < min_len ({})",
+                len,
+                self.min_len
+            );
+            assert!(
+                len <= self.max_len,
+                "find_amplicon post-condition: length ({}) > max_len ({})",
+                len,
+                self.max_len
+            );
         }
+
+        result
     }
 
     /// Try to find an amplicon in a specific orientation
@@ -886,22 +1026,19 @@ impl PrimerTrimProcessor {
                 };
 
                 // Keep best scoring match, breaking ties by longest amplicon
-                let is_better = match &best {
-                    None => true,
-                    Some(current) => {
-                        let cost_cmp = candidate.total_cost().cmp(&current.total_cost());
-                        match cost_cmp {
-                            cmp::Ordering::Less => true, // Lower cost is better
-                            cmp::Ordering::Equal => {
-                                // Same cost: prefer longer amplicon
-                                let candidate_len = candidate.end - candidate.start;
-                                let current_len = current.end - current.start;
-                                candidate_len > current_len
-                            }
-                            cmp::Ordering::Greater => false,
+                let is_better = best.as_ref().is_none_or(|current| {
+                    let cost_cmp = candidate.total_cost().cmp(&current.total_cost());
+                    match cost_cmp {
+                        cmp::Ordering::Less => true, // Lower cost is better
+                        cmp::Ordering::Equal => {
+                            // Same cost: prefer longer amplicon
+                            let candidate_len = candidate.end - candidate.start;
+                            let current_len = current.end - current.start;
+                            candidate_len > current_len
                         }
+                        cmp::Ordering::Greater => false,
                     }
-                };
+                });
 
                 if is_better {
                     best = Some(candidate);
@@ -926,7 +1063,7 @@ impl<Rf: Record> ParallelProcessor<Rf> for PrimerTrimProcessor {
 
         // Log progress every 10000 reads
         if read_count.is_multiple_of(10000) {
-            debug!("Processed {} reads", read_count);
+            debug!("Processed {read_count} reads");
         }
 
         let seq = record.seq();
@@ -998,8 +1135,8 @@ fn main() -> Result<()> {
     validate_args(&args)?;
 
     info!("=== Primer Trimming Started ===");
-    info!("Input file: {:?}", args.input);
-    info!("Output file: {:?}", args.output);
+    info!("Input file: {}", args.input.display());
+    info!("Output file: {}", args.output.display());
     info!("Output format: {:?}", args.format);
     info!(
         "Compression: {}",
@@ -1088,20 +1225,17 @@ fn main() -> Result<()> {
     info!("Processing records...");
     reader
         .process_parallel(&mut processor, args.threads)
-        .map_err(|e| anyhow::anyhow!("Processing failed: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Processing failed: {e}"))?;
 
     info!("Processing complete");
 
     // Report statistics
-    let mut stats_output: Box<dyn Write> = match &args.stats {
-        Some(path) => {
-            info!("Writing statistics to: {:?}", path);
-            Box::new(File::create(path)?)
-        }
-        None => {
-            debug!("Writing statistics to stderr");
-            Box::new(std::io::stderr())
-        }
+    let mut stats_output: Box<dyn Write> = if let Some(path) = &args.stats {
+        info!("Writing statistics to: {}", path.display());
+        Box::new(File::create(path)?)
+    } else {
+        debug!("Writing statistics to stderr");
+        Box::new(std::io::stderr())
     };
     stats.report(&mut *stats_output)?;
 
@@ -1119,6 +1253,27 @@ mod tests {
     // Type aliases for test utilities
     type SharedBuffer = Arc<Mutex<Vec<u8>>>;
     type TestWriterPair = (SharedWriter, SharedBuffer);
+
+    /// A writer that delegates to a shared buffer, allowing test inspection after writes.
+    struct SharedVecWriter {
+        buffer: Arc<Mutex<Vec<u8>>>,
+    }
+
+    impl std::io::Write for SharedVecWriter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.buffer
+                .lock()
+                .expect("SharedVecWriter buffer mutex poisoned")
+                .write(buf)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.buffer
+                .lock()
+                .expect("SharedVecWriter buffer mutex poisoned")
+                .flush()
+        }
+    }
 
     // Helper function to create a test processor (full-read search, no windows)
     fn create_test_processor(
@@ -1218,8 +1373,10 @@ mod tests {
     fn test_trim_stats_empty() {
         let stats = TrimStats::new();
         let mut output = Vec::new();
-        stats.report(&mut output).unwrap();
-        let report = String::from_utf8(output).unwrap();
+        stats
+            .report(&mut output)
+            .expect("TrimStats::report failed to write to Vec buffer");
+        let report = String::from_utf8(output).expect("TrimStats report contained invalid UTF-8");
         assert!(report.contains("Total reads processed: 0"));
         assert!(report.contains("Amplicons found: 0"));
     }
@@ -1233,8 +1390,10 @@ mod tests {
         stats.reverse_orientation.store(25, Ordering::Relaxed);
 
         let mut output = Vec::new();
-        stats.report(&mut output).unwrap();
-        let report = String::from_utf8(output).unwrap();
+        stats
+            .report(&mut output)
+            .expect("TrimStats::report failed to write to Vec buffer");
+        let report = String::from_utf8(output).expect("TrimStats report contained invalid UTF-8");
 
         assert!(report.contains("Total reads processed: 100"));
         assert!(report.contains("Amplicons found: 75 (75.00%)"));
@@ -1261,7 +1420,9 @@ mod tests {
 
         // Wait for all threads to complete
         for handle in handles {
-            handle.join().unwrap();
+            handle
+                .join()
+                .expect("stats update thread panicked during concurrent access test");
         }
 
         // Verify counts
@@ -1292,7 +1453,8 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon =
+            result.expect("find_amplicon failed on read with exact primer matches ACGT...TGCA");
         assert_eq!(amplicon.orientation, Orientation::Forward);
         assert_eq!(amplicon.fwd_cost, 0);
         assert_eq!(amplicon.rev_cost, 0);
@@ -1311,7 +1473,9 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result.expect(
+            "find_amplicon failed on read with 1-mismatch primers ACTT/TGCC (max_mismatch=2)",
+        );
         assert_eq!(amplicon.fwd_cost, 1);
         assert_eq!(amplicon.rev_cost, 1);
     }
@@ -1325,8 +1489,10 @@ mod tests {
         let read = b"ACGTATATATATATGCA";
         let result = processor.find_amplicon(read);
 
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FailureReason::TooShort);
+        assert_eq!(
+            result.expect_err("find_amplicon should reject insert below min_len"),
+            FailureReason::TooShort
+        );
     }
 
     #[test]
@@ -1338,8 +1504,10 @@ mod tests {
         let read = b"ACGTATATATATATGCA";
         let result = processor.find_amplicon(read);
 
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FailureReason::TooLong);
+        assert_eq!(
+            result.expect_err("find_amplicon should reject insert above max_len"),
+            FailureReason::TooLong
+        );
     }
 
     #[test]
@@ -1351,8 +1519,10 @@ mod tests {
         let read = b"ATATATATATTGCA";
         let result = processor.find_amplicon(read);
 
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FailureReason::NoForwardPrimer);
+        assert_eq!(
+            result.expect_err("find_amplicon should fail when forward primer missing"),
+            FailureReason::NoForwardPrimer
+        );
     }
 
     #[test]
@@ -1364,8 +1534,10 @@ mod tests {
         let read = b"ACGTATATATATA";
         let result = processor.find_amplicon(read);
 
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FailureReason::NoReversePrimer);
+        assert_eq!(
+            result.expect_err("find_amplicon should fail when reverse primer missing"),
+            FailureReason::NoReversePrimer
+        );
     }
 
     #[test]
@@ -1380,7 +1552,7 @@ mod tests {
 
         // Should find valid amplicon in reverse orientation
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result.expect("find_amplicon failed on reverse-oriented read TGCA...ACGT");
         assert_eq!(amplicon.orientation, Orientation::Reverse);
         assert_eq!(amplicon.start, 4); // After REV primer
         assert_eq!(amplicon.end, 10); // Before FWD_RC primer
@@ -1389,6 +1561,7 @@ mod tests {
     // Phase 6 Tests: ParallelProcessor Integration
 
     #[test]
+    #[allow(clippy::panic)] // let-else for FASTQ line count validation
     fn test_process_record_trims_primers() {
         let primers = PrimerPair::new(b"ACGT", b"TGCA");
         let (writer, buffer) = create_test_writer();
@@ -1414,17 +1587,22 @@ mod tests {
             qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
         };
 
-        processor.process_record(record).unwrap();
+        processor
+            .process_record(record)
+            .expect("process_record failed on valid FASTQ record with primers ACGT...TGCA");
 
         // Check output
-        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTQ output contained invalid UTF-8");
         let lines: Vec<&str> = output.lines().collect();
 
-        assert_eq!(lines.len(), 4);
-        assert_eq!(lines[0], "@test_read");
-        assert_eq!(lines[1], "ATATATAT"); // Insert only, primers removed
-        assert_eq!(lines[2], "+");
-        assert_eq!(lines[3], "IIIIIIII"); // Quality for insert only
+        let [header, seq, plus, qual] = lines.as_slice() else {
+            panic!("expected 4 FASTQ lines, got {}", lines.len());
+        };
+        assert_eq!(*header, "@test_read");
+        assert_eq!(*seq, "ATATATAT"); // Insert only, primers removed
+        assert_eq!(*plus, "+");
+        assert_eq!(*qual, "IIIIIIII"); // Quality for insert only
 
         // Check statistics
         assert_eq!(stats.total_reads.load(Ordering::Relaxed), 1);
@@ -1457,11 +1635,14 @@ mod tests {
             qual: Some(b"IIIIIIIIIIII".to_vec()),
         };
 
-        processor.process_record(record).unwrap();
+        processor.process_record(record).expect(
+            "process_record should succeed even when no amplicon found (just updates stats)",
+        );
 
         // Check no output was written
-        let output = buffer.lock().unwrap();
+        let output = buffer.lock().expect("test buffer mutex poisoned");
         assert_eq!(output.len(), 0);
+        drop(output);
 
         // Check statistics
         assert_eq!(stats.total_reads.load(Ordering::Relaxed), 1);
@@ -1496,7 +1677,9 @@ mod tests {
             seq: b"GGGGGGGGGGGGGGGG".to_vec(),
             qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
         };
-        processor.process_record(record1).unwrap();
+        processor.process_record(record1).expect(
+            "process_record errored on no-forward-primer case (should track stats, not error)",
+        );
 
         // Test 2: No reverse primer
         let record2 = MockRecord {
@@ -1504,7 +1687,9 @@ mod tests {
             seq: b"ACGTACGTGGGGGGGG".to_vec(),
             qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
         };
-        processor.process_record(record2).unwrap();
+        processor.process_record(record2).expect(
+            "process_record errored on no-reverse-primer case (should track stats, not error)",
+        );
 
         // Test 3: Too short (insert < 10)
         let record3 = MockRecord {
@@ -1512,7 +1697,9 @@ mod tests {
             seq: b"ACGTACGTATTTGCATGCA".to_vec(), // Insert is only 2bp
             qual: Some(b"IIIIIIIIIIIIIIIIIII".to_vec()),
         };
-        processor.process_record(record3).unwrap();
+        processor.process_record(record3).expect(
+            "process_record errored on too-short-insert case (should track stats, not error)",
+        );
 
         // Test 4: Too long (insert > 50)
         let record4 = MockRecord {
@@ -1522,7 +1709,9 @@ mod tests {
                 b"IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII".to_vec(),
             ),
         };
-        processor.process_record(record4).unwrap();
+        processor.process_record(record4).expect(
+            "process_record errored on too-long-insert case (should track stats, not error)",
+        );
 
         // Test 5: Invalid structure (primers overlap)
         let record5 = MockRecord {
@@ -1530,7 +1719,9 @@ mod tests {
             seq: b"TGCATGCAACGTACGT".to_vec(), // Reverse before forward
             qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
         };
-        processor.process_record(record5).unwrap();
+        processor.process_record(record5).expect(
+            "process_record errored on invalid-structure case (should track stats, not error)",
+        );
 
         // Verify statistics
         assert_eq!(stats.total_reads.load(Ordering::Relaxed), 5);
@@ -1556,7 +1747,8 @@ mod tests {
 
         // Should find in reverse orientation
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon =
+            result.expect("find_amplicon failed on palindromic primer read ACGTACGT...TGCATGCA");
         // Note: ACGTACGT is a palindrome, so orientation detection may vary
         // The important thing is we found a valid amplicon
         assert_eq!(amplicon.fwd_cost, 0);
@@ -1573,7 +1765,8 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result
+            .expect("find_amplicon failed on read with multiple primer matches (should pick best)");
         // Should find a valid amplicon with exact matches (cost 0)
         assert_eq!(amplicon.fwd_cost, 0);
         assert_eq!(amplicon.rev_cost, 0);
@@ -1607,7 +1800,7 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result.expect("find_amplicon failed when primers at exact read boundaries");
         assert_eq!(amplicon.start, 4); // After ACGT
         assert_eq!(amplicon.end, 12); // Before TGCA
         assert_eq!(amplicon.end - amplicon.start, 8); // Insert length
@@ -1652,7 +1845,7 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result.expect("find_amplicon rejected 8bp insert when min_len=8");
         assert_eq!(amplicon.end - amplicon.start, 8);
     }
 
@@ -1666,7 +1859,7 @@ mod tests {
         let result = processor.find_amplicon(read);
 
         assert!(result.is_ok());
-        let amplicon = result.unwrap();
+        let amplicon = result.expect("find_amplicon rejected 8bp insert when max_len=8");
         assert_eq!(amplicon.end - amplicon.start, 8);
     }
 
@@ -1695,7 +1888,9 @@ mod tests {
             qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
         };
 
-        processor.process_record(record).unwrap();
+        processor
+            .process_record(record)
+            .expect("process_record failed on valid forward-orientation read");
 
         // Verify orientation was tracked
         assert_eq!(stats.amplicons_found.load(Ordering::Relaxed), 1);
@@ -1726,14 +1921,17 @@ mod tests {
         };
 
         let result = validate_args(&args);
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("does not exist"));
+        assert!(result
+            .expect_err("validate_args should reject non-existent input file")
+            .to_string()
+            .contains("does not exist"));
     }
 
     #[test]
     fn test_validate_args_invalid_primer_sequence() {
         let temp_file = std::env::temp_dir().join("test_validate.fastq");
-        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n").unwrap();
+        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n")
+            .expect("failed to create temp test file");
 
         let args = Args {
             input: temp_file.clone(),
@@ -1754,22 +1952,23 @@ mod tests {
         let result = validate_args(&args);
         assert!(result.is_err());
         assert!(result
-            .unwrap_err()
+            .expect_err("validate_args should reject primer with digits")
             .to_string()
             .contains("invalid character"));
 
-        std::fs::remove_file(&temp_file).unwrap();
+        std::fs::remove_file(&temp_file).expect("failed to clean up temp test file");
     }
 
     #[test]
     fn test_validate_args_empty_primer() {
         let temp_file = std::env::temp_dir().join("test_validate2.fastq");
-        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n").unwrap();
+        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n")
+            .expect("failed to create temp test file");
 
         let args = Args {
             input: temp_file.clone(),
             output: PathBuf::from("/tmp/out.fastq"),
-            forward: "".to_string(), // Empty
+            forward: String::new(), // Empty
             reverse: "TGCATGCA".to_string(),
             max_mismatch: 2,
             min_len: 50,
@@ -1784,15 +1983,19 @@ mod tests {
 
         let result = validate_args(&args);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("cannot be empty"));
+        assert!(result
+            .expect_err("validate_args should reject empty primer")
+            .to_string()
+            .contains("cannot be empty"));
 
-        std::fs::remove_file(&temp_file).unwrap();
+        std::fs::remove_file(&temp_file).expect("failed to clean up temp test file");
     }
 
     #[test]
     fn test_validate_args_min_greater_than_max() {
         let temp_file = std::env::temp_dir().join("test_validate3.fastq");
-        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n").unwrap();
+        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n")
+            .expect("failed to create temp test file");
 
         let args = Args {
             input: temp_file.clone(),
@@ -1813,17 +2016,18 @@ mod tests {
         let result = validate_args(&args);
         assert!(result.is_err());
         assert!(result
-            .unwrap_err()
+            .expect_err("validate_args should reject min_len > max_len")
             .to_string()
             .contains("cannot be greater than"));
 
-        std::fs::remove_file(&temp_file).unwrap();
+        std::fs::remove_file(&temp_file).expect("failed to clean up temp test file");
     }
 
     #[test]
     fn test_validate_args_zero_threads() {
         let temp_file = std::env::temp_dir().join("test_validate4.fastq");
-        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n").unwrap();
+        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n")
+            .expect("failed to create temp test file");
 
         let args = Args {
             input: temp_file.clone(),
@@ -1843,15 +2047,19 @@ mod tests {
 
         let result = validate_args(&args);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("at least 1"));
+        assert!(result
+            .expect_err("validate_args should reject threads=0")
+            .to_string()
+            .contains("at least 1"));
 
-        std::fs::remove_file(&temp_file).unwrap();
+        std::fs::remove_file(&temp_file).expect("failed to clean up temp test file");
     }
 
     #[test]
     fn test_validate_args_valid() {
         let temp_file = std::env::temp_dir().join("test_validate5.fastq");
-        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n").unwrap();
+        std::fs::write(&temp_file, "@read\nACGT\n+\nIIII\n")
+            .expect("failed to create temp test file");
 
         let args = Args {
             input: temp_file.clone(),
@@ -1872,7 +2080,7 @@ mod tests {
         let result = validate_args(&args);
         assert!(result.is_ok());
 
-        std::fs::remove_file(&temp_file).unwrap();
+        std::fs::remove_file(&temp_file).expect("failed to clean up temp test file");
     }
 
     // Phase 5 Tests: Output Writing
@@ -1905,30 +2113,14 @@ mod tests {
     // Helper to create a test writer that captures output
     fn create_test_writer() -> TestWriterPair {
         let buffer = Arc::new(Mutex::new(Vec::new()));
-        let buffer_clone = buffer.clone();
-
-        // Create a wrapper that writes to our shared buffer
-        struct SharedVecWriter {
-            buffer: Arc<Mutex<Vec<u8>>>,
-        }
-
-        impl std::io::Write for SharedVecWriter {
-            fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-                self.buffer.lock().unwrap().write(buf)
-            }
-
-            fn flush(&mut self) -> std::io::Result<()> {
-                self.buffer.lock().unwrap().flush()
-            }
-        }
-
         let writer: Box<dyn std::io::Write + Send> = Box::new(SharedVecWriter {
-            buffer: buffer_clone,
+            buffer: buffer.clone(),
         });
         (Arc::new(Mutex::new(writer)), buffer)
     }
 
     #[test]
+    #[allow(clippy::panic)] // let-else for FASTQ line count validation
     fn test_write_fastq_format() {
         let primers = PrimerPair::new(b"ACGT", b"TGCA");
         let (writer, buffer) = create_test_writer();
@@ -1960,21 +2152,27 @@ mod tests {
             qual: Some(b"IIIIIIIIIIIIIIIIIIIII".to_vec()),
         };
 
-        processor.write_trimmed_record(&record, &amplicon).unwrap();
+        processor
+            .write_trimmed_record(&record, &amplicon)
+            .expect("write_trimmed_record failed for valid FASTQ record");
 
         // Extract the written data
-        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTQ output contained invalid UTF-8");
 
         // Verify FASTQ format
         let lines: Vec<&str> = output.lines().collect();
-        assert_eq!(lines.len(), 4);
-        assert_eq!(lines[0], "@test_read");
-        assert_eq!(lines[1], "ACGTATATATATA"); // Trimmed sequence (positions 4-17 exclusive = 13 chars)
-        assert_eq!(lines[2], "+");
-        assert_eq!(lines[3], "IIIIIIIIIIIII"); // Trimmed quality (13 chars)
+        let [header, seq, plus, qual] = lines.as_slice() else {
+            panic!("expected 4 FASTQ lines, got {}", lines.len());
+        };
+        assert_eq!(*header, "@test_read");
+        assert_eq!(*seq, "ACGTATATATATA"); // Trimmed sequence (positions 4-17 exclusive = 13 chars)
+        assert_eq!(*plus, "+");
+        assert_eq!(*qual, "IIIIIIIIIIIII"); // Trimmed quality (13 chars)
     }
 
     #[test]
+    #[allow(clippy::panic)] // let-else for FASTA line count validation
     fn test_write_fasta_format() {
         let primers = PrimerPair::new(b"ACGT", b"TGCA");
         let (writer, buffer) = create_test_writer();
@@ -2006,16 +2204,21 @@ mod tests {
             qual: None,
         };
 
-        processor.write_trimmed_record(&record, &amplicon).unwrap();
+        processor
+            .write_trimmed_record(&record, &amplicon)
+            .expect("write_trimmed_record failed for valid FASTA record");
 
         // Extract the written data
-        let output = String::from_utf8(buffer.lock().unwrap().clone()).unwrap();
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTA output contained invalid UTF-8");
 
         // Verify FASTA format
         let lines: Vec<&str> = output.lines().collect();
-        assert_eq!(lines.len(), 2);
-        assert_eq!(lines[0], ">test_read");
-        assert_eq!(lines[1], "ACGTATATATATA"); // Trimmed sequence
+        let [header, seq] = lines.as_slice() else {
+            panic!("expected 2 FASTA lines, got {}", lines.len());
+        };
+        assert_eq!(*header, ">test_read");
+        assert_eq!(*seq, "ACGTATATATATA"); // Trimmed sequence
     }
 
     #[test]
@@ -2052,8 +2255,10 @@ mod tests {
 
         // Should error when quality is None for FASTQ format
         let result = processor.write_trimmed_record(&record, &amplicon);
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("quality scores"));
+        assert!(result
+            .expect_err("write_trimmed_record should reject FASTQ output without quality scores")
+            .to_string()
+            .contains("quality scores"));
     }
 
     #[test]
@@ -2077,22 +2282,24 @@ mod tests {
             reverse_window: 0,
         };
 
-        let writer = create_writer(&args).unwrap();
+        let writer = create_writer(&args).expect("create_writer failed for uncompressed output");
 
         // Write some test data
         {
-            let mut w = writer.lock().unwrap();
-            writeln!(w, "test data").unwrap();
+            let mut w = writer.lock().expect("writer mutex poisoned");
+            writeln!(w, "test data").expect("failed to write test data");
         }
 
         // Read back and verify it's uncompressed
-        let mut file = std::fs::File::open(&output_path).unwrap();
+        let mut file =
+            std::fs::File::open(&output_path).expect("failed to open output file for verification");
         let mut contents = String::new();
-        file.read_to_string(&mut contents).unwrap();
+        file.read_to_string(&mut contents)
+            .expect("failed to read output file");
         assert_eq!(contents, "test data\n");
 
         // Cleanup
-        std::fs::remove_file(&output_path).unwrap();
+        std::fs::remove_file(&output_path).expect("failed to clean up temp test file");
     }
 
     #[test]
@@ -2116,25 +2323,28 @@ mod tests {
             reverse_window: 0,
         };
 
-        let writer = create_writer(&args).unwrap();
+        let writer = create_writer(&args).expect("create_writer failed for gzip output");
 
         // Write some test data
         {
-            let mut w = writer.lock().unwrap();
-            writeln!(w, "test data").unwrap();
+            let mut w = writer.lock().expect("writer mutex poisoned");
+            writeln!(w, "test data").expect("failed to write test data");
         }
         // Drop the writer to flush and close the gzip stream
         drop(writer);
 
         // Read back and verify it's gzip compressed
-        let file = std::fs::File::open(&output_path).unwrap();
+        let file =
+            std::fs::File::open(&output_path).expect("failed to open gzip output for verification");
         let mut decoder = GzDecoder::new(file);
         let mut contents = String::new();
-        decoder.read_to_string(&mut contents).unwrap();
+        decoder
+            .read_to_string(&mut contents)
+            .expect("failed to decompress gzip output");
         assert_eq!(contents, "test data\n");
 
         // Cleanup
-        std::fs::remove_file(&output_path).unwrap();
+        std::fs::remove_file(&output_path).expect("failed to clean up temp test file");
     }
 
     // Format combination validation tests
@@ -2151,7 +2361,10 @@ mod tests {
         // FASTA -> FASTQ is invalid (no quality scores)
         let result = validate_format_combination(fastx::Format::Fasta, OutputFormat::Fastq);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("quality scores"));
+        assert!(result
+            .expect_err("FASTA->FASTQ conversion should be rejected")
+            .to_string()
+            .contains("quality scores"));
     }
 
     #[test]
@@ -2172,40 +2385,46 @@ mod tests {
 
     #[test]
     fn test_window_bounds_no_limit() {
-        let primers = PrimerPair::new(b"ACGT", b"TGCA");
-        let search = WindowedSearch::new(primers, 0, 0, 0);
-
         // window_size=0 means search entire read
-        assert_eq!(search.window_bounds(100, 0, false), (0, 100));
-        assert_eq!(search.window_bounds(100, 0, true), (0, 100));
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 0, false),
+            (0, 100)
+        );
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 0, true),
+            (0, 100)
+        );
     }
 
     #[test]
     fn test_window_bounds_at_5_prime() {
-        let primers = PrimerPair::new(b"ACGT", b"TGCA");
-        let search = WindowedSearch::new(primers, 0, 50, 50);
-
         // at_end=false means 5' end (first N bases)
-        assert_eq!(search.window_bounds(100, 50, false), (0, 50));
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 50, false),
+            (0, 50)
+        );
     }
 
     #[test]
     fn test_window_bounds_at_3_prime() {
-        let primers = PrimerPair::new(b"ACGT", b"TGCA");
-        let search = WindowedSearch::new(primers, 0, 50, 50);
-
         // at_end=true means 3' end (last N bases)
-        assert_eq!(search.window_bounds(100, 50, true), (50, 100));
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 50, true),
+            (50, 100)
+        );
     }
 
     #[test]
     fn test_window_bounds_larger_than_read() {
-        let primers = PrimerPair::new(b"ACGT", b"TGCA");
-        let search = WindowedSearch::new(primers, 0, 200, 200);
-
         // Window larger than read should search entire read
-        assert_eq!(search.window_bounds(100, 200, false), (0, 100));
-        assert_eq!(search.window_bounds(100, 200, true), (0, 100));
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 200, false),
+            (0, 100)
+        );
+        assert_eq!(
+            WindowedSearch::compute_window_bounds(100, 200, true),
+            (0, 100)
+        );
     }
 
     #[test]
@@ -2227,7 +2446,7 @@ mod tests {
             result.is_ok(),
             "Should find amplicon when primers are within windows"
         );
-        let amplicon = result.unwrap();
+        let amplicon = result.expect("find_amplicon failed with primers within 10bp windows");
         assert_eq!(amplicon.orientation, Orientation::Forward);
         assert_eq!(amplicon.start, 4); // After forward primer
         assert_eq!(amplicon.end, 22); // Before reverse primer RC
@@ -2245,11 +2464,11 @@ mod tests {
         assert_eq!(read.len(), 32);
 
         let result = processor.find_amplicon(read);
-        assert!(
-            result.is_err(),
-            "Should not find amplicon when forward primer is outside window"
+        assert_eq!(
+            result
+                .expect_err("find_amplicon should fail when forward primer is outside 5bp window"),
+            FailureReason::NoForwardPrimer
         );
-        assert_eq!(result.unwrap_err(), FailureReason::NoForwardPrimer);
     }
 
     #[test]
@@ -2265,11 +2484,11 @@ mod tests {
         assert_eq!(read.len(), 33);
 
         let result = processor.find_amplicon(read);
-        assert!(
-            result.is_err(),
-            "Should not find amplicon when reverse primer is outside window"
+        assert_eq!(
+            result
+                .expect_err("find_amplicon should fail when reverse primer is outside 5bp window"),
+            FailureReason::NoReversePrimer
         );
-        assert_eq!(result.unwrap_err(), FailureReason::NoReversePrimer);
     }
 
     #[test]
@@ -2289,7 +2508,8 @@ mod tests {
             result.is_ok(),
             "Should find amplicon in reverse orientation"
         );
-        let amplicon = result.unwrap();
+        let amplicon =
+            result.expect("find_amplicon failed on reverse-oriented read with windowed search");
         assert_eq!(amplicon.orientation, Orientation::Reverse);
         assert_eq!(amplicon.start, 4); // After reverse primer (rev.text_end)
         assert_eq!(amplicon.end, 22); // Before forward primer RC (fwd.text_start)
@@ -2353,7 +2573,8 @@ mod tests {
             result.is_ok(),
             "Should find amplicon with primers near window edges"
         );
-        let amplicon = result.unwrap();
+        let amplicon =
+            result.expect("find_amplicon failed with primers near 15bp window boundaries");
 
         // Verify coordinates are in read space, not window space
         // FWD ends at 13, REV_RC starts at 29
@@ -2377,7 +2598,8 @@ mod tests {
             result.is_ok(),
             "Should find amplicon in reverse orientation"
         );
-        let amplicon = result.unwrap();
+        let amplicon = result
+            .expect("find_amplicon should fall back to reverse orientation when forward fails");
         assert_eq!(amplicon.orientation, Orientation::Reverse);
     }
 
@@ -2416,7 +2638,8 @@ mod tests {
             result.is_ok(),
             "Should find amplicon with asymmetric windows"
         );
-        let amplicon = result.unwrap();
+        let amplicon =
+            result.expect("find_amplicon failed with asymmetric windows (fwd=20, rev=10)");
         assert_eq!(amplicon.orientation, Orientation::Forward);
     }
 }

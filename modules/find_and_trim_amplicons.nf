@@ -17,12 +17,19 @@ process FIND_AND_TRIM_AMPLICONS {
 	barcode = file(reads).getSimpleName()
 	amplicon = file(patterns).getSimpleName()
     """
-	export RUST_LOG=find_and_trim_amplicons=info 
+	export RUST_LOG=find_and_trim_amplicons=info
 
     FORWARD_PATTERN=\$(head -n 1 ${patterns})
     REVERSE_PATTERN=\$(tail -n 1 ${patterns})
 
-    find_and_trim_amplicons.rs \\
+    # Use pre-compiled binary in container, fall back to rust-script locally
+    if command -v find_and_trim_amplicons &> /dev/null; then
+        TRIM_CMD=find_and_trim_amplicons
+    else
+        TRIM_CMD=find_and_trim_amplicons.rs
+    fi
+
+    \$TRIM_CMD \\
     --input ${reads} \\
     --forward \${FORWARD_PATTERN} \\
     --reverse \${REVERSE_PATTERN} \\

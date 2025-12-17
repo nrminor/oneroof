@@ -241,8 +241,8 @@ def normalize_bed_lines(
             encoding="utf8",
         ) as output,
     ):
-        # collect all the lines from the bed file
-        lines = [row.strip().split("\t") for row in file if row != ""]
+        # collect all the lines from the bed file, filtering out empty lines
+        lines = [row.strip().split("\t") for row in file if row.strip()]
 
         # check that all lines contain primer labels with either the expected forward
         # suffix or the expected reverse suffix, which is necessary to be able to

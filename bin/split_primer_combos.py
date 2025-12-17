@@ -93,6 +93,7 @@ def main() -> None:
                 "SENSE",
             ],
         )
+        .drop_nulls()
         .with_columns(
             pl.col("NAME")
             .str.replace(fwd_suff, "")

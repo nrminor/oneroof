@@ -6,6 +6,7 @@ include { DOWNLOAD_MODELS ; BASECALL ; DEMULTIPLEX } from "../modules/dorado"
 include { MERGE_BAMS          } from "../modules/samtools"
 include { VALIDATE_NANOPORE   } from "../modules/validate"
 include { FILTER_WITH_CHOPPER } from "../modules/chopper"
+include { QUALITY_CONTROL     } from "../subworkflows/quality_control"
 include { COMPRESS_TO_SORTED_FASTA } from "../modules/seqkit"
 include { FAIDX             } from "../modules/samtools"
 include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
@@ -13,6 +14,9 @@ include { EARLY_RASUSA_READ_DOWNSAMPLING } from "../modules/rasusa"
 
 
 workflow GATHER_NANOPORE {
+    take:
+    ch_contam_fasta
+
     main:
 
     PUBLISH_COMMAND()
@@ -134,7 +138,12 @@ workflow GATHER_NANOPORE {
     FILTER_WITH_CHOPPER(
         VALIDATE_NANOPORE.out.map { label, seq_file, _status -> tuple(label, file(seq_file)) }
     )
-    
+
+    // Run QC on FASTQ before converting to FASTA
+    QUALITY_CONTROL(
+        FILTER_WITH_CHOPPER.out,
+        ch_contam_fasta
+    )
 
     COMPRESS_TO_SORTED_FASTA(
         FILTER_WITH_CHOPPER.out

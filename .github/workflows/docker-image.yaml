@@ -9,6 +9,9 @@ on:
         - 'Containerfile'
         - 'pyproject.toml'
         - 'pixi.lock'
+        - 'Cargo.toml'
+        - 'Cargo.lock'
+        - 'bin/find_and_trim_amplicons.rs'
     pull_request:
         branches: [ "main" ]
         paths:
@@ -17,6 +20,9 @@ on:
         - 'Containerfile'
         - 'pyproject.toml'
         - 'pixi.lock'
+        - 'Cargo.toml'
+        - 'Cargo.lock'
+        - 'bin/find_and_trim_amplicons.rs'
 
 jobs:
 

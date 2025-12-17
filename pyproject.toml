@@ -35,10 +35,10 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Rust",
+  "Programming Language :: Other",  # Nextflow (Groovy-based DSL)
 ]
 dependencies = [
-  "xlsxwriter>=3.2.0",
-  "xlsx2csv>=0.8.4",
   "biopython>=1.84",
   "pysam>=0.22.1",
   "scipy>=1.14.1",
@@ -50,9 +50,12 @@ dependencies = [
   "pyyaml",
   "pytz>=2025.1",
   "pydantic>=2.9.2,<3",
-  "rich",
   "typer>=0.16.0,<0.17",
   "polars[calamine,numpy,openpyxl,pandas,pyarrow,xlsx2csv,xlsxwriter]>=1.22.0",
+  "multiqc>=1.33",
+  "slack-sdk>=3.39.0",
+  "duckdb>=1.2.0",
+  "rich>=14.0.0",
 ]
 
 [tool.pixi.workspace]
@@ -60,32 +63,27 @@ channels = ["conda-forge", "bioconda", "anaconda"]
 platforms = ["osx-64", "linux-64", "osx-arm64"]
 
 [tool.pixi.dependencies]
-samtools = ">=1.5,<2"
 nextflow = ">=24.4.2,<24.5"
-minimap2 = ">=2.28,<3"
-fastqc = ">=0.12.1,<0.13"
-multiqc = ">=1.19,<2"
-bcftools = ">=1.16,<2"
-chopper = ">=0.9.0,<0.10"
-seqkit = ">=2.8.2,<2.9"
-snpeff = ">=5.2,<6"
-vsearch = ">=2.28.1,<2.29"
-rasusa = ">=2.0.0,<2.1"
-csvtk = { version = ">=0.30.0,<0.31", channel = "bioconda" }
-snpsift = ">=5.2,<6"
 bbmap = ">=39.1,<40"
+fastp = ">=0.24.0,<0.25"
+vsearch = ">=2.28.1,<2.29"
+seqkit = ">=2.8.2,<2.9"
 bedtools = ">=2.31.1,<3"
+samtools = ">=1.5,<2"
+minimap2 = ">=2.28,<3"
+bcftools = ">=1.16,<2"
+ivar = ">=1.4.4,<2"
+snpeff = ">=5.2,<6"
+snpsift = ">=5.2,<6"
+fastqc = ">=0.12.1,<0.13"
+nextclade = ">=3.18.1,<4"
+chopper = ">=0.9.0,<0.10"
+rasusa = ">=2.0.0,<2.1"
 deacon = ">=0.2.0,<0.3"
+devider = ">=0.0.1,<0.0.2"
 sylph = ">=0.8.1,<0.9"
 sylph-tax = ">=1.2.0,<2"
-fastp = ">=0.24.0,<0.25"
-slack_sdk = ">=3.35.0,<4"
-lua = ">=5.4.8,<6"
-nextclade = ">=3.18.1,<4"
-mosdepth = ">=0.3.3,<0.4"
-ivar = ">=1.4.4,<2"
 rust-script = ">=0.36.0,<0.37"
-devider = ">=0.0.1,<0.0.2"
 
 [tool.pixi.target.osx-64.dependencies]
 fq = { version = ">=0.12,<0.13", channel = "bioconda" }
@@ -129,73 +127,5 @@ venv = ".venv"
 typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]
-minversion = "8.0"
-addopts = [
-  "-ra",
-  "--strict-markers",
-  "--strict-config",
-  "--cov=bin",
-  "--cov-report=term-missing",
-  "--cov-report=html",
-]
+pythonpath = ["bin"]
 testpaths = ["bin"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-filterwarnings = [
-  "ignore::DeprecationWarning",
-  "ignore::PendingDeprecationWarning",
-]
-markers = [
-  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "network: marks tests as requiring network access",
-]
-
-[tool.coverage.run]
-source = ["bin"]
-omit = ["*/test_*.py", "*/__init__.py", "*/__main__.py"]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "if __name__ == .__main__.:",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if 0:",
-  "if False:",
-  "pass",
-]
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py{310,311,312,313}
-isolated_build = True
-
-[testenv]
-deps =
-    pytest>=8.3.3
-    pytest-cov
-    pytest-mock
-    pytest-xdist
-commands =
-    pytest {posargs}
-
-[testenv:lint]
-deps =
-    ruff>=0.9.6
-    basedpyright>=1.21.0
-commands =
-    ruff check .
-    ruff format --check .
-    basedpyright
-
-[testenv:format]
-deps =
-    ruff>=0.9.6
-commands =
-    ruff check . --fix --unsafe-fixes
-    ruff format .
-"""

@@ -9,7 +9,7 @@ process PLOT_COVERAGE {
 	maxRetries 2
 
     input:
-    tuple val(sample_id), path(mosdepth_files)
+    tuple val(sample_id), path(coverage_bed)
 
     output:
     path "${sample_id}.*.pdf", emit: plots

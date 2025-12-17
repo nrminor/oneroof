@@ -82,7 +82,7 @@ class Utils {
         --min_len                      Minimum acceptable read length. Default: 1
         --min_qual                     Minimum acceptable average quality for a given read. Default: 20
         --secondary                    Enable secondary alignments for each amplicon. Default: null
-        --max_mismatch                 Maximum number of mismatches allowed when finding primers. Default: 0
+        --max_mismatch                 Maximum number of mismatches allowed when finding primers. Default: 0 (illumina) or 2 (nanopore)
         --downsample_to                Desired coverage to downsample to. Default: 0 (no downsampling)
         --min_consensus_freq           Minimum frequency of a variant base to be included in a consensus sequence. Default: 0.5
         --min_haplo_reads              Minimum read support to report an amplicon-haplotype. Default: 2
@@ -121,6 +121,8 @@ class Utils {
                 Maximum read length         : ${params.max_len}
                 Minimum avg. read quality   : ${params.min_qual}
                 Permitted primer mismatches : ${params.max_mismatch}
+                Forward primer search window: ${params.forward_window != 0 ? params.forward_window + " bp" : "Entire read"}
+                Reverse primer search window: ${params.reverse_window != 0 ? params.reverse_window + " bp" : "Entire read"}
                 Desired coverage            : ${params.downsample_to != 0 ? params.downsample_to + "X" : "No downsampling"}
                 Secondary alignments        : ${params.secondary ? "on" : "off"}
                 Minimum coverage            : ${params.min_depth_coverage}X

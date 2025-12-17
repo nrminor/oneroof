@@ -97,81 +97,57 @@ def parse_command_line_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def accumulate_cov_dfs(directory: str, sample_list: list[str]) -> pl.DataFrame:
+def accumulate_cov_dfs(directory: str | Path) -> pl.DataFrame:
     """
-    Accumulate and concatenate multiple CSV files from a specified directory into a single Polars DataFrame.
+    Accumulate coverage data from all BED files in directory.
 
-    This function reads all CSV files in the given directory, each file should contain columns named
-    'chromosome', 'start', 'stop', and 'coverage'. It adds an additional column called 'sample',
-    with values taken from the provided 'sample_lookup' list. The length of the 'sample_lookup' list must match
-    the number of CSV files in the directory.
-
-    The function performs the following steps:
-    1. Lists all files in the specified directory.
-    2. Reads each CSV file into a Polars DataFrame.
-    3. Adds a 'sample' column to each DataFrame using values from the 'sample_lookup' list.
-    4. Concatenates all DataFrames into a single DataFrame.
+    Reads all *.per-base.bed files using glob, extracts sample ID from filename,
+    and explodes position ranges into individual rows.
 
     Parameters:
-    - directory (str): The path to the directory containing the CSV files. Each CSV file should have columns
-                       named 'chromosome', 'start', 'stop', and 'coverage'.
-    - sample_lookup (list): A list of values to be added as the 'sample' column in the resulting DataFrame.
-                      The length of this list should match the number of CSV files in the directory.
+        directory: Path to directory containing BED files
 
     Returns:
-    - pl.DataFrame: A Polars DataFrame containing data from all files, with an additional 'sample' column.
+        DataFrame with columns: chromosome, coverage, sample, position
 
     Raises:
-    - ValueError: If the number of files in the directory does not match the length of the 'sample_lookup' list.
-
-    Example:
-    >>> directory = 'path/to/csv_files'
-    >>> sample_lookup = ['Sample1', 'Sample2', 'Sample3']
-    >>> result_df = accumulate_cov_dfs(directory, sample_lookup)
-    >>> print(result_df)
-    shape: (number_of_rows, 5)
-    ┌───────────┬───────┬───────┬──────────┬────────┐
-    │ chromosome │ start │ stop  │ coverage │ sample │
-    │ ---       │ ---   │ ---   │ ---      │ ---    │
-    │ str       │ i64   │ i64   │ i64      │ str    │
-    ├───────────┼───────┼───────┼──────────┼────────┤
-    │ ...       │ ...   │ ...   │ ...      │ ...    │
-    └───────────┴───────┴───────┴──────────┴────────┘
+        AssertionError: If directory does not exist
+        ValueError: If no BED files found in directory
     """
-    assert Path(
-        directory,
-    ).is_dir(), f"The provided input directory {directory} does not exist."
+    directory = Path(directory)
+    assert directory.is_dir(), (
+        f"The provided input directory {directory} does not exist."
+    )
 
-    sample_lookup = {
-        sample_id: Path(directory) / Path(f"{sample_id}.per-base.bed")
-        for sample_id in sample_list
-    }
+    glob_pattern = str(directory / "*.per-base.bed")
 
-    df_list = []
-    for sample_id, bed_file in sample_lookup.items():
-        bc_df = (
-            pl.read_csv(
-                bed_file,
-                separator="\t",
-                has_header=False,
-                new_columns=["chromosome", "start", "stop", "coverage"],
-            )
-            .with_columns(sample=pl.lit(sample_id))
-            .with_columns(
-                pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias(
-                    "position",
-                ),
-            )
-            .drop("start", "stop")
-            .explode("position")
+    df = (
+        pl.scan_csv(
+            glob_pattern,
+            separator="\t",
+            has_header=False,
+            new_columns=["chromosome", "start", "stop", "coverage"],
+            glob=True,
+            include_file_paths="source_file",
         )
+        .with_columns(
+            pl.col("source_file")
+            .str.extract(r"([^/]+)\.per-base\.bed$", group_index=1)
+            .alias("sample")
+        )
+        .drop("source_file")
+        .with_columns(
+            pl.int_ranges(start=pl.col("start"), end=pl.col("stop")).alias("position")
+        )
+        .drop("start", "stop")
+        .explode("position")
+        .collect()
+    )
 
-        df_list.append(bc_df)
+    if df.is_empty():
+        raise ValueError(f"No *.per-base.bed files found in {directory}")
 
-    bc_stacked = df_list[0]
-    for df in df_list[1:]:
-        bc_stacked = bc_stacked.vstack(df)
-    return bc_stacked
+    return df
 
 
 def plot_log_coverages(
@@ -317,11 +293,7 @@ def main() -> None:
     """
     args = parse_command_line_args()
     min_desired_depth = args.min_coverage
-    sample_list = [
-        path.name.replace(".per-base.bed", "")
-        for path in Path(args.input_dir).glob("*.per-base.bed")
-    ]
-    sample_dataframe = accumulate_cov_dfs(args.input_dir, sample_list)
+    sample_dataframe = accumulate_cov_dfs(args.input_dir)
 
     if args.log:
         plot_instance = plot_log_coverages(

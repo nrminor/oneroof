@@ -21,21 +21,22 @@ process MERGE_VCF_FILES {
 
 }
 
-process PROCESS_VCF {
+process COMPRESS_AND_INDEX_VCF {
 
-    // errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
-	// maxRetries 1
+    tag "${sample_id}"
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
 
     input:
-    tuple val(sample_id), path (vcf)
+    tuple val(sample_id), path(vcf)
 
     output: 
-    tuple val(sample_id), path ("${vcf}.gz"), path("${vcf}.gz.tbi")
+    tuple val(sample_id), path("${vcf}.gz"), path("${vcf}.gz.tbi")
 
     script:
     """
     bgzip -c "${vcf}" > "${vcf}.gz"
     tabix -p vcf "${vcf}.gz"
-    
     """
 }

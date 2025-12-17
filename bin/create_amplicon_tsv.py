@@ -1,81 +1,116 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "polars",
+# ]
+# ///
+
+"""Summarize amplicon coverage from stats files and BED file."""
+
+from __future__ import annotations
 
 import argparse
-import glob
-import re
 
-import pandas as pd
+import polars as pl
 
 
-def extract_sample_name(filename):
-    base_name = filename.replace(".QIAseq_", "_QIAseq_")
-    if "_QIAseq_" in base_name:
-        return base_name.split("_QIAseq_")[0]
-    return base_name.split(".")[0]
+def main(bed_file: str, output_file: str, stats_pattern: str) -> None:
+    """
+    Create amplicon summary TSV from stats files and BED file.
 
+    Reads all stats files matching the glob pattern, extracts sample and amplicon
+    names from the 'file' column, joins with BED file to get amplicon positions,
+    and writes a summary TSV.
 
-def extract_amplicon_name(filename):
-    match = re.search(r"(QIAseq_[^._\s]+)", filename)
-    if match:
-        return match.group(1)
-    return "unknown"
-
-
-def get_amplicon_positions(bed_df, amplicon_name):
-    # Match base form (e.g., QIAseq_92 from QIAseq_92_splice9)
-    base_amplicon = re.sub(r"[_-](splice\d+|\d+)$", "", amplicon_name)
-
-    # Find matching LEFT and RIGHT primers (include splices)
-    left_primers = bed_df[
-        bed_df["name"].str.contains(f"{base_amplicon}_LEFT", na=False)
-    ]
-    right_primers = bed_df[
-        bed_df["name"].str.contains(f"{base_amplicon}_RIGHT", na=False)
-    ]
-
-    if not left_primers.empty and not right_primers.empty:
-        start_pos = left_primers["start"].min()
-        end_pos = right_primers["end"].max()
-        return start_pos, end_pos
-
-    return None, None
-
-
-def main(bed_file, output_file, stats_pattern):
-    # Read stats files
-    stats_files = glob.glob(stats_pattern)
-    if not stats_files:
-        raise FileNotFoundError(
-            f"No stats files found matching pattern: {stats_pattern}",
+    Parameters:
+        bed_file: Path to BED file with primer positions
+        output_file: Path to output TSV file
+        stats_pattern: Glob pattern for stats files (e.g., "stats_*.tsv")
+    """
+    # Read all stats files with glob, extract info from the 'file' column
+    # (which contains filenames like "SAMPLE.QIAseq_X-Y.no_downsampling.fasta.gz")
+    stats = (
+        pl.scan_csv(
+            stats_pattern,
+            separator="\t",
+            glob=True,
         )
-
-    all_stats_data = [pd.read_csv(f, sep="\t") for f in stats_files]
-    combined_stats_df = pd.concat(all_stats_data, ignore_index=True)
-
-    # Read BED file
-    bed_columns = ["chrom", "start", "end", "name", "score", "strand"]
-    bed_df = pd.read_csv(bed_file, sep="\t", names=bed_columns, header=None)
-
-    output_data = []
-    for _, row in combined_stats_df.iterrows():
-        filename = row["file"]
-        sample_name = extract_sample_name(filename)
-        amplicon_name = extract_amplicon_name(filename)
-        reads = row["num_seqs"]
-        start_pos, end_pos = get_amplicon_positions(bed_df, amplicon_name)
-
-        output_data.append(
-            {
-                "sample_name": sample_name,
-                "amplicon_name": amplicon_name,
-                "start_pos": start_pos if start_pos is not None else "NA",
-                "end_pos": end_pos if end_pos is not None else "NA",
-                "reads": reads,
-            },
+        .with_columns(
+            # Normalize .QIAseq_ to _QIAseq_ for consistent parsing
+            pl.col("file")
+            .str.replace(r"\.QIAseq_", "_QIAseq_")
+            .alias("normalized_file")
         )
+        .with_columns(
+            # Extract sample name: everything before _QIAseq_, or first dot-segment
+            pl.when(pl.col("normalized_file").str.contains("_QIAseq_"))
+            .then(
+                pl.col("normalized_file").str.extract(
+                    r"^([^_]+(?:_[^_]+)*?)_QIAseq_", group_index=1
+                )
+            )
+            .otherwise(
+                pl.col("normalized_file").str.extract(r"^([^.]+)", group_index=1)
+            )
+            .alias("sample_name"),
+            # Extract amplicon name: QIAseq_XXX (including any suffix like -1)
+            pl.col("file")
+            .str.extract(r"(QIAseq_[^.]+)", group_index=1)
+            .alias("amplicon_name"),
+            # Extract base amplicon for joining: QIAseq_N (just the number, no suffix)
+            pl.col("file")
+            .str.extract(r"(QIAseq_\d+)", group_index=1)
+            .alias("base_amplicon"),
+        )
+        .select(
+            "sample_name",
+            "amplicon_name",
+            "base_amplicon",
+            pl.col("num_seqs").alias("reads"),
+        )
+    )
 
-    output_df = pd.DataFrame(output_data)
-    output_df.to_csv(output_file, sep="\t", index=False)
+    # Read BED file, compute amplicon start/end positions
+    bed = (
+        pl.scan_csv(
+            bed_file,
+            separator="\t",
+            has_header=False,
+            new_columns=["chrom", "start", "end", "name", "score", "strand"],
+        )
+        .with_columns(
+            # Extract base amplicon from primer name (e.g., QIAseq_2_LEFT -> QIAseq_2)
+            pl.col("name")
+            .str.extract(r"(QIAseq_\d+)", group_index=1)
+            .alias("base_amplicon"),
+            # Flag LEFT vs RIGHT primers
+            pl.col("name").str.contains("_LEFT").alias("is_left"),
+            pl.col("name").str.contains("_RIGHT").alias("is_right"),
+        )
+        .filter(pl.col("base_amplicon").is_not_null())
+    )
+
+    # Aggregate to get min(start) for LEFT primers, max(end) for RIGHT primers
+    amplicon_positions = bed.group_by("base_amplicon").agg(
+        pl.col("start").filter(pl.col("is_left")).min().alias("start_pos"),
+        pl.col("end").filter(pl.col("is_right")).max().alias("end_pos"),
+    )
+
+    # Join stats with positions and format output
+    result = (
+        stats.join(amplicon_positions, on="base_amplicon", how="left")
+        .select(
+            "sample_name",
+            "amplicon_name",
+            pl.col("start_pos").cast(pl.String).fill_null("NA"),
+            pl.col("end_pos").cast(pl.String).fill_null("NA"),
+            "reads",
+        )
+        .collect()
+    )
+
+    result.write_csv(output_file, separator="\t")
 
 
 if __name__ == "__main__":

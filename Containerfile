@@ -64,3 +64,13 @@ RUN echo "export PATH=$PATH:$HOME/.pixi/envs/default/bin" >> $HOME/.bashrc
 # 6) modify some nextflow environment variables
 RUN echo "export NXF_CACHE_DIR=/scratch" >> $HOME/.bashrc
 RUN echo "export NXF_HOME=/scratch" >> $HOME/.bashrc
+
+# Pre-compile Rust scripts for container use
+# --------------------------------
+# This avoids rust-script JIT compilation overhead on every process invocation.
+# Local (non-container) runs still use rust-script directly via the .rs files.
+COPY Cargo.toml $HOME/Cargo.toml
+COPY Cargo.lock $HOME/Cargo.lock
+COPY bin/find_and_trim_amplicons.rs $HOME/bin/find_and_trim_amplicons.rs
+RUN cd $HOME && $HOME/.pixi/envs/default/bin/cargo build --release && \
+    cp $HOME/target/release/find_and_trim_amplicons $HOME/.pixi/envs/default/bin/

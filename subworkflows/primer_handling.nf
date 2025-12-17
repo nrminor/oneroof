@@ -12,7 +12,6 @@ include { GET_PRIMER_PATTERNS;
 include { FIND_AND_TRIM_AMPLICONS  } from "../modules/find_and_trim_amplicons"
 include { GET_PRIMER_SEQS          } from "../modules/bedtools"
 include { FAIDX                    } from "../modules/samtools"
-include { ORIENT_READS             } from "../modules/vsearch"
 // include { TRIM_ENDS_TO_PRIMERS     } from "../modules/cutadapt"
 include {
     // FIND_COMPLETE_AMPLICONS ;
@@ -34,13 +33,10 @@ workflow PRIMER_HANDLING {
 
     main:
 
-    ORIENT_READS(
-        ch_basecalls
-            .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFasta()) }
-            .filter { item -> item[2] > 100 }
-            .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) },
-        ch_refseq,
-    )
+    ch_filtered_basecalls = ch_basecalls
+        .map { barcode, reads -> tuple(barcode, file(reads), file(reads).countFasta()) }
+        .filter { item -> item[2] > 10 }
+        .map { barcode, reads, _read_count -> tuple(barcode, file(reads)) }
 
     if (params.primer_bed && params.primer_bed  != "") {
 
@@ -109,7 +105,7 @@ workflow PRIMER_HANDLING {
     }
     
     FIND_AND_TRIM_AMPLICONS(
-        ORIENT_READS.out.map { _barcode, fastq -> fastq }.combine(GET_PRIMER_PATTERNS.out)
+        ch_filtered_basecalls.map { _barcode, reads -> reads }.combine(GET_PRIMER_PATTERNS.out)
     )
 
     // FIND_COMPLETE_AMPLICONS(

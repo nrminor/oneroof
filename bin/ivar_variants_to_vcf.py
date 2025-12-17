@@ -905,7 +905,8 @@ def stats(
         console.print("\n[bold]Variant Types:[/bold]")
         snp_count = len(
             ivar_df.filter(
-                ~pl.col("ALT").str.starts_with("+") & ~pl.col("ALT").str.starts_with("-"),
+                ~pl.col("ALT").str.starts_with("+")
+                & ~pl.col("ALT").str.starts_with("-"),
             ),
         )
         ins_count = len(ivar_df.filter(pl.col("ALT").str.starts_with("+")))
@@ -926,7 +927,11 @@ def stats(
             (0.75, 1.0),
         ]
         for low, high in freq_bins:
-            count = len(ivar_df.filter((pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high)))
+            count = len(
+                ivar_df.filter(
+                    (pl.col("ALT_FREQ") >= low) & (pl.col("ALT_FREQ") < high)
+                )
+            )
             if count > 0:
                 console.print(f"  • {low:.0%}-{high:.0%}: {count:,} variants")
 
