@@ -161,6 +161,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/xorg-libxtst-1.2.5-hb9d3cd8_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.3.1-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
+      - pypi: https://files.pythonhosted.org/packages/db/33/ef2f2409450ef6daa61459d5de5c08128e7d3edb773fefd0a324d1310238/altair-6.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/24/b4/11f8a31d8b67cca3371e046db49baa7c0594d71eb40ac8121e2fc0888db0/bcrypt-5.0.0-cp39-abi3-manylinux_2_28_x86_64.whl
@@ -236,6 +237,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a7/6b/48f6d47a92eaf6f0dd235146307a7eb0d179b78d2faebc53aca3f1e49177/vl_convert_python-1.8.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/0c/3662f4a66880196a590b202f0db82d919dd2f89e99a27fadef91c4a33d41/xlsxwriter-3.2.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl
@@ -347,6 +349,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/osx-64/vsearch-2.28.1-h43736c0_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zlib-1.3.1-hd23fc13_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/zstd-1.5.7-h3eecb57_6.conda
+      - pypi: https://files.pythonhosted.org/packages/db/33/ef2f2409450ef6daa61459d5de5c08128e7d3edb773fefd0a324d1310238/altair-6.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5d/ba/2af136406e1c3839aea9ecadc2f6be2bcd1eff255bd451dd39bcf302c47a/bcrypt-5.0.0-cp39-abi3-macosx_10_12_universal2.whl
@@ -422,6 +425,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/22/5a/9dca7d8ff56e82c298e9ef381cfc803e262b85b7c59f2515d0e9f81a75b6/vl_convert_python-1.8.0-cp37-abi3-macosx_10_12_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/0c/3662f4a66880196a590b202f0db82d919dd2f89e99a27fadef91c4a33d41/xlsxwriter-3.2.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl
@@ -531,6 +535,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/vsearch-2.28.1-he5cb1a1_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
+      - pypi: https://files.pythonhosted.org/packages/db/33/ef2f2409450ef6daa61459d5de5c08128e7d3edb773fefd0a324d1310238/altair-6.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/2a/7cc015f5b9f5db42b7d48157e23356022889fc354a2813c15934b7cb5c0e/attrs-25.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5d/ba/2af136406e1c3839aea9ecadc2f6be2bcd1eff255bd451dd39bcf302c47a/bcrypt-5.0.0-cp39-abi3-macosx_10_12_universal2.whl
@@ -606,6 +611,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/dc/9b/47798a6c91d8bdb567fe2698fe81e0c6b7cb7ef4d13da4114b41d239f65d/typing_inspection-0.4.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/42/e2/325e6b5895482b2534e7462c012f237c66ffb02fb3af45eec0accab2f8d4/vl_convert_python-1.8.0-cp37-abi3-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/c4/c0/15c21556362c67f1155f3643a375d50ac67559b82c768e64e800a42a2577/xlsx2csv-0.8.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/0c/3662f4a66880196a590b202f0db82d919dd2f89e99a27fadef91c4a33d41/xlsxwriter-3.2.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2e/54/647ade08bf0db230bfea292f893923872fd20be6ac6f53b2b936ba839d75/zipp-3.23.0-py3-none-any.whl
@@ -665,6 +671,56 @@ packages:
   purls: []
   size: 566531
   timestamp: 1744668655747
+- pypi: https://files.pythonhosted.org/packages/db/33/ef2f2409450ef6daa61459d5de5c08128e7d3edb773fefd0a324d1310238/altair-6.0.0-py3-none-any.whl
+  name: altair
+  version: 6.0.0
+  sha256: 09ae95b53d5fe5b16987dccc785a7af8588f2dca50de1e7a156efa8a461515f8
+  requires_dist:
+  - jinja2
+  - jsonschema>=3.0
+  - narwhals>=1.27.1
+  - packaging
+  - typing-extensions>=4.12.0 ; python_full_version < '3.15'
+  - altair-tiles>=0.3.0 ; extra == 'all'
+  - anywidget>=0.9.0 ; extra == 'all'
+  - numpy ; extra == 'all'
+  - pandas>=1.1.3 ; extra == 'all'
+  - pyarrow>=11 ; extra == 'all'
+  - vegafusion>=2.0.3 ; extra == 'all'
+  - vl-convert-python>=1.8.0 ; extra == 'all'
+  - duckdb>=1.0 ; python_full_version < '3.14' and extra == 'dev'
+  - geopandas>=0.14.3 ; python_full_version < '3.14' and extra == 'dev'
+  - hatch>=1.13.0 ; extra == 'dev'
+  - ipykernel ; extra == 'dev'
+  - ipython ; extra == 'dev'
+  - mistune ; extra == 'dev'
+  - mypy ; extra == 'dev'
+  - pandas-stubs ; extra == 'dev'
+  - pandas>=1.1.3 ; extra == 'dev'
+  - polars>=0.20.3 ; extra == 'dev'
+  - pyarrow-stubs ; extra == 'dev'
+  - pytest ; extra == 'dev'
+  - pytest-cov ; extra == 'dev'
+  - pytest-xdist[psutil]~=3.5 ; extra == 'dev'
+  - ruff>=0.9.5 ; extra == 'dev'
+  - taskipy>=1.14.1 ; extra == 'dev'
+  - tomli>=2.2.1 ; extra == 'dev'
+  - types-jsonschema ; extra == 'dev'
+  - types-setuptools ; extra == 'dev'
+  - docutils ; extra == 'doc'
+  - jinja2 ; extra == 'doc'
+  - myst-parser ; extra == 'doc'
+  - numpydoc ; extra == 'doc'
+  - pillow ; extra == 'doc'
+  - pydata-sphinx-theme>=0.14.1 ; extra == 'doc'
+  - scipy ; extra == 'doc'
+  - scipy-stubs ; python_full_version >= '3.10' and extra == 'doc'
+  - sphinx ; extra == 'doc'
+  - sphinx-copybutton ; extra == 'doc'
+  - sphinx-design ; extra == 'doc'
+  - sphinxext-altair ; extra == 'doc'
+  - vl-convert-python>=1.8.0 ; extra == 'save'
+  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
   name: annotated-types
   version: 0.7.0
@@ -4385,7 +4441,7 @@ packages:
 - pypi: ./
   name: oneroof
   version: 2.0.0
-  sha256: 281ebe54dd72afde1bdd9c291ddb18b6a5e56e18e07b3e414b5c0be31bb63cc1
+  sha256: c287711317f80e96a6646f2e3811c45d4913d6443a9c51eaff42c3784518510b
   requires_dist:
   - biopython>=1.84
   - pysam>=0.22.1
@@ -4404,6 +4460,8 @@ packages:
   - duckdb>=1.2.0
   - rich>=14.0.0
   - typer>=0.20.0
+  - altair>=6.0.0
+  - vl-convert-python>=1.8.0
   requires_python: '>=3.10'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/openjdk-21.0.0-haa376d0_0.conda
@@ -6186,6 +6244,21 @@ packages:
   - pkg:pypi/urllib3?source=compressed-mapping
   size: 102842
   timestamp: 1765719817255
+- pypi: https://files.pythonhosted.org/packages/22/5a/9dca7d8ff56e82c298e9ef381cfc803e262b85b7c59f2515d0e9f81a75b6/vl_convert_python-1.8.0-cp37-abi3-macosx_10_12_x86_64.whl
+  name: vl-convert-python
+  version: 1.8.0
+  sha256: f663317fc280b07553534195c1e31c4ca882d9c8601430211b078196db5ed227
+  requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/42/e2/325e6b5895482b2534e7462c012f237c66ffb02fb3af45eec0accab2f8d4/vl_convert_python-1.8.0-cp37-abi3-macosx_11_0_arm64.whl
+  name: vl-convert-python
+  version: 1.8.0
+  sha256: 81f6380019ceadf070a79f85aa624475a6568093f70de0e151a32e91ecbcaacf
+  requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/a7/6b/48f6d47a92eaf6f0dd235146307a7eb0d179b78d2faebc53aca3f1e49177/vl_convert_python-1.8.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: vl-convert-python
+  version: 1.8.0
+  sha256: b51264998e8fcc43dbce801484a950cfe6513cdc4c46b20604ef50989855a617
+  requires_python: '>=3.7'
 - conda: https://conda.anaconda.org/bioconda/linux-64/vsearch-2.28.1-h6a68c12_1.tar.bz2
   sha256: 771f1b5c3e68ccd924e2f68c5baadf661f145ab70e28245682231a9fa73be727
   md5: 782ceaa70c753660d8bbd0585969f950

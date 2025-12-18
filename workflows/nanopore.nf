@@ -96,5 +96,38 @@ workflow NANOPORE {
             variant_outputs.merge_vcf_files
         )
 
+        // Assemble OneRoof report from collected metrics
+        if ( params.generate_json_report ) {
+
+            // Build QC thresholds map from params
+            qc_thresholds = [
+                coverage_pass: params.qc_coverage_pass,
+                coverage_warn: params.qc_coverage_warn,
+                completeness_pass: params.qc_completeness_pass,
+                completeness_warn: params.qc_completeness_warn
+            ]
+
+            // Get reference name from refseq filename
+            reference_name = file(params.refseq).baseName
+
+            // Collect all coverage metrics JSON files
+            ch_metrics = alignment_outputs.coverage_metrics
+                .map { sample_id, metrics_json -> metrics_json }
+                .collect()
+
+            // MultiQC config template (use default if not specified)
+            ch_multiqc_template = params.multiqc_config_template
+                ? Channel.fromPath(params.multiqc_config_template)
+                : Channel.fromPath("${projectDir}/assets/multiqc_config.yaml")
+
+            ASSEMBLE_REPORT(
+                ch_metrics,
+                params.platform,
+                reference_name,
+                qc_thresholds,
+                ch_multiqc_template.first()
+            )
+
+        }
 
 }
