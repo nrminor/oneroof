@@ -85,6 +85,19 @@
 !/bin/oneroof_cli/commands/
 !/bin/oneroof_cli/commands/*.py
 
+# reporting package (metrics extraction, visualization, report assembly)
+!/bin/reporting/
+!/bin/reporting/*.py
+!/bin/reporting/extractors/
+!/bin/reporting/extractors/*.py
+!/bin/reporting/visualizations/
+!/bin/reporting/visualizations/*.py
+
+# assets (templates, configs)
+!/assets/
+!/assets/*.yaml
+!/assets/*.yml
+
 # Rust development files for IDE support
 !/Cargo.toml
 !/Cargo.lock

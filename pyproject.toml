@@ -56,6 +56,8 @@ dependencies = [
   "duckdb>=1.2.0",
   "rich>=14.0.0",
   "typer>=0.20.0",
+  "altair>=6.0.0",
+  "vl-convert-python>=1.8.0",
 ]
 
 [tool.pixi.workspace]
@@ -107,7 +109,7 @@ dev = [
   "ruff>=0.9.6",
   "tox>=4.19",
   "tox-uv>=1.15",
-  "ty>=0.0.0a8",
+  "ty>=0.0.3",
 ]
 
 [tool.uv]

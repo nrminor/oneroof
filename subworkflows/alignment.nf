@@ -1,4 +1,4 @@
-include { REPORT_REFERENCES      } from "../modules/reporting"
+include { REPORT_REFERENCES ; EXTRACT_COVERAGE_METRICS } from "../modules/reporting"
 include { ALIGN_WITH_PRESET      } from "../modules/minimap2"
 include { CONVERT_AND_SORT ; SORT_BAM ; INDEX } from "../modules/samtools"
 include { ALIGNMENT_DOWNSAMPLING } from "../modules/rasusa"
@@ -42,6 +42,10 @@ workflow ALIGNMENT {
         INDEX.out
     )
 
+    EXTRACT_COVERAGE_METRICS(
+        BEDTOOLS_GENOMECOV.out
+    )
+
     PLOT_COVERAGE(
         BEDTOOLS_GENOMECOV.out
     )
@@ -57,4 +61,5 @@ workflow ALIGNMENT {
     emit:
     index            = INDEX.out
     coverage_summary = COVERAGE_SUMMARY.out
+    coverage_metrics = EXTRACT_COVERAGE_METRICS.out
 }
