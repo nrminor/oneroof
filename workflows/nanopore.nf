@@ -1,5 +1,3 @@
-#!/usr/bin/env nextflow
-
 include { GATHER_NANOPORE } from "../subworkflows/gather_nanopore"
 include { PRIMER_HANDLING } from "../subworkflows/primer_handling"
 include { ALIGNMENT } from "../subworkflows/alignment"
@@ -78,11 +76,11 @@ workflow NANOPORE {
             ch_snpeff_config
         )
 
-        if ( params.primer_bed && Utils.countFastaHeaders(params.refseq) == Utils.countAmplicons(params.primer_bed) ) {
+        if ( params.devider_preset ) {
 
             HAPLOTYPING (
                 alignment_outputs.index,
-                variant_outputs.annotate,
+                variant_outputs.vcf,
                 ch_refseq
             )
 

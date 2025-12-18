@@ -43,7 +43,9 @@ def _load_positions_from_tsv(tsv_path: str) -> pl.LazyFrame:
 
 
 def _load_positions_from_bed(
-    bed_path: str, fwd_suffix: str, rev_suffix: str
+    bed_path: str,
+    fwd_suffix: str,
+    rev_suffix: str,
 ) -> pl.LazyFrame:
     """
     Load amplicon positions from BED file (legacy approach).
@@ -98,9 +100,7 @@ def _parse_stats_files(stats_pattern: str) -> pl.LazyFrame:
             # Extract sample name: first segment before '.'
             pl.col("file").str.extract(r"^([^.]+)", group_index=1).alias("sample_name"),
             # Extract amplicon name: second segment (between first and second '.')
-            pl.col("file")
-            .str.extract(r"^[^.]+\.([^.]+)", group_index=1)
-            .alias("amplicon_name"),
+            pl.col("file").str.extract(r"^[^.]+\.([^.]+)", group_index=1).alias("amplicon_name"),
         )
         .select(
             "sample_name",

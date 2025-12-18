@@ -1,5 +1,3 @@
-#!/usr/bin/env nextflow
-
 include { REPORT_REFERENCES } from "../modules/reporting"
 include { GENERATE_MPILEUP  } from "../modules/samtools"
 include { CALL_VARIANTS ; CONVERT_TO_VCF } from "../modules/ivar"
@@ -29,7 +27,8 @@ workflow VARIANTS {
     )
 
     CONVERT_TO_VCF(
-        CALL_VARIANTS.out.filter { _id, tsv -> file(tsv).countLines() > 1 }
+        CALL_VARIANTS.out.filter { _id, tsv -> file(tsv).countLines() > 1 },
+        ch_refseq
     )
 
     BUILD_DB(
@@ -57,6 +56,7 @@ workflow VARIANTS {
     )
 
     emit:
+    vcf = CONVERT_TO_VCF.out  // unannotated VCFs for haplotyping
     annotate = ANNOTATE_VCF.out
     merge_vcf_files = MERGE_VCF_FILES.out.collect()
     full_variant_table = COLLECT_FULL_VARIANT_TABLE.out

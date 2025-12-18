@@ -62,13 +62,14 @@ process CONVERT_TO_VCF {
 
     input:
     tuple val(barcode), path(ivar_table)
+    path refseq
 
     output:
     tuple val(barcode), path("${barcode}.vcf")
 
     script:
     """
-    ivar_variants_to_vcf.py convert ${ivar_table} ${barcode}.vcf
+    ivar_variants_to_vcf.py convert ${ivar_table} ${barcode}.vcf --reference ${refseq}
     """
 
 }

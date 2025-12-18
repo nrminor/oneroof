@@ -32,11 +32,11 @@ process COMPRESS_AND_INDEX_VCF {
     tuple val(sample_id), path(vcf)
 
     output: 
-    tuple val(sample_id), path("${vcf}.gz"), path("${vcf}.gz.tbi")
+    tuple val(sample_id), path("${sample_id}.sorted.vcf.gz"), path("${sample_id}.sorted.vcf.gz.tbi")
 
     script:
     """
-    bgzip -c "${vcf}" > "${vcf}.gz"
-    tabix -p vcf "${vcf}.gz"
+    bcftools sort "${vcf}" -Oz -o "${sample_id}.sorted.vcf.gz"
+    tabix -p vcf "${sample_id}.sorted.vcf.gz"
     """
 }
