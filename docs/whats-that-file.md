@@ -485,11 +485,12 @@ Python scripts and utilities for data processing:
 - Handles multi-segment viruses like influenza
 - Produces complete genome sequences
 
-**generate_variant_pivot.py**
+**collect_full_variant_table.py**
 
-- Creates pivot tables of variants across samples
-- Useful for comparing mutations between samples
-- Supports epidemiological analyses
+- Collects and enriches variant data from all samples into a final table
+- Adds derived columns: variant_id, aa_change, mutation_type, is_consensus, sample_count, is_shared
+- Outputs both TSV and Parquet formats for flexible querying
+- Useful for exploring variants across samples in Jupyter or DuckDB
 
 ### Primer Management Scripts
 

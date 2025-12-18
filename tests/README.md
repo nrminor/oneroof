@@ -93,9 +93,9 @@ The `bin/` directory contains Python utility scripts that support the pipeline's
 ### Test Files
 
 Python test files follow the naming convention `test_<script_name>.py` and are located in the `bin/` directory alongside the scripts they test:
+- `test_collect_full_variant_table.py` - Tests full variant table collection and enrichment
 - `test_concat_consensus.py` - Tests consensus sequence concatenation
 - `test_file_watcher.py` - Tests remote file watching functionality
-- `test_generate_variant_pivot.py` - Tests variant pivot table generation
 - `test_ivar_variants_to_vcf.py` - Tests ivar to VCF conversion
 - `test_slack_alerts.py` - Tests Slack notification functionality
 

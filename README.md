@@ -7,6 +7,7 @@
 - [Detailed Setup Instructions](#detailed-setup-instructions)
   - [Configuration](#configuration)
   - [Developer Setup](#developer-setup)
+  - [OneRoof CLI (Power Users)](#oneroof-cli-power-users)
 - [Testing](#testing)
   - [Running Tests](#running-tests)
   - [Test Structure](#test-structure)
@@ -56,7 +57,7 @@ nextflow run nrminor/oneroof \
 
 If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don’t want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline’s dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
 
-Nextflow pipelines like this one have a ton of configuration, which can be overwhelming for beginners and new users. To make this process easier, we’re developing a Terminal User Interface (TUI) to guide you through setup. Please stay tuned!
+For power users working with a local clone of the repository, we also provide the `oneroof` CLI—a friendly command-line interface with organized help, input validation, and easy resume functionality. See the [OneRoof CLI](#oneroof-cli-power-users) section below for details.
 
 ## Quick Start
 
@@ -98,7 +99,7 @@ Most users should configure `oneroof` through the command line via the following
 | `--min_variant_frequency` | 0.05 (illumina) or 0.10 (nanopore) | Minimum variant frequency to call a variant. |
 | `--meta_ref` | None | Dataset, either a local FASTA file or a pre-built dataset built by Sylph, to use for metagenomic profiling. Can download prebuilt ones here: [Pre-built Sylph Databases](https://github.com/bluenote-1577/sylph/wiki/Pre%E2%80%90built-databases). |
 | `--sylph_tax_db` | None | The taxonomic annotation for the sylph database specified with `--meta_ref`. The pipeline automaticially downloads the databases so only the identifier is needed here. |
-|`--meta_ref_link` | None | The link to download the sylph dataset needed to run metagenomics, would be used instead of specifying an already downloaded data set in `--meta_ref`. |
+| `--sylph_db_link` | None | The link to download the sylph dataset needed to run metagenomics, would be used instead of specifying an already downloaded data set in `--meta_ref`. |
 | `--nextclade_dataset` | None | The name of the dataset to run nextclade with. To see all dataset options run `nextclade dataset list --only-names`. |
 | `--results` | results/ | Where to place results. |
 | `--cleanup` | false | Whether to cleanup work directory after a successful run. |
@@ -147,9 +148,66 @@ Especially on Apple Silicon Macs, this will reduce the overhead of using the Doc
 
 Note also that more information on the repo’s files is available in our [developer guide](developer.qmd).
 
+### OneRoof CLI (Power Users)
+
+For users who have cloned the repository and are working locally, we provide the `oneroof` command-line interface. This Typer-based CLI wraps the Nextflow pipeline with several quality-of-life improvements:
+
+- **Organized help**: Parameters are grouped by category with Rich-formatted output
+- **Input validation**: File and directory paths are validated before the pipeline runs
+- **Kebab-case flags**: More natural CLI conventions (`--primer-bed` instead of `--primer_bed`)
+- **Dry-run mode**: Preview the generated Nextflow command without executing
+- **Easy resume**: Resume interrupted runs with `oneroof resume`
+
+The CLI is available automatically when you enter the pixi environment:
+
+``` bash
+pixi shell --frozen
+oneroof --help
+```
+
+Or install it directly with pip or uv:
+
+``` bash
+# With pip
+pip install -e .
+
+# With uv
+uv pip install -e .
+```
+
+**Example usage:**
+
+``` bash
+# See all available commands
+oneroof --help
+
+# See all run options, organized by category
+oneroof run --help
+
+# Run with Illumina data
+oneroof run \
+  --refseq my_ref.fasta \
+  --illumina-fastq-dir my_reads/ \
+  --profile docker
+
+# Preview the command without running
+oneroof run \
+  --refseq my_ref.fasta \
+  --illumina-fastq-dir my_reads/ \
+  --dry-run
+
+# Resume an interrupted run (uses cached parameters)
+oneroof resume
+
+# Run test profiles (no --refseq needed)
+oneroof run --profile illumina_test_with_primers
+```
+
+The CLI generates and executes standard Nextflow commands under the hood, so all Nextflow features (caching, resume, etc.) work as expected.
+
 ## Testing
 
-OneRoof includes a comprehensive test suite built with [nf-test](https://www.nf-test.com/), the official testing framework for Nextflow pipelines. The test suite validates pipeline functionality through module, workflow, and end-to-end tests.
+OneRoof includes a limited but growing test suite, which validates pipeline functionality through module, workflow, and end-to-end tests.
 
 ### Running Tests
 
@@ -165,12 +223,11 @@ just test-nanopore
 
 # To run specific tests, run `just` and then under `testing` will be all the specific tests
 just 
-
 ```
 
 ### Test Structure
 
-Tests are organized as profiles in `nextflow.config` and each specific test is in its own config file under `conf/illumina_tests` or `conf/nanopore_tests`. The data used for these tests can be found under `tests/data`. Tests can also be run with `nextflow run . -profile illumina_test_with_primers` or any other test specified as a profile in `nextflow.config` and this will show a verbose output to see the pipeline running. 
+Tests are organized as profiles in `nextflow.config` and each specific test is in its own config file under `conf/illumina_tests` or `conf/nanopore_tests`. The data used for these tests can be found under `tests/data`. Tests can also be run with `nextflow run . -profile illumina_test_with_primers` or any other test specified as a profile in `nextflow.config` and this will show a verbose output to see the pipeline running.
 
 For more details on the testing framework and how to write new tests, see the [test suite documentation](../tests/README.md).
 

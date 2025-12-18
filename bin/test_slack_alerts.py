@@ -298,7 +298,9 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_successful_notification(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
+    def test_successful_notification(
+        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+    ):
         """Test successful Slack notification sending"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456", "U789012"]
@@ -343,7 +345,9 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_slack_api_error(self, mock_get_user_ids, mock_get_slack_token, mock_webclient, capsys):
+    def test_slack_api_error(
+        self, mock_get_user_ids, mock_get_slack_token, mock_webclient, capsys
+    ):
         """Test handling of Slack API errors"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456"]
@@ -380,7 +384,9 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_no_users_configured(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
+    def test_no_users_configured(
+        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+    ):
         """Test when no users are configured"""
         # Setup mocks
         mock_get_user_ids.return_value = []  # No users
@@ -410,7 +416,9 @@ class TestSendSlackNotification:
     @patch("slack_alerts.WebClient")
     @patch("slack_alerts.get_slack_token")
     @patch("slack_alerts.get_user_ids")
-    def test_message_formatting(self, mock_get_user_ids, mock_get_slack_token, mock_webclient):
+    def test_message_formatting(
+        self, mock_get_user_ids, mock_get_slack_token, mock_webclient
+    ):
         """Test detailed message formatting"""
         # Setup mocks
         mock_get_user_ids.return_value = ["U123456"]

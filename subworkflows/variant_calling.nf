@@ -9,6 +9,7 @@ include {
     EXTRACT_FIELDS
 } from "../modules/snpeff"
 include { MERGE_VCF_FILES   } from "../modules/bcftools"
+include { COLLECT_FULL_VARIANT_TABLE } from "../modules/variant_table"
 
 workflow VARIANTS {
     take:
@@ -51,7 +52,12 @@ workflow VARIANTS {
         ANNOTATE_VCF.out.map { _label, vcf -> vcf }.collect()
     )
 
+    COLLECT_FULL_VARIANT_TABLE(
+        EXTRACT_FIELDS.out.map { _sample_id, _vcf, tsv -> tsv }.collect()
+    )
+
     emit:
     annotate = ANNOTATE_VCF.out
     merge_vcf_files = MERGE_VCF_FILES.out.collect()
+    full_variant_table = COLLECT_FULL_VARIANT_TABLE.out
 }

@@ -79,6 +79,12 @@
 !/bin/*.awk
 !/bin/README.md
 
+# oneroof CLI package (Typer-based CLI wrapper)
+!/bin/oneroof_cli/
+!/bin/oneroof_cli/*.py
+!/bin/oneroof_cli/commands/
+!/bin/oneroof_cli/commands/*.py
+
 # Rust development files for IDE support
 !/Cargo.toml
 !/Cargo.lock

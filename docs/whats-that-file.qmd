@@ -466,11 +466,12 @@ Python scripts and utilities for data processing:
 - Handles multi-segment viruses like influenza
 - Produces complete genome sequences
 
-**generate_variant_pivot.py**
+**collect_full_variant_table.py**
 
-- Creates pivot tables of variants across samples
-- Useful for comparing mutations between samples
-- Supports epidemiological analyses
+- Collects and enriches variant data from all samples into a final table
+- Adds derived columns: variant_id, aa_change, mutation_type, is_consensus, sample_count, is_shared
+- Outputs both TSV and Parquet formats for flexible querying
+- Useful for exploring variants across samples in Jupyter or DuckDB
 
 ### Primer Management Scripts
 
@@ -535,8 +536,61 @@ Python scripts and utilities for data processing:
 **__main__.py**
 
 - Package entry point
+- Imports and runs the `oneroof` CLI
 - Allows running as `python -m bin`
-- May provide CLI interface
+
+### OneRoof CLI Package (oneroof_cli/)
+
+The `oneroof_cli/` directory contains a Typer-based command-line interface that wraps the Nextflow pipeline with a friendlier user experience.
+
+**oneroof_cli/__init__.py**
+
+- Package initialization and `main()` entry point
+- Registers all CLI commands with the Typer app
+- Handles keyboard interrupts and exit codes
+
+**oneroof_cli/app.py**
+
+- Typer application instance configuration
+- Sets up Rich markup mode and help options
+- Central app that commands register with
+
+**oneroof_cli/utils.py**
+
+- Shared utility functions for the CLI
+- Console output helpers (error, success, info, warning)
+- Nextflow command generation and execution
+- Resume file management
+
+**oneroof_cli/commands/__init__.py**
+
+- Command module imports
+- Makes commands discoverable to the main app
+
+**oneroof_cli/commands/run.py**
+
+- The main `oneroof run` command
+- Defines all ~50 pipeline parameters with Typer annotations
+- Organizes parameters into Rich help panels by category
+- Generates and executes Nextflow commands
+
+**oneroof_cli/commands/resume.py**
+
+- The `oneroof resume` command
+- Reads cached command from `.nfresume` file
+- Re-executes previous run with same parameters
+
+**oneroof_cli/commands/env.py**
+
+- The `oneroof env` command (stub)
+- Will check that dependencies are available
+- Planned for future implementation
+
+**oneroof_cli/commands/validate.py**
+
+- The `oneroof validate` command (stub)
+- Will validate input files before running
+- Planned for future implementation
 
 ### Test Files
 

@@ -50,12 +50,12 @@ dependencies = [
   "pyyaml",
   "pytz>=2025.1",
   "pydantic>=2.9.2,<3",
-  "typer>=0.16.0,<0.17",
-  "polars[calamine,numpy,openpyxl,pandas,pyarrow,xlsx2csv,xlsxwriter]>=1.22.0",
+  "polars-lts-cpu[calamine,numpy,openpyxl,pandas,pyarrow,xlsx2csv,xlsxwriter]>=1.22.0",
   "multiqc>=1.33",
   "slack-sdk>=3.39.0",
   "duckdb>=1.2.0",
   "rich>=14.0.0",
+  "typer>=0.20.0",
 ]
 
 [tool.pixi.workspace]
@@ -100,13 +100,13 @@ dev = [
   "ipykernel>=6.29.5",
   "ipython>=8.12.3",
   "jupyter>=0.6.4",
-  "mamba>=0.11.3",
-  "marimo[sql]>=0.9.10",
+  # "marimo[sql]>=0.18.4",
   "pip>=24.2",
   "pytest>=8.3.3",
   "quarto>=0.1.0",
   "ruff>=0.9.6",
-  "tox>=4.18.1",
+  "tox>=4.19",
+  "tox-uv>=1.15",
   "ty>=0.0.0a8",
 ]
 
@@ -117,11 +117,15 @@ compile-bytecode = true
 requires = ["setuptools >= 40.8.0", "cffi >=1.15.0,!=1.17.0"]
 build-backend = "setuptools.build_meta:__legacy__"
 
-[tool.setuptools]
-py-modules = ["bin"]
+[tool.setuptools.packages.find]
+where = ["bin"]
+include = ["oneroof_cli*"]
+
+[tool.setuptools.package-dir]
+"" = "bin"
 
 [project.scripts]
-"oneroof" = "bin.__main__:main"
+"oneroof" = "oneroof_cli:main"
 
 [tool.pixi.pypi-dependencies]
 oneroof = { path = ".", editable = true }
@@ -134,3 +138,18 @@ typeCheckingMode = "basic"
 [tool.pytest.ini_options]
 pythonpath = ["bin"]
 testpaths = ["bin"]
+
+[tool.tox]
+requires = ["tox>=4.19", "tox-uv>=1.15"]
+env_list = ["py310", "py311", "py312", "py313", "lint"]
+
+[tool.tox.env_run_base]
+description = "Run tests under {base_python}"
+runner = "uv-venv-lock-runner"
+dependency_groups = ["dev"]
+commands = [["pytest"]]
+
+[tool.tox.env.lint]
+description = "Run ruff linter"
+skip_install = true
+commands = [["ruff", "check", "."]]

@@ -301,7 +301,9 @@ def create_filter_expr(config: ConversionConfig) -> pl.Expr:
 
     # iVar PASS filter
     filters.append(
-        pl.when(pl.col("PASS")).then(pl.lit("")).otherwise(pl.lit(FilterType.FAIL_TEST.value)),
+        pl.when(pl.col("PASS"))
+        .then(pl.lit(""))
+        .otherwise(pl.lit(FilterType.FAIL_TEST.value)),
     )
 
     # Quality filter
@@ -586,7 +588,8 @@ def process_ivar_file(config: ConversionConfig) -> None:
             write_vcf_file(empty_df, config.file_out, headers, sample_name)
 
             all_hap_path = (
-                config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+                config.file_out.parent
+                / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
             )
             write_vcf_file(empty_df, all_hap_path, headers, sample_name)
 
@@ -616,7 +619,8 @@ def process_ivar_file(config: ConversionConfig) -> None:
         # Write all haplotypes output
         progress.update(task, description="[green]Writing all haplotypes VCF...")
         all_hap_path = (
-            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent
+            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         write_vcf_file(result_df, all_hap_path, headers, sample_name)
 
@@ -813,7 +817,8 @@ def convert(  # noqa: PLR0913
             f"\n[bold green]✓[/bold green] Successfully converted to {config.file_out}",
         )
         all_hap_path = (
-            config.file_out.parent / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
+            config.file_out.parent
+            / f"{config.file_out.stem}_all_hap{config.file_out.suffix}"
         )
         console.print(
             f"[bold green]✓[/bold green] All haplotypes written to {all_hap_path}",
@@ -954,7 +959,8 @@ def stats(
         console.print("\n[bold]Variant Types:[/bold]")
         snp_count = len(
             ivar_df.filter(
-                ~pl.col("ALT").str.starts_with("+") & ~pl.col("ALT").str.starts_with("-"),
+                ~pl.col("ALT").str.starts_with("+")
+                & ~pl.col("ALT").str.starts_with("-"),
             ),
         )
         ins_count = len(ivar_df.filter(pl.col("ALT").str.starts_with("+")))

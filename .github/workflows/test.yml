@@ -37,32 +37,6 @@ jobs:
         run: |
           uv run pytest
 
-  python-tests-tox:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
-
-      - name: Install and run tox
-        run: |
-          uvx --from tox-uv tox -p auto
-
-      - name: Run linting with tox
-        run: |
-          uvx --from tox-uv tox -e lint
-
   nextflow-tests:
     runs-on: ubuntu-latest
     strategy:

@@ -33,17 +33,20 @@ uv run concat_consensus.py
 uv run file_watcher.py --config credentials.yaml
 ```
 
-### generate_variant_pivot.py
-**Purpose**: Processes variant data from annotated VCF files into a pivot table format.
+### collect_full_variant_table.py
+**Purpose**: Collects and enriches variant data from all samples into a final, queryable table.
 
 **Key Features**:
-- Parses VCF fields extracted with SnpSift
-- Creates pivot tables for variant analysis
-- Uses Polars for efficient data processing
+- Combines per-sample SnpSift variant effect files into a single table
+- Adds derived columns: variant_id, aa_change (one-letter), mutation_type, is_consensus, sample_count, is_shared
+- Converts HGVS three-letter amino acid notation to one-letter (e.g., p.Asp614Gly → D614G)
+- Outputs both TSV (human-readable) and Parquet (fast queries) formats
+- Uses Polars lazy API for efficient processing of large datasets
+- Sorted by chromosome, position, and sample for easy exploration
 
 **Usage Example**:
 ```bash
-uv run generate_variant_pivot.py --input_table variants.tsv
+uv run collect_full_variant_table.py --input-dir variant_tsvs/ --output full_variants --consensus-threshold 0.8
 ```
 
 ### ivar_variants_to_vcf.py
@@ -162,9 +165,9 @@ uv run validate_primer_bed.py -i primers.bed -o validated_primers
 ## Test Files
 
 The directory includes test files for several scripts:
+- `test_collect_full_variant_table.py`
 - `test_concat_consensus.py`
 - `test_file_watcher.py`
-- `test_generate_variant_pivot.py`
 - `test_ivar_variants_to_vcf.py`
 - `test_slack_alerts.py`
 

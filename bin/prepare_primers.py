@@ -139,7 +139,9 @@ def parse_fasta(fasta_path: Path) -> dict[str, str]:
                 assert current_id, f"Empty sequence ID at line {line_num}"
                 continue
 
-            assert current_id is not None, f"Sequence data before header at line {line_num}"
+            assert current_id is not None, (
+                f"Sequence data before header at line {line_num}"
+            )
             current_seq.append(line)
 
         _save_current()
@@ -290,7 +292,9 @@ def validate_primer_names(
     Raises:
         ValueError: If any primer lacks a valid suffix
     """
-    invalid = [r.name for r in records if not has_valid_suffix(r.name, fwd_suffix, rev_suffix)]
+    invalid = [
+        r.name for r in records if not has_valid_suffix(r.name, fwd_suffix, rev_suffix)
+    ]
 
     if not invalid:
         return
@@ -476,8 +480,12 @@ def generate_splice_combinations(
     Returns:
         List of (record, spliced_name) tuples for all combinations
     """
-    fwd_primers = [(r, n) for r, n in indexed_primers if is_forward_primer(n, fwd_suffix)]
-    rev_primers = [(r, n) for r, n in indexed_primers if is_reverse_primer(n, rev_suffix)]
+    fwd_primers = [
+        (r, n) for r, n in indexed_primers if is_forward_primer(n, fwd_suffix)
+    ]
+    rev_primers = [
+        (r, n) for r, n in indexed_primers if is_reverse_primer(n, rev_suffix)
+    ]
 
     assert fwd_primers, "No forward primers found"
     assert rev_primers, "No reverse primers found"
@@ -563,7 +571,11 @@ def _group_respliced_by_pair(
         if "_splice" not in name:
             return extract_amplicon_base(name, fwd_suffix, rev_suffix)
 
-        base = name.split(fwd_suffix)[0] if fwd_suffix in name else name.split(rev_suffix)[0]
+        base = (
+            name.split(fwd_suffix)[0]
+            if fwd_suffix in name
+            else name.split(rev_suffix)[0]
+        )
         splice = name.split("_splice")[1]
         return f"{base}_splice{splice}"
 
