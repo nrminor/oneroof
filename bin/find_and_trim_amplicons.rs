@@ -175,6 +175,10 @@ struct Args {
     #[arg(long)]
     no_compress: bool,
 
+    /// Disable primer trimming and only find amplicons
+    #[arg(long)]
+    no_trim: bool,
+
     /// Statistics output file (default: stderr)
     #[arg(long)]
     stats: Option<PathBuf>,
@@ -606,6 +610,8 @@ struct PrimerTrimProcessor {
     output_format: OutputFormat,
     /// Shared statistics tracker (thread-safe)
     stats: SharedStats,
+    /// find but do not trim primers in amplicons
+    find_only: bool,
 }
 
 /// Configured primer search with optional windowing.
@@ -801,6 +807,7 @@ impl PrimerTrimProcessor {
         writer: SharedWriter,
         output_format: OutputFormat,
         stats: SharedStats,
+        find_only: bool,
     ) -> Self {
         Self {
             search: WindowedSearch::new(primers, max_mismatch, forward_window, reverse_window),
@@ -810,6 +817,7 @@ impl PrimerTrimProcessor {
             writer,
             output_format,
             stats,
+            find_only,
         }
     }
 
@@ -842,7 +850,11 @@ impl PrimerTrimProcessor {
 
         // SAFETY: bounds validated by assertions (start <= end, start <= len) and bail check (end <= len)
         #[allow(clippy::indexing_slicing)]
-        let trimmed_seq = &sequence[amplicon.start..amplicon.end];
+        let trimmed_seq = if self.find_only {
+            &sequence
+        } else {
+            &sequence[amplicon.start..amplicon.end]
+        };
 
         let mut writer = self.writer.lock().expect("writer mutex poisoned");
 
@@ -866,7 +878,11 @@ impl PrimerTrimProcessor {
                 // SAFETY: start <= end (asserted above), end <= quality.len() (bail check above)
                 // Therefore start <= quality.len()
                 #[allow(clippy::indexing_slicing)]
-                let trimmed_qual = &quality[amplicon.start..amplicon.end];
+                let trimmed_qual = if self.find_only {
+                    quality
+                } else {
+                    &quality[amplicon.start..amplicon.end]
+                };
 
                 // Write FASTQ record
                 writeln!(writer, "@{}", record.id_str())?;
@@ -1205,6 +1221,7 @@ fn main() -> Result<()> {
         writer,
         args.format,
         stats.clone(),
+        args.no_trim,
     );
 
     // Read and process in parallel
@@ -1309,6 +1326,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats,
+            false,
         )
     }
 
@@ -1577,6 +1595,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats.clone(),
+            false,
         );
 
         // Read: ACGT + ATATATAT + TGCA (RC of TGCA is TGCA)
@@ -1626,6 +1645,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats.clone(),
+            false,
         );
 
         // Read with no primers
@@ -1669,6 +1689,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats.clone(),
+            false,
         );
 
         // Test 1: No forward primer
@@ -1812,8 +1833,18 @@ mod tests {
         let (writer, _buffer) = create_test_writer();
         let stats = Arc::new(TrimStats::default());
 
-        let processor =
-            PrimerTrimProcessor::new(primers, 0, 5, 100, 0, 0, writer, OutputFormat::Fastq, stats);
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            5,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fastq,
+            stats,
+            false,
+        );
 
         let amplicon = AmpliconMatch {
             start: 4,
@@ -1879,6 +1910,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats.clone(),
+            false,
         );
 
         // Process a read in forward orientation
@@ -1914,6 +1946,7 @@ mod tests {
             max_len: 2000,
             threads: 4,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -1943,6 +1976,7 @@ mod tests {
             max_len: 2000,
             threads: 4,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -1975,6 +2009,7 @@ mod tests {
             max_len: 2000,
             threads: 4,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -2007,6 +2042,7 @@ mod tests {
             max_len: 50,
             threads: 4,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -2039,6 +2075,7 @@ mod tests {
             max_len: 2000,
             threads: 0, // Invalid
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -2071,6 +2108,7 @@ mod tests {
             max_len: 2000,
             threads: 4,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -2136,6 +2174,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats,
+            false,
         );
 
         let amplicon = AmpliconMatch {
@@ -2188,6 +2227,7 @@ mod tests {
             writer,
             OutputFormat::Fasta,
             stats,
+            false,
         );
 
         let amplicon = AmpliconMatch {
@@ -2237,6 +2277,7 @@ mod tests {
             writer,
             OutputFormat::Fastq,
             stats,
+            false,
         );
 
         let amplicon = AmpliconMatch {
@@ -2276,6 +2317,7 @@ mod tests {
             max_len: 2000,
             threads: 1,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: true,
             stats: None,
             forward_window: 0,
@@ -2317,6 +2359,7 @@ mod tests {
             max_len: 2000,
             threads: 1,
             format: OutputFormat::Fastq,
+            no_trim: false,
             no_compress: false,
             stats: None,
             forward_window: 0,
