@@ -1,0 +1,342 @@
+# Developer Guide
+
+
+- [OneRoof Development Environment](#oneroof-development-environment)
+- [Dorado](#dorado)
+- [Nextflow organization](#nextflow-organization)
+- [Nextflow configuration](#nextflow-configuration)
+  - [Analysis Presets](#analysis-presets)
+- [Python development](#python-development)
+- [Reporting Module](#reporting-module)
+  - [Module Structure](#module-structure)
+  - [Adding a New Extractor](#adding-a-new-extractor)
+  - [Adding a New Visualization](#adding-a-new-visualization)
+  - [Schema Versioning](#schema-versioning)
+  - [Running Tests](#running-tests)
+
+## OneRoof Development Environment
+
+Most `oneroof` development happens in the `dev` branch of this repo. To get started with doing so yourself, clone and switch to the `dev` branch like so:
+
+``` bash
+git clone https://github.com/nrminor/oneroof.git && \
+cd oneroof && \
+git checkout dev
+```
+
+From there, you’ll have a few tools to consider installing if you haven’t already:
+
+1.  The Pixi package manager, available here: <https://pixi.sh/latest/>
+2.  The command runner Just, available here: <https://just.systems/man/en/chapter_4.html>
+3.  Pre-commit, available here: <https://pre-commit.com/>
+4.  Docker to use the repo Dockerfile as a dev container, available here: <https://docs.docker.com/engine/install/>
+5.  Quarto to modify documentation, available here: <https://quarto.org/docs/get-started/>
+6.  An editor with language support for Nextflow (or Groovy as a fallback), Python, and Quarto (or Markdown as a fallback).
+
+Much of this project was written in VSCode, as it’s currently the editor that makes it easiest to install Nextflow, Quarto, and Python language servers. We recommend developers use VSCode (or one of the VSCode forks, e.g., Cursor, Positron, etc.) for the same reason, though editors like Zed, Helix, or NeoVim can also be set up to provide the same functionality.
+
+#### Pixi
+
+Of the above tools, Pixi is the only one that is essential for development, as it handles installing the pipeline’s dependencies from various `conda` registries as well as the Python Package Index. That said, you could get away with not using `pixi` by manually installing the packages in [`pyproject.toml`](../pyproject.toml) in a `conda` environment, using pip when needed. While this solution is inelegant compared to having a unified package manager like Pixi, it may be more familiar to some users.
+
+If you are sticking with Pixi, run `pixi shell --frozen` in the project root before you get started. This will create a terminal environment with everything you need to work on and run `oneroof` (or rather: everything except Dorado. More on that below). The `--frozen` flag is critical; it tells Pixi to install the exact dependency versions recorded in `pixi.lock` as opposed to searching for newer versions where possible. This ensures reproducibility, as updates to the dependencies in `pixi.lock` will only be pushed when they have been tested on Linux and MacOS systems by the core maintainer team.
+
+#### Just
+
+While [Just](https://just.systems/man/en/chapter_1.html) isn’t as important as Pixi, I would still recommend [installing it](https://just.systems/man/en/chapter_4.html) because of the conveniences it offers. With Just, the repo [`justfile`](../justfile) provides a switchboard of command shorthands, including:
+
+- `just docs`, which runs a series of Quarto commands to render and bundle the repo docs (including this file) as well as construct an updated readme
+- `just py`, which lints and formats all the repo’s Python files.
+- `just docker`, which builds and pushes a new version of the repo Docker Image.
+- `just env`, which instantiates the Pixi environment.
+- `just all`, which does everything (`just doit` will do the same thing😎).
+
+Run `just` in the same directory as the repo [`justfile`](../justfile) to list all available recipes, and check out the [Just Programmer’s Manual](https://just.systems/man/en/chapter_1.html) for more about Just.
+
+#### Pre-commit
+
+If you run `pre-commit install` in the repo root directory, it will install the pre-commit hooks in our [`.pre-commit-config.yaml`](../.pre-commit-config.yaml). These hooks make sure that formatting throughout the repo files are consistent before they can be committed. Again, not essential, but nice!
+
+#### Docker
+
+If you don’t want to futz with all of the above or with setting up Dorado locally, you can also use the pipeline’s Docker Hub image [`nrminor/dorado-and-friends:v0.2.3`](https://hub.docker.com/r/nrminor/dorado-and-friends) as a dev container. It should bring everything the pipeline and its dev environment needs, though its use as a dev container has not yet been tested.
+
+#### Quarto
+
+Quarto can be thought of as a renderer or compiler for documents written in supercharged Markdown. It can run code blocks, render to HTML, PDF, `reveal.js` presentations, Microsoft Powerpoint and Word documents, websites, books, and dozens of other formats. As such, I use Quarto markdown documents as a sort of “ur-format,” and render it out to other formats as desired. To render the project readme and any other `.qmd` documents in this project, you will need Quarto installed. The Quarto config file, [`_quarto.yml`](../_quarto.yml), controls project level settings, including a post-render section telling it to regenerate the Github-markdown-formatted readme from [`assets/index.qmd`](index.qmd) (via the project’s `just readme` recipe).
+
+## Dorado
+
+Dorado is the one tricky dependency that isn’t handled by Pixi, as it is not published outside of the compiled executables in [Oxford Nanopore’s GitHub Releases](https://github.com/nanoporetech/dorado/releases). To install it locally on your own system, you’ll need to take additional care managing `$PATH` and downloading Dorado’s models yourself, as the Dockerfile does. Here’s how the Docker file handles the Linux version of Dorado it installs
+
+``` bash
+wget --quiet https://cdn.oxfordnanoportal.com/software/analysis/dorado-0.7.1-linux-x64.tar.gz && \
+tar -xvf dorado-0.7.1-linux-x64.tar.gz && \
+rm -rf dorado-0.7.1-linux-x64.tar.gz
+
+export PATH=$PATH:$HOME/dorado-0.7.1-linux-x64/bin:$HOME/dorado-0.7.1-linux-x64/lib:$HOME/dorado-0.7.1-linux-x64
+
+dorado download
+```
+
+The process will be similar for MacOS users; we recommend consulting the above Dorado releases for the executable you should download. Feel free to raise an issue or a PR for more specific instructions in this section!
+
+## Nextflow organization
+
+This pipeline follows a slightly shaved-down project organization to the [nf-core](https://nf-co.re/) projects, which you can think of as a standardized means of organizing Nextflow `.nf` scripts. Like most Nextflow pipelines, the pipeline entrypoint is `main.nf`. `main.nf` performs some logic to call one of the workflow declaration scripts in the `workflows/` directory. Workflow declaration scripts themselves call subworkflow declaration scripts in the `subworkflows/` directory. Subworkflow scripts then call modules in the `modules/` directory; these scripts actually do work, as they contain the individual processes that make up each workflow run.
+
+If this seems like a lot, trust your instincts. Here’s why it’s worth it anyway:
+
+1.  It atomizes each building block for the pipeline, making it much easier to make the pipeline flexible to the inputs provided by the user. The pipeline doesn’t just run in one way; it can run in many ways. It also makes it possible to reuse the same processes at multiple stages of the pipeline, like we do with our `reporting.nf` module.
+2.  It makes it exceptionally easy to add functionality by plugging in new module scripts.
+3.  It also makes it exceptionally easy to switch out or reorder modules or bring in new subworkflows, e.g., a phylogenetics subworkflow. In other words, this project structure makes it easier for the maintainers *to refactor*.
+4.  Having defined individual workflow and module files here makes it easier to move around files and reuse Nextflow code for other workflows in the future. Instead of needing to scroll down a very long monolithic Nextflow script, just take the one file you need and get to work.
+
+Like most Nextflow pipelines, `oneroof` also has a few other important directories:
+
+- `bin/`, which contains executable scripts that are called in various processes/modules.
+- `lib/`, which contains Groovy utility functions that can be called natively within Nextflow scripts.
+- `conf/`, which contains Nextflow configuration files with defaults, in our case, for the two workflow options (the Illumina workflow and the Nanopore workflow).
+
+## Nextflow configuration
+
+`oneroof` comes with a large suite of parameters users can tweak to customize each run to their needs, in addition to profiles for controlling the environment the pipeline runs in. For now, we recommend users review the table in the repo `README.md` for documentation on the most commonly used parameters. That said, we expect to have more configuration documentation here soon.
+
+### Analysis Presets
+
+Preset configurations live in `conf/presets/` and provide pre-configured database settings for common analysis types. These are implemented as Nextflow profiles that can be combined with execution profiles (e.g., `-profile virus,docker`).
+
+**Current presets:**
+
+| File | Profile | Description |
+|----|----|----|
+| `conf/presets/virus.config` | `virus` | General viral metagenomics with Sylph IMG/VR 4.1 database and panhuman decontamination |
+| `conf/presets/sarscov2.config` | `sarscov2` | Extends `virus` with Nextclade SARS-CoV-2 dataset |
+
+**Adding a new preset:**
+
+1.  Create a new config file in `conf/presets/`:
+
+``` groovy
+// conf/presets/mypreset.config
+params {
+    // Database and tool configurations
+    some_param = "value"
+}
+```
+
+2.  If extending an existing preset, use `includeConfig`:
+
+``` groovy
+includeConfig 'virus.config'
+params {
+    // Additional parameters
+}
+```
+
+3.  Add the profile to `nextflow.config`:
+
+``` groovy
+profiles {
+    mypreset {
+        includeConfig "conf/presets/mypreset.config"
+    }
+}
+```
+
+4.  Update `lib/oneroof_cli/commands/run.py`:
+    - Add to `AnalysisPreset` enum
+    - Add to `PRESET_PROFILES` list
+5.  Update documentation in `README.md` and `docs/index.qmd`.
+
+## Python development
+
+We’re big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatter, and we use it liberally in the writing of our Python scripts. To do so yourself in VSCode, we offer the following configuration for your User Settings JSON:
+
+``` jsonc
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "ruff.lineLength": 88,
+  "ruff.lint.select": ["ALL"],
+  "ruff.lint.ignore": ["D", "S101", "E501", "PTH123", "TD003"],
+  "ruff.nativeServer": "on",
+  "notebook.defaultFormatter": "charliermarsh.ruff",
+}
+```
+
+At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in [the Ruff rule docs](https://docs.astral.sh/ruff/rules/). Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it’s a bit annoying or overwhelming in the short-term.
+
+## Reporting Module
+
+The reporting system generates JSON reports, MultiQC custom content, and interactive visualizations. Library code lives in `lib/` while executable scripts live in `bin/`.
+
+### Module Structure
+
+    lib/
+    ├── reporting/
+    │   ├── __init__.py              # Package exports
+    │   ├── schema.py                # Pydantic models for JSON schema
+    │   ├── multiqc.py               # MultiQC TSV/YAML generators
+    │   ├── extractors/              # Metric extraction from tool outputs
+    │   │   ├── __init__.py
+    │   │   ├── alignment.py         # BAM file metrics
+    │   │   ├── consensus.py         # Consensus FASTA metrics
+    │   │   ├── coverage.py          # Per-base coverage metrics
+    │   │   ├── haplotyping.py       # Devider output metrics
+    │   │   ├── metagenomics.py      # Sylph profiling metrics
+    │   │   └── variants.py          # VCF/ivar variant metrics
+    │   └── visualizations/          # Altair chart generators
+    │       ├── __init__.py
+    │       ├── utils.py             # Theme, colors, save helpers
+    │       ├── amplicon_efficiency.py
+    │       ├── coverage_heatmap.py
+    │       ├── qc_dashboard.py
+    │       └── variant_summary.py
+    ├── oneroof_cli/                 # CLI package (see below)
+    └── test_*.py                    # Tests for library modules
+
+    bin/
+    ├── extract_metrics.py           # CLI for running extractors
+    ├── assemble_report.py           # CLI for assembling final report
+    └── test_*.py                    # Tests for executable scripts
+
+### Adding a New Extractor
+
+Extractors parse tool outputs and produce structured metrics. To add one:
+
+1.  **Create the extractor module** in `lib/reporting/extractors/`:
+
+``` python
+# lib/reporting/extractors/my_tool.py
+from pathlib import Path
+from pydantic import BaseModel, Field
+
+class MyToolExtractedMetrics(BaseModel):
+    """Metrics extracted from MyTool output."""
+    sample_id: str
+    some_metric: float = Field(ge=0, description="Description here")
+
+def extract(sample_id: str, input_path: Path) -> MyToolExtractedMetrics:
+    """Extract metrics from MyTool output file."""
+    # Parse the file and return validated model
+    return MyToolExtractedMetrics(sample_id=sample_id, some_metric=42.0)
+```
+
+2.  **Export in `__init__.py`**:
+
+``` python
+from .my_tool import MyToolExtractedMetrics, extract as extract_my_tool
+```
+
+3.  **Add CLI subcommand** in `bin/extract_metrics.py`:
+
+``` python
+@app.command("my-tool")
+def my_tool_cmd(sample_id: str, input_path: Path, output: Path) -> None:
+    metrics = my_tool.extract(sample_id, input_path)
+    output.write_text(metrics.model_dump_json(indent=2))
+```
+
+4.  **Create Nextflow process** in `modules/reporting.nf`:
+
+``` groovy
+process EXTRACT_MY_TOOL_METRICS {
+    input:
+    tuple val(sample_id), path(input_file)
+
+    output:
+    path "${sample_id}_my_tool_metrics.json", emit: metrics
+
+    script:
+    """
+    extract_metrics.py my-tool --sample-id ${sample_id} \\
+        --input ${input_file} --output ${sample_id}_my_tool_metrics.json
+    """
+}
+```
+
+5.  **Wire into subworkflow** with appropriate emit.
+
+6.  **Write tests** in `lib/test_my_tool_extractor.py`.
+
+### Adding a New Visualization
+
+Visualizations use Altair to generate interactive HTML charts:
+
+1.  **Create the visualization module** in `lib/reporting/visualizations/`:
+
+``` python
+# lib/reporting/visualizations/my_chart.py
+from pathlib import Path
+import altair as alt
+import polars as pl
+from .utils import register_oneroof_theme, save_chart, COLORS
+
+def my_chart(
+    samples: dict[str, dict],
+    output_path: Path,
+    formats: list[str] | None = None,
+    title: str = "My Chart",
+) -> list[Path]:
+    """Generate my chart from sample metrics."""
+    if formats is None:
+        formats = ["html"]
+
+    register_oneroof_theme()
+
+    # Prepare data as Polars DataFrame
+    data = pl.DataFrame(...)
+
+    if len(data) == 0:
+        return []
+
+    chart = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(...)
+        .properties(title=title)
+    )
+
+    return save_chart(chart, output_path, formats)
+```
+
+2.  **Export in `__init__.py`**.
+
+3.  **Call from `assemble_report.py`** in the visualization section.
+
+4.  **Write tests** following the pattern in existing test files.
+
+### Schema Versioning
+
+The JSON report schema is versioned and lives in `schemas/`. The current version is symlinked at `schemas/current/`. When making breaking changes to `lib/reporting/schema.py`:
+
+1.  Update the `schema_version` default in `OneRoofReport`
+2.  Create a new version directory (e.g., `schemas/v0.2.0-alpha/`)
+3.  Regenerate the schema: `uv run python -c "from reporting.schema import OneRoofReport; import json; print(json.dumps(OneRoofReport.model_json_schema(), indent=2))" > schemas/v0.2.0-alpha/oneroof_report.schema.json`
+4.  Update the `current` symlink
+5.  Document changes in the version’s `CHANGELOG.md`
+
+### Running Tests
+
+``` bash
+# All tests (both bin/ and lib/)
+uv run pytest
+
+# Library tests only
+uv run pytest lib/
+
+# Executable tests only
+uv run pytest bin/
+
+# Specific module
+uv run pytest lib/test_coverage_extractor.py -v
+
+# With coverage
+uv run pytest --cov=lib/reporting --cov-report=html
+```
