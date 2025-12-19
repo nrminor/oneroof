@@ -79,4 +79,5 @@ COPY bin/find_and_trim_amplicons.rs $HOME/bin/find_and_trim_amplicons.rs
 RUN cd $HOME && \
     export PATH="$HOME/.pixi/envs/default/bin:$PATH" && \
     RUSTFLAGS="-C target-cpu=native" cargo build --release && \
-    cp $HOME/target/release/find_and_trim_amplicons $HOME/.pixi/envs/default/bin/
+    cp $HOME/target/release/find_and_trim_amplicons $HOME/.pixi/envs/default/bin/ && \
+    rm -rf $HOME/target

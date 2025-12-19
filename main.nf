@@ -26,7 +26,7 @@ workflow {
         alignment and variant-calling, variant-effect annotation, consensus
         sequence calling, quality reporting, and phylogenetic tree-building, all
         under "one roof."
-        (version 0.1.0)
+        (version 2.2.1)
         =========================================================================
         """
         .stripIndent()
