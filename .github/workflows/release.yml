@@ -164,6 +164,7 @@ jobs:
   docker:
     name: Push Docker Image
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: release
     if: ${{ always() && (github.event_name == 'workflow_dispatch' || !contains(github.ref, '-')) }}
 
@@ -181,20 +182,11 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Containerfile
-          push: true
-          tags: nrminor/oneroof:${{ steps.version.outputs.version }}
-          provenance: false
+      - name: Build image
+        run: docker build --file Containerfile --tag nrminor/oneroof:${{ steps.version.outputs.version }} .
+
+      - name: Push image
+        run: docker push nrminor/oneroof:${{ steps.version.outputs.version }}
