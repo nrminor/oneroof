@@ -9,13 +9,12 @@ include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
 include { ASSEMBLE_REPORT } from "../modules/reporting"
 include { MULTIQC } from "../modules/multiqc"
+include { RESOLVE_REFSEQ ; RESOLVE_REF_GBK } from "../modules/reference"
 
 workflow ILLUMINA {
 
     take:
         ch_primer_bed
-        ch_refseq
-        ch_ref_gbk
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
@@ -25,6 +24,17 @@ workflow ILLUMINA {
 
     main:
         assert params.platform == "illumina"
+
+        // Resolve reference sequences (handles both local paths and NCBI accessions)
+        RESOLVE_REFSEQ(Channel.value(params.refseq))
+        ch_refseq = RESOLVE_REFSEQ.out.refseq
+
+        if (params.ref_gbk) {
+            RESOLVE_REF_GBK(Channel.value(params.ref_gbk))
+            ch_ref_gbk = RESOLVE_REF_GBK.out.ref_gbk
+        } else {
+            ch_ref_gbk = Channel.empty()
+        }
         assert params.illumina_fastq_dir != "" :
         "Please double check that a directory of Illumina FASTQs or Nanopore POD5s is provided."
         assert file( params.illumina_fastq_dir ).isDirectory() :

@@ -141,7 +141,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snpsift-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/linux-64/sylph-0.8.1-ha6fb395_0.tar.bz2
-      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.7.1-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.8.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/tabix-1.11-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_ha0e22de_103.conda
@@ -340,7 +340,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snpsift-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-64/sylph-0.8.1-hdc87acc_0.tar.bz2
-      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.7.1-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.8.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/tabix-1.11-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-64/tapi-1600.0.11.8-h8d8e812_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/tk-8.6.13-hf689a15_3.conda
@@ -526,7 +526,7 @@ environments:
       - conda: https://conda.anaconda.org/bioconda/noarch/snpeff-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/snpsift-5.4.0a-hdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/osx-arm64/sylph-0.8.1-h15efd92_0.tar.bz2
-      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.7.1-pyhdfd78af_0.conda
+      - conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.8.0-pyhdfd78af_0.conda
       - conda: https://conda.anaconda.org/bioconda/noarch/tabix-1.11-hdfd78af_0.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tapi-1600.0.11.8-h997e182_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h892fb3f_3.conda
@@ -3297,6 +3297,7 @@ packages:
   - liblapacke 3.11.0   5*_openblas
   - libcblas   3.11.0   5*_openblas
   license: BSD-3-Clause
+  license_family: BSD
   purls: []
   size: 18200
   timestamp: 1765818857876
@@ -3311,6 +3312,7 @@ packages:
   - blas 2.305   openblas
   - liblapacke 3.11.0   5*_openblas
   license: BSD-3-Clause
+  license_family: BSD
   purls: []
   size: 18491
   timestamp: 1765819090240
@@ -3325,6 +3327,7 @@ packages:
   - blas 2.305   openblas
   - liblapacke 3.11.0   5*_openblas
   license: BSD-3-Clause
+  license_family: BSD
   purls: []
   size: 18551
   timestamp: 1765819121855
@@ -4441,7 +4444,7 @@ packages:
 - pypi: ./
   name: oneroof
   version: 2.0.0
-  sha256: 8cd537c29d88c07185c76c74cd1042ed08d1d1e416bd358ca60307b1d6fa5b74
+  sha256: 7bc57dd80771a2f77f89af252b501dc544273e7d4213069cacc2780906c8323e
   requires_dist:
   - biopython>=1.84
   - pysam>=0.22.1
@@ -6058,9 +6061,9 @@ packages:
   purls: []
   size: 650182
   timestamp: 1741912226490
-- conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.7.1-pyhdfd78af_0.conda
-  sha256: c00d308433f3dd17d7330c97b8b1082b3ecc5a65f1748bfd79df09171c5f0aba
-  md5: e484945b5303f3799a764eab2aa3f6aa
+- conda: https://conda.anaconda.org/bioconda/noarch/sylph-tax-1.8.0-pyhdfd78af_0.conda
+  sha256: f100be4e7ec45b3643164cfd20a35b153bb1eb87b47db5b93218879239ea5d1a
+  md5: 7bc1e355a657d61a8e80d7ff4f60bdcc
   depends:
   - pandas
   - python >=3.7
@@ -6069,8 +6072,8 @@ packages:
   license_family: MIT
   purls:
   - pkg:pypi/sylph-tax?source=hash-mapping
-  size: 18341
-  timestamp: 1765758045545
+  size: 18945
+  timestamp: 1765930794798
 - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-h4ee821c_9.conda
   sha256: c47299fe37aebb0fcf674b3be588e67e4afb86225be4b0d452c7eb75c086b851
   md5: 13dc3adbc692664cd3beabd216434749

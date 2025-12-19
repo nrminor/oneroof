@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+
 from oneroof_cli.app import app
 from oneroof_cli.utils import generate_nextflow_command, info, run_nextflow
 
@@ -36,6 +37,13 @@ class DeviderPreset(str, Enum):
     hi_fi = "hi-fi"
 
 
+class AnalysisPreset(str, Enum):
+    """Analysis presets that configure databases for specific use cases."""
+
+    virus = "virus"
+    sarscov2 = "sarscov2"
+
+
 # =============================================================================
 # Available Profiles (for help text)
 # =============================================================================
@@ -47,6 +55,12 @@ CORE_PROFILES = [
     "singularity",
     "apptainer",
     "containerless",
+]
+
+# Preset profiles (database configurations)
+PRESET_PROFILES = [
+    "virus",
+    "sarscov2",
 ]
 
 # Test profiles (Illumina)
@@ -71,7 +85,43 @@ NANOPORE_TEST_PROFILES = [
     "nanopore_test_bad_primers",
 ]
 
-ALL_PROFILES = CORE_PROFILES + ILLUMINA_TEST_PROFILES + NANOPORE_TEST_PROFILES
+ALL_PROFILES = (
+    CORE_PROFILES + PRESET_PROFILES + ILLUMINA_TEST_PROFILES + NANOPORE_TEST_PROFILES
+)
+
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+
+def _combine_profiles(
+    preset: Optional[AnalysisPreset],
+    profile: Optional[str],
+) -> Optional[str]:
+    """
+    Combine preset and profile into a single comma-separated profile string.
+
+    The preset (if provided) is prepended to any user-specified profiles.
+    This allows `--preset virus --profile docker` to become `-profile virus,docker`.
+
+    Args:
+        preset: Optional analysis preset (virus, sarscov2, etc.)
+        profile: Optional comma-separated profile string from user
+
+    Returns:
+        Combined profile string, or None if neither is provided.
+    """
+    profiles: list[str] = []
+
+    if preset:
+        profiles.append(preset.value)
+
+    if profile:
+        # Profile may already be comma-separated, so extend rather than append
+        profiles.extend(p.strip() for p in profile.split(",") if p.strip())
+
+    return ",".join(profiles) if profiles else None
 
 
 # =============================================================================
@@ -638,6 +688,20 @@ def run_pipeline(
             rich_help_panel=PANEL_OUTPUT,
         ),
     ] = False,
+    preset: Annotated[
+        Optional[AnalysisPreset],
+        typer.Option(
+            "--preset",
+            help=(
+                "Analysis preset that configures databases for specific use cases. "
+                "Options: virus (IMG/VR + panhuman decontamination), "
+                "sarscov2 (virus + Nextclade). "
+                "Combine with --profile for execution environment."
+            ),
+            case_sensitive=False,
+            rich_help_panel=PANEL_OUTPUT,
+        ),
+    ] = None,
     profile: Annotated[
         Optional[str],
         typer.Option(
@@ -646,6 +710,7 @@ def run_pipeline(
             help=(
                 "Nextflow execution profile(s), comma-separated. "
                 "Core: standard, docker, singularity, apptainer, containerless. "
+                "Presets: virus, sarscov2. "
                 "Test profiles also available (e.g., illumina_test_with_primers)."
             ),
             rich_help_panel=PANEL_OUTPUT,
@@ -746,7 +811,8 @@ def run_pipeline(
         "cleanup": cleanup if cleanup else None,
         # Profile is handled specially in generate_nextflow_command
         # It's passed as a comma-separated string directly to Nextflow
-        "profile": profile,
+        # Combine preset and profile: preset comes first if provided
+        "profile": _combine_profiles(preset, profile),
     }
 
     # Handle resume flag - this goes to Nextflow as -resume, not --resume

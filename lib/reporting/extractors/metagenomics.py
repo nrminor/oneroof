@@ -149,7 +149,9 @@ def extract(
         for row in df_sorted.iter_rows(named=True):
             taxon = str(row[genome_col]) if row[genome_col] else "unknown"
             ani = float(row[ani_col]) if row[ani_col] is not None else 0.0
-            abundance = float(row[abundance_col]) if row[abundance_col] is not None else 0.0
+            abundance = (
+                float(row[abundance_col]) if row[abundance_col] is not None else 0.0
+            )
 
             top_hits.append(
                 MetagenomicsHit(

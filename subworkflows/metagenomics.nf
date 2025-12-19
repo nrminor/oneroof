@@ -49,7 +49,9 @@ workflow METAGENOMICS {
         : Channel.empty()
 
     // Branch the meta_ref channel by file type
+    // Use map to ensure we have file objects, then branch
     ch_meta_ref
+        .map { ref -> file(ref) }
         .branch { ref ->
             prebuilt: ref.name.endsWith('.syldb')
             custom: true  // .fasta, .fa, .fna, etc.

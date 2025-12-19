@@ -98,6 +98,54 @@ Like most Nextflow pipelines, `oneroof` also has a few other important directori
 
 `oneroof` comes with a large suite of parameters users can tweak to customize each run to their needs, in addition to profiles for controlling the environment the pipeline runs in. For now, we recommend users review the table in the repo `README.md` for documentation on the most commonly used parameters. That said, we expect to have more configuration documentation here soon.
 
+### Analysis Presets
+
+Preset configurations live in `conf/presets/` and provide pre-configured database settings for common analysis types. These are implemented as Nextflow profiles that can be combined with execution profiles (e.g., `-profile virus,docker`).
+
+**Current presets:**
+
+| File | Profile | Description |
+|------|---------|-------------|
+| `conf/presets/virus.config` | `virus` | General viral metagenomics with Sylph IMG/VR 4.1 database and panhuman decontamination |
+| `conf/presets/sarscov2.config` | `sarscov2` | Extends `virus` with Nextclade SARS-CoV-2 dataset |
+
+**Adding a new preset:**
+
+1. Create a new config file in `conf/presets/`:
+
+```groovy
+// conf/presets/mypreset.config
+params {
+    // Database and tool configurations
+    some_param = "value"
+}
+```
+
+2. If extending an existing preset, use `includeConfig`:
+
+```groovy
+includeConfig 'virus.config'
+params {
+    // Additional parameters
+}
+```
+
+3. Add the profile to `nextflow.config`:
+
+```groovy
+profiles {
+    mypreset {
+        includeConfig "conf/presets/mypreset.config"
+    }
+}
+```
+
+4. Update `lib/oneroof_cli/commands/run.py`:
+   - Add to `AnalysisPreset` enum
+   - Add to `PRESET_PROFILES` list
+
+5. Update documentation in `README.md` and `docs/index.qmd`.
+
 ## Python development
 
 We're big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatter, and we use it liberally in the writing of our Python scripts. To do so yourself in VSCode, we offer the following configuration for your User Settings JSON:

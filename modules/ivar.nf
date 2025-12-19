@@ -61,8 +61,7 @@ process CONVERT_TO_VCF {
 	maxRetries 2
 
     input:
-    tuple val(barcode), path(ivar_table)
-    path refseq
+    tuple val(barcode), path(ivar_table), path(refseq)
 
     output:
     tuple val(barcode), path("${barcode}.vcf")

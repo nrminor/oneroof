@@ -9,8 +9,8 @@ from reporting.visualizations.amplicon_efficiency import (
     amplicon_heatmap,
     amplicon_ranking_bar,
     load_amplicon_summary,
+    prepare_amplicon_heatmap_data,
     prepare_amplicon_stats,
-    prepare_heatmap_data,
 )
 
 
@@ -281,14 +281,14 @@ class TestPrepareHeatmapData:
     def test_adds_log_reads_column(self, amplicon_summary_tsv: Path) -> None:
         """Test that log_reads column is added."""
         data_lf = pl.scan_csv(amplicon_summary_tsv, separator="\t")
-        result = prepare_heatmap_data(data_lf)
+        result = prepare_amplicon_heatmap_data(data_lf)
 
         assert "log_reads" in result.columns
 
     def test_log_reads_handles_zeros(self, amplicon_summary_tsv: Path) -> None:
         """Test that log1p handles zero reads correctly."""
         data_lf = pl.scan_csv(amplicon_summary_tsv, separator="\t")
-        result = prepare_heatmap_data(data_lf)
+        result = prepare_amplicon_heatmap_data(data_lf)
 
         # Rows with reads=0 should have log_reads=0 (log1p(0) = 0)
         zero_rows = result.filter(pl.col("reads") == 0)
@@ -297,7 +297,7 @@ class TestPrepareHeatmapData:
     def test_preserves_original_reads(self, amplicon_summary_tsv: Path) -> None:
         """Test that original reads column is preserved."""
         data_lf = pl.scan_csv(amplicon_summary_tsv, separator="\t")
-        result = prepare_heatmap_data(data_lf)
+        result = prepare_amplicon_heatmap_data(data_lf)
 
         assert "reads" in result.columns
         # Check a known value

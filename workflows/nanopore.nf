@@ -9,6 +9,7 @@ include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
 include { ASSEMBLE_REPORT } from "../modules/reporting"
 include { MULTIQC } from "../modules/multiqc"
+include { RESOLVE_REFSEQ ; RESOLVE_REF_GBK } from "../modules/reference"
 
 workflow NANOPORE {
 
@@ -16,8 +17,6 @@ workflow NANOPORE {
 
     take:
         ch_primer_bed
-        ch_refseq
-        ch_refgbk
         ch_contam_fasta
         ch_snpeff_config
         ch_metagenome_ref
@@ -27,6 +26,17 @@ workflow NANOPORE {
 
     main:
         assert params.platform == "ont"
+
+        // Resolve reference sequences (handles both local paths and NCBI accessions)
+        RESOLVE_REFSEQ(Channel.value(params.refseq))
+        ch_refseq = RESOLVE_REFSEQ.out.refseq
+
+        if (params.ref_gbk) {
+            RESOLVE_REF_GBK(Channel.value(params.ref_gbk))
+            ch_refgbk = RESOLVE_REF_GBK.out.ref_gbk
+        } else {
+            ch_refgbk = Channel.empty()
+        }
 
         gather_outputs = GATHER_NANOPORE ( ch_contam_fasta )
 

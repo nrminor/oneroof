@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def prepare_heatmap_data(coverage_metrics: list[dict]) -> pl.DataFrame:
+def prepare_coverage_heatmap_data(coverage_metrics: list[dict]) -> pl.DataFrame:
     """
     Prepare coverage metrics for heatmap visualization.
 
@@ -99,7 +99,7 @@ def coverage_summary_heatmap(
 
     register_oneroof_theme()
 
-    data = prepare_heatmap_data(coverage_metrics)
+    data = prepare_coverage_heatmap_data(coverage_metrics)
 
     if len(data) == 0:
         # Return empty list if no data

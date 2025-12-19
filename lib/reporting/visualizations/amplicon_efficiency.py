@@ -241,7 +241,7 @@ def amplicon_dropout_scatter(
     return save_chart(chart, output_path, formats)
 
 
-def prepare_heatmap_data(data: pl.LazyFrame) -> pl.DataFrame:
+def prepare_amplicon_heatmap_data(data: pl.LazyFrame) -> pl.DataFrame:
     """
     Prepare data for heatmap visualization.
 
@@ -288,7 +288,7 @@ def amplicon_heatmap(
 
     # Load lazily and prepare data
     data_lf = pl.scan_csv(summary_path, separator="\t")
-    data = prepare_heatmap_data(data_lf)
+    data = prepare_amplicon_heatmap_data(data_lf)
 
     if len(data) == 0:
         return []

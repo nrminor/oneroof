@@ -87,8 +87,8 @@ rasusa = ">=2.0.0,<2.1"
 deacon = ">=0.2.0,<0.3"
 devider = ">=0.0.1,<0.0.2"
 sylph = ">=0.8.1,<0.9"
-sylph-tax = ">=1.2.0,<2"
 rust-script = ">=0.36.0,<0.37"
+sylph-tax = ">=1.8.0,<2"
 
 [tool.pixi.target.osx-64.dependencies]
 fq = { version = ">=0.12,<0.13", channel = "bioconda" }

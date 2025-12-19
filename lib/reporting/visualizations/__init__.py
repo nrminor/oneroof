@@ -18,13 +18,13 @@ from .amplicon_efficiency import (
     amplicon_heatmap,
     amplicon_ranking_bar,
     load_amplicon_summary,
+    prepare_amplicon_heatmap_data,
     prepare_amplicon_stats,
-    prepare_heatmap_data,
 )
 from .coverage_heatmap import (
     coverage_bar_chart,
     coverage_summary_heatmap,
-    prepare_heatmap_data,
+    prepare_coverage_heatmap_data,
 )
 from .qc_dashboard import (
     completeness_distribution,
@@ -50,8 +50,9 @@ __all__ = [
     "coverage_distribution",
     "coverage_summary_heatmap",
     "load_amplicon_summary",
+    "prepare_amplicon_heatmap_data",
     "prepare_amplicon_stats",
-    "prepare_heatmap_data",
+    "prepare_coverage_heatmap_data",
     "prepare_variant_effect_data",
     "prepare_variant_type_data",
     "qc_scatter",

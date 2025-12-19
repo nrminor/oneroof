@@ -44,7 +44,9 @@ def prepare_qc_status_data(samples: dict[str, dict]) -> pl.DataFrame:
             status_counts[status] += 1
 
     rows = [
-        {"status": status, "count": count} for status, count in status_counts.items() if count > 0
+        {"status": status, "count": count}
+        for status, count in status_counts.items()
+        if count > 0
     ]
 
     if not rows:
@@ -264,7 +266,9 @@ def completeness_distribution(
             .mark_bar(width=50)
             .encode(
                 alt.X("sample_id:N").title("Sample"),
-                alt.Y("completeness:Q").title("Completeness (%)").scale(domain=[0, 100]),
+                alt.Y("completeness:Q")
+                .title("Completeness (%)")
+                .scale(domain=[0, 100]),
                 alt.Color("qc_status:N")
                 .scale(
                     domain=["pass", "warn", "fail"],

@@ -132,7 +132,7 @@ const MAX_PRIMER_MATCHES: usize = 1000;
 
 /// Command line arguments for primer trimming
 #[derive(Parser, Debug)]
-#[command(name = "primer-trim")]
+#[command(name = "find_and_trim_amplicons")]
 #[command(version, about = "Find and trim primer sequences in FASTQ/FASTA reads")]
 struct Args {
     /// Input FASTQ/FASTA file (format auto-detected, gzip/bzip2 supported)
@@ -2754,9 +2754,15 @@ mod tests {
 
         assert_eq!(*header, "@test_read");
         // With find_only=true, the FULL sequence should be written, not just the insert
-        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence");
+        assert_eq!(
+            *seq, "ACGTATATATATTGCA",
+            "find_only should preserve full sequence"
+        );
         assert_eq!(*plus, "+");
-        assert_eq!(*qual, "IIIIIIIIIIIIIIII", "find_only should preserve full quality");
+        assert_eq!(
+            *qual, "IIIIIIIIIIIIIIII",
+            "find_only should preserve full quality"
+        );
     }
 
     #[test]
@@ -2810,7 +2816,10 @@ mod tests {
         };
 
         assert_eq!(*header, ">test_read");
-        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence in FASTA");
+        assert_eq!(
+            *seq, "ACGTATATATATTGCA",
+            "find_only should preserve full sequence in FASTA"
+        );
     }
 
     #[test]
@@ -2858,7 +2867,10 @@ mod tests {
             panic!("expected 4 FASTQ lines, got {}", lines.len());
         };
 
-        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence via process_record");
+        assert_eq!(
+            *seq, "ACGTATATATATTGCA",
+            "find_only should preserve full sequence via process_record"
+        );
     }
 
     #[test]
@@ -2894,7 +2906,11 @@ mod tests {
 
         // Verify no output was written
         let output = buffer.lock().expect("test buffer mutex poisoned");
-        assert_eq!(output.len(), 0, "find_only should still filter reads without amplicons");
+        assert_eq!(
+            output.len(),
+            0,
+            "find_only should still filter reads without amplicons"
+        );
         drop(output);
 
         // Verify statistics track the failure

@@ -26,10 +26,12 @@ workflow VARIANTS {
         ch_refseq,
     )
 
-    CONVERT_TO_VCF(
-        CALL_VARIANTS.out.filter { _id, tsv -> file(tsv).countLines() > 1 },
-        ch_refseq
-    )
+    // Combine variant calls with reference for VCF conversion
+    ch_variants_with_ref = CALL_VARIANTS.out
+        .filter { _id, tsv -> file(tsv).countLines() > 1 }
+        .combine(ch_refseq)
+
+    CONVERT_TO_VCF(ch_variants_with_ref)
 
     BUILD_DB(
         ch_refseq,

@@ -56,6 +56,29 @@ nextflow run nrminor/oneroof \
 
 If you want to use Apptainer containers instead of Docker, just add `-profile apptainer` to either of the above `nextflow run` commands. And if you don't want to use containers at all, simply run `pixi shell --frozen` to bring all the pipeline's dependencies into scope and then add `-profile containerless` to your `nextflow run` command.
 
+### Analysis Presets
+
+For common use cases, `oneroof` provides analysis presets that pre-configure databases for metagenomics and decontamination. Presets can be combined with execution profiles:
+
+```bash
+# General viral analysis with Docker
+nextflow run nrminor/oneroof -profile virus,docker \
+  --refseq my_ref.fasta \
+  --illumina_fastq_dir my_reads/
+
+# SARS-CoV-2 analysis (includes Nextclade)
+nextflow run nrminor/oneroof -profile sarscov2,docker \
+  --refseq my_ref.fasta \
+  --illumina_fastq_dir my_reads/
+```
+
+Available presets:
+
+| Preset | Description |
+|--------|-------------|
+| `virus` | General viral metagenomics: Sylph IMG/VR 4.1 database (2.9M viral genomes) + panhuman decontamination index |
+| `sarscov2` | SARS-CoV-2 analysis: inherits `virus` preset + Nextclade SARS-CoV-2 dataset for clade assignment |
+
 For power users working with a local clone of the repository, we also provide the `oneroof` CLI—a friendly command-line interface with organized help, input validation, and easy resume functionality. See the [OneRoof CLI](#oneroof-cli-power-users) section below for details.
 
 ## Quick Start
@@ -200,6 +223,19 @@ oneroof resume
 
 # Run test profiles (no --refseq needed)
 oneroof run --profile illumina_test_with_primers
+
+# Use analysis presets for common workflows
+oneroof run \
+  --refseq my_ref.fasta \
+  --illumina-fastq-dir my_reads/ \
+  --preset virus \
+  --profile docker
+
+# Presets can also be specified directly in --profile
+oneroof run \
+  --refseq my_ref.fasta \
+  --illumina-fastq-dir my_reads/ \
+  --profile sarscov2,docker
 ```
 
 The CLI generates and executes standard Nextflow commands under the hood, so all Nextflow features (caching, resume, etc.) work as expected.

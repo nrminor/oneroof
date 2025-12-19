@@ -59,6 +59,8 @@
 !/conf/nanopore_tests
 !/conf/illumina_tests/*.config
 !/conf/nanopore_tests/*.config
+!/conf/presets
+!/conf/presets/*.config
 !/conf/*.config
 !/conf/*.yml
 !/conf/*.yaml

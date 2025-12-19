@@ -39,28 +39,18 @@ workflow {
     log.info frontMatter
     Utils.workflowDisplay(params, workflow, log, nextflow)
 
-    // Checking for required files
+    // Checking for required parameters
     // ---------------------------------------------------------------------- //
 
-    // make sure a reference sequence FASTA, the minimum pipeline dependency, is
-    // provided and exists
+    // Make sure a reference sequence is provided (can be a file path or NCBI accession)
     assert params.refseq :
-    "Please provide a reference FASTA file with the parameter `refseq`."
-    assert file(params.refseq).isFile() :
-    "Please double check that the reference FASTA file provided with the parameter `refseq` exists."
+    "Please provide a reference FASTA file path or NCBI accession with the parameter `refseq`."
 
     // ---------------------------------------------------------------------- //
 
-    // initialize input channels
+    // Initialize input channels
     ch_primer_bed = params.primer_bed ?
         Channel.fromPath( params.primer_bed ) :
-        Channel.empty()
-
-    ch_refseq = Channel
-        .fromPath( params.refseq )
-
-    ch_ref_gbk = params.ref_gbk ?
-        Channel.fromPath( params.ref_gbk ) :
         Channel.empty()
 
     ch_contam_fasta = params.contam_fasta && file(params.contam_fasta).isFile()
@@ -95,8 +85,6 @@ workflow {
 
         NANOPORE (
             ch_primer_bed,
-            ch_refseq,
-            ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
             ch_metagenomics_ref,
@@ -109,8 +97,6 @@ workflow {
 
         ILLUMINA (
             ch_primer_bed,
-            ch_refseq,
-            ch_ref_gbk,
             ch_contam_fasta,
             ch_snpeff_config,
             ch_metagenomics_ref,
