@@ -18,7 +18,8 @@ process DOWNLOAD_SYLPH_DB {
 
     tag "${db_url}"
 
-    storeDir "${params.results}/sylph_cache"
+    // Use publishDir instead of storeDir to avoid cross-run cache issues
+    publishDir "${params.results}/sylph_cache", mode: 'copy', overwrite: true
 
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' }
     maxRetries 1
@@ -30,8 +31,10 @@ process DOWNLOAD_SYLPH_DB {
     path "*.syldb", emit: syldb
 
     script:
+    // Extract filename from URL for meaningful output name
+    def db_name = db_url.tokenize('/')[-1]
     """
-    wget -q "${db_url}" -O database.syldb
+    wget -q "${db_url}" -O ${db_name}
     """
 }
 
