@@ -25,7 +25,10 @@ process CHECK_DATASET {
 
 process DOWNLOAD_DATASET {
 
-    storeDir params.nextclade_cache
+    tag "${valid_dataset}"
+
+    // Use publishDir instead of storeDir to avoid cross-run cache issues
+    publishDir params.nextclade_cache, mode: 'copy', overwrite: true
 
     input:
     val valid_dataset
@@ -44,6 +47,8 @@ process DOWNLOAD_DATASET {
 }
 
 process RUN_NEXTCLADE {
+
+    tag "${sequences.simpleName}"
 
     publishDir params.nextclade, mode: 'copy'
 
