@@ -1,0 +1,707 @@
+{
+  "$defs": {
+    "AlignmentMetrics": {
+      "description": "Metrics from read alignment.",
+      "properties": {
+        "total_reads": {
+          "description": "Total reads in input",
+          "title": "Total Reads",
+          "type": "integer"
+        },
+        "mapped_reads": {
+          "description": "Reads aligned to reference",
+          "title": "Mapped Reads",
+          "type": "integer"
+        },
+        "mapping_rate": {
+          "description": "Fraction of reads mapped",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Mapping Rate",
+          "type": "number"
+        },
+        "mean_coverage": {
+          "description": "Mean depth across reference",
+          "minimum": 0.0,
+          "title": "Mean Coverage",
+          "type": "number"
+        },
+        "median_coverage": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Median Coverage"
+        },
+        "genome_coverage_at_1x": {
+          "description": "Fraction of genome with \u22651x",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Genome Coverage At 1X",
+          "type": "number"
+        },
+        "genome_coverage_at_10x": {
+          "description": "Fraction of genome with \u226510x",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Genome Coverage At 10X",
+          "type": "number"
+        },
+        "genome_coverage_at_100x": {
+          "description": "Fraction of genome with \u2265100x",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Genome Coverage At 100X",
+          "type": "number"
+        }
+      },
+      "required": [
+        "total_reads",
+        "mapped_reads",
+        "mapping_rate",
+        "mean_coverage",
+        "genome_coverage_at_1x",
+        "genome_coverage_at_10x",
+        "genome_coverage_at_100x"
+      ],
+      "title": "AlignmentMetrics",
+      "type": "object"
+    },
+    "ConsensusMetrics": {
+      "description": "Metrics from consensus sequence.",
+      "properties": {
+        "length": {
+          "description": "Total consensus length",
+          "exclusiveMinimum": 0,
+          "title": "Length",
+          "type": "integer"
+        },
+        "n_count": {
+          "description": "Number of N bases",
+          "minimum": 0,
+          "title": "N Count",
+          "type": "integer"
+        },
+        "n_percentage": {
+          "description": "Percentage of N bases",
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "N Percentage",
+          "type": "number"
+        },
+        "completeness": {
+          "description": "1 - (n_count / length)",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Completeness",
+          "type": "number"
+        },
+        "ambiguous_bases": {
+          "default": 0,
+          "description": "Non-ACGTN bases",
+          "minimum": 0,
+          "title": "Ambiguous Bases",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "length",
+        "n_count",
+        "n_percentage",
+        "completeness"
+      ],
+      "title": "ConsensusMetrics",
+      "type": "object"
+    },
+    "HaplotypingMetrics": {
+      "description": "Metrics from Devider haplotype phasing (Nanopore only).",
+      "properties": {
+        "haplotypes_called": {
+          "description": "Number of distinct haplotypes",
+          "minimum": 0,
+          "title": "Haplotypes Called",
+          "type": "integer"
+        },
+        "reads_assigned": {
+          "description": "Reads successfully assigned",
+          "minimum": 0,
+          "title": "Reads Assigned",
+          "type": "integer"
+        },
+        "reads_unassigned": {
+          "description": "Reads not assigned",
+          "minimum": 0,
+          "title": "Reads Unassigned",
+          "type": "integer"
+        },
+        "assignment_rate": {
+          "description": "Fraction of reads assigned",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Assignment Rate",
+          "type": "number"
+        },
+        "num_snps": {
+          "description": "SNP positions used for phasing",
+          "minimum": 0,
+          "title": "Num Snps",
+          "type": "integer"
+        },
+        "haplotype_abundances": {
+          "description": "Abundance % per haplotype",
+          "items": {
+            "type": "number"
+          },
+          "title": "Haplotype Abundances",
+          "type": "array"
+        },
+        "haplotype_depths": {
+          "description": "Depth per haplotype",
+          "items": {
+            "type": "number"
+          },
+          "title": "Haplotype Depths",
+          "type": "array"
+        }
+      },
+      "required": [
+        "haplotypes_called",
+        "reads_assigned",
+        "reads_unassigned",
+        "assignment_rate",
+        "num_snps"
+      ],
+      "title": "HaplotypingMetrics",
+      "type": "object"
+    },
+    "MetagenomicsHit": {
+      "description": "Single hit from metagenomic profiling.",
+      "properties": {
+        "taxon": {
+          "title": "Taxon",
+          "type": "string"
+        },
+        "taxid": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Taxid"
+        },
+        "ani": {
+          "anyOf": [
+            {
+              "maximum": 100.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ani"
+        },
+        "relative_abundance": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Relative Abundance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "taxon",
+        "relative_abundance"
+      ],
+      "title": "MetagenomicsHit",
+      "type": "object"
+    },
+    "MetagenomicsMetrics": {
+      "description": "Metrics from Sylph metagenomic profiling.",
+      "properties": {
+        "top_hits": {
+          "items": {
+            "$ref": "#/$defs/MetagenomicsHit"
+          },
+          "title": "Top Hits",
+          "type": "array"
+        },
+        "unknown_fraction": {
+          "description": "Fraction not classified",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Unknown Fraction",
+          "type": "number"
+        },
+        "primary_on_target": {
+          "description": "Whether top hit matches expected target",
+          "title": "Primary On Target",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unknown_fraction",
+        "primary_on_target"
+      ],
+      "title": "MetagenomicsMetrics",
+      "type": "object"
+    },
+    "Platform": {
+      "description": "Sequencing platform identifier.",
+      "enum": [
+        "ont",
+        "illumina"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "PrimerInfo": {
+      "description": "Information about primer scheme.",
+      "properties": {
+        "provided": {
+          "title": "Provided",
+          "type": "boolean"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Path"
+        },
+        "amplicon_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amplicon Count"
+        }
+      },
+      "required": [
+        "provided"
+      ],
+      "title": "PrimerInfo",
+      "type": "object"
+    },
+    "QCStatus": {
+      "description": "Quality control status for a sample.",
+      "enum": [
+        "pass",
+        "warn",
+        "fail"
+      ],
+      "title": "QCStatus",
+      "type": "string"
+    },
+    "ReferenceInfo": {
+      "description": "Information about the reference sequence.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "length": {
+          "title": "Length",
+          "type": "integer"
+        },
+        "segment_count": {
+          "default": 1,
+          "title": "Segment Count",
+          "type": "integer"
+        },
+        "segments": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Segments",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "length"
+      ],
+      "title": "ReferenceInfo",
+      "type": "object"
+    },
+    "RunMetadata": {
+      "description": "Metadata about the pipeline run.",
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/Platform"
+        },
+        "reference": {
+          "$ref": "#/$defs/ReferenceInfo"
+        },
+        "primers": {
+          "$ref": "#/$defs/PrimerInfo"
+        },
+        "parameters": {
+          "$ref": "#/$defs/RunParameters"
+        },
+        "start_time": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start Time"
+        },
+        "end_time": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "End Time"
+        },
+        "duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Seconds"
+        },
+        "nextflow_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nextflow Version"
+        },
+        "oneroof_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Oneroof Version"
+        }
+      },
+      "required": [
+        "platform",
+        "reference",
+        "primers",
+        "parameters"
+      ],
+      "title": "RunMetadata",
+      "type": "object"
+    },
+    "RunParameters": {
+      "description": "Key parameters used for the run.",
+      "properties": {
+        "min_depth_coverage": {
+          "title": "Min Depth Coverage",
+          "type": "integer"
+        },
+        "min_consensus_freq": {
+          "title": "Min Consensus Freq",
+          "type": "number"
+        },
+        "min_variant_frequency": {
+          "title": "Min Variant Frequency",
+          "type": "number"
+        },
+        "downsample_to": {
+          "default": 0,
+          "title": "Downsample To",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "min_depth_coverage",
+        "min_consensus_freq",
+        "min_variant_frequency"
+      ],
+      "title": "RunParameters",
+      "type": "object"
+    },
+    "SampleMetrics": {
+      "description": "All metrics for a single sample.",
+      "properties": {
+        "sample_id": {
+          "title": "Sample Id",
+          "type": "string"
+        },
+        "qc_status": {
+          "$ref": "#/$defs/QCStatus"
+        },
+        "qc_notes": {
+          "description": "Human-readable QC notes",
+          "items": {
+            "type": "string"
+          },
+          "title": "Qc Notes",
+          "type": "array"
+        },
+        "alignment": {
+          "$ref": "#/$defs/AlignmentMetrics"
+        },
+        "variants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VariantMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "consensus": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConsensusMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "metagenomics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MetagenomicsMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "haplotyping": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HaplotypingMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "sample_id",
+        "qc_status",
+        "alignment"
+      ],
+      "title": "SampleMetrics",
+      "type": "object"
+    },
+    "Summary": {
+      "description": "Aggregate summary across all samples.",
+      "properties": {
+        "sample_count": {
+          "title": "Sample Count",
+          "type": "integer"
+        },
+        "samples_pass": {
+          "title": "Samples Pass",
+          "type": "integer"
+        },
+        "samples_warn": {
+          "title": "Samples Warn",
+          "type": "integer"
+        },
+        "samples_fail": {
+          "title": "Samples Fail",
+          "type": "integer"
+        },
+        "mean_coverage_depth": {
+          "title": "Mean Coverage Depth",
+          "type": "number"
+        },
+        "mean_genome_coverage": {
+          "title": "Mean Genome Coverage",
+          "type": "number"
+        },
+        "total_variants_called": {
+          "title": "Total Variants Called",
+          "type": "integer"
+        },
+        "unique_variants": {
+          "title": "Unique Variants",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sample_count",
+        "samples_pass",
+        "samples_warn",
+        "samples_fail",
+        "mean_coverage_depth",
+        "mean_genome_coverage",
+        "total_variants_called",
+        "unique_variants"
+      ],
+      "title": "Summary",
+      "type": "object"
+    },
+    "VariantMetrics": {
+      "description": "Metrics from variant calling.",
+      "properties": {
+        "total_called": {
+          "description": "Total variants called",
+          "minimum": 0,
+          "title": "Total Called",
+          "type": "integer"
+        },
+        "consensus_variants": {
+          "description": "Variants above consensus threshold",
+          "minimum": 0,
+          "title": "Consensus Variants",
+          "type": "integer"
+        },
+        "subclonal_variants": {
+          "description": "Variants below consensus threshold",
+          "minimum": 0,
+          "title": "Subclonal Variants",
+          "type": "integer"
+        },
+        "snps": {
+          "minimum": 0,
+          "title": "Snps",
+          "type": "integer"
+        },
+        "insertions": {
+          "minimum": 0,
+          "title": "Insertions",
+          "type": "integer"
+        },
+        "deletions": {
+          "minimum": 0,
+          "title": "Deletions",
+          "type": "integer"
+        },
+        "by_effect": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "Counts by SnpEff effect",
+          "title": "By Effect",
+          "type": "object"
+        }
+      },
+      "required": [
+        "total_called",
+        "consensus_variants",
+        "subclonal_variants",
+        "snps",
+        "insertions",
+        "deletions"
+      ],
+      "title": "VariantMetrics",
+      "type": "object"
+    }
+  },
+  "description": "Top-level report structure.",
+  "properties": {
+    "schema_version": {
+      "default": "0.1.0-alpha",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "run_metadata": {
+      "$ref": "#/$defs/RunMetadata"
+    },
+    "summary": {
+      "$ref": "#/$defs/Summary"
+    },
+    "samples": {
+      "additionalProperties": {
+        "$ref": "#/$defs/SampleMetrics"
+      },
+      "title": "Samples",
+      "type": "object"
+    },
+    "coverage_by_position": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Coverage By Position"
+    },
+    "variant_matrix": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Variant Matrix"
+    }
+  },
+  "required": [
+    "generated_at",
+    "run_metadata",
+    "summary",
+    "samples"
+  ],
+  "title": "OneRoofReport",
+  "type": "object"
+}

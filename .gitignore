@@ -134,6 +134,13 @@
 !/globus/scripts/*.sh
 !/globus/scripts/*.py
 
+# JSON report schemas
+!/schemas
+!/schemas/current
+!/schemas/v*
+!/schemas/v*/*.json
+!/schemas/v*/*.md
+
 # testing
 !/tests
 !/tests/data
