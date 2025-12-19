@@ -120,3 +120,174 @@ We're big fans of the [Ruff](https://docs.astral.sh/ruff/) linter and formatter,
 ```
 
 At first, the lints may seem daunting, but virtually all lints come with persuasive documentation in [the Ruff rule docs](https://docs.astral.sh/ruff/rules/). Ultimately, our strict compliance with Ruff lints is inspired by the similar level of robustness that strict lints afford in the Rust ecosystem. We want our software to be resilient, performant, formatted in a familiar style, and reproducible in the long-term. Complying with as many lints as possible will only help, not harm, that end, even if it's a bit annoying or overwhelming in the short-term.
+
+## Reporting Module
+
+The reporting system generates JSON reports, MultiQC custom content, and interactive visualizations. Library code lives in `lib/` while executable scripts live in `bin/`.
+
+### Module Structure
+
+```
+lib/
+├── reporting/
+│   ├── __init__.py              # Package exports
+│   ├── schema.py                # Pydantic models for JSON schema
+│   ├── multiqc.py               # MultiQC TSV/YAML generators
+│   ├── extractors/              # Metric extraction from tool outputs
+│   │   ├── __init__.py
+│   │   ├── alignment.py         # BAM file metrics
+│   │   ├── consensus.py         # Consensus FASTA metrics
+│   │   ├── coverage.py          # Per-base coverage metrics
+│   │   ├── haplotyping.py       # Devider output metrics
+│   │   ├── metagenomics.py      # Sylph profiling metrics
+│   │   └── variants.py          # VCF/ivar variant metrics
+│   └── visualizations/          # Altair chart generators
+│       ├── __init__.py
+│       ├── utils.py             # Theme, colors, save helpers
+│       ├── amplicon_efficiency.py
+│       ├── coverage_heatmap.py
+│       ├── qc_dashboard.py
+│       └── variant_summary.py
+├── oneroof_cli/                 # CLI package (see below)
+└── test_*.py                    # Tests for library modules
+
+bin/
+├── extract_metrics.py           # CLI for running extractors
+├── assemble_report.py           # CLI for assembling final report
+└── test_*.py                    # Tests for executable scripts
+```
+
+### Adding a New Extractor
+
+Extractors parse tool outputs and produce structured metrics. To add one:
+
+1. **Create the extractor module** in `lib/reporting/extractors/`:
+
+```python
+# lib/reporting/extractors/my_tool.py
+from pathlib import Path
+from pydantic import BaseModel, Field
+
+class MyToolExtractedMetrics(BaseModel):
+    """Metrics extracted from MyTool output."""
+    sample_id: str
+    some_metric: float = Field(ge=0, description="Description here")
+
+def extract(sample_id: str, input_path: Path) -> MyToolExtractedMetrics:
+    """Extract metrics from MyTool output file."""
+    # Parse the file and return validated model
+    return MyToolExtractedMetrics(sample_id=sample_id, some_metric=42.0)
+```
+
+2. **Export in `__init__.py`**:
+
+```python
+from .my_tool import MyToolExtractedMetrics, extract as extract_my_tool
+```
+
+3. **Add CLI subcommand** in `bin/extract_metrics.py`:
+
+```python
+@app.command("my-tool")
+def my_tool_cmd(sample_id: str, input_path: Path, output: Path) -> None:
+    metrics = my_tool.extract(sample_id, input_path)
+    output.write_text(metrics.model_dump_json(indent=2))
+```
+
+4. **Create Nextflow process** in `modules/reporting.nf`:
+
+```groovy
+process EXTRACT_MY_TOOL_METRICS {
+    input:
+    tuple val(sample_id), path(input_file)
+
+    output:
+    path "${sample_id}_my_tool_metrics.json", emit: metrics
+
+    script:
+    """
+    extract_metrics.py my-tool --sample-id ${sample_id} \\
+        --input ${input_file} --output ${sample_id}_my_tool_metrics.json
+    """
+}
+```
+
+5. **Wire into subworkflow** with appropriate emit.
+
+6. **Write tests** in `lib/test_my_tool_extractor.py`.
+
+### Adding a New Visualization
+
+Visualizations use Altair to generate interactive HTML charts:
+
+1. **Create the visualization module** in `lib/reporting/visualizations/`:
+
+```python
+# lib/reporting/visualizations/my_chart.py
+from pathlib import Path
+import altair as alt
+import polars as pl
+from .utils import register_oneroof_theme, save_chart, COLORS
+
+def my_chart(
+    samples: dict[str, dict],
+    output_path: Path,
+    formats: list[str] | None = None,
+    title: str = "My Chart",
+) -> list[Path]:
+    """Generate my chart from sample metrics."""
+    if formats is None:
+        formats = ["html"]
+
+    register_oneroof_theme()
+
+    # Prepare data as Polars DataFrame
+    data = pl.DataFrame(...)
+
+    if len(data) == 0:
+        return []
+
+    chart = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(...)
+        .properties(title=title)
+    )
+
+    return save_chart(chart, output_path, formats)
+```
+
+2. **Export in `__init__.py`**.
+
+3. **Call from `assemble_report.py`** in the visualization section.
+
+4. **Write tests** following the pattern in existing test files.
+
+### Schema Versioning
+
+The JSON report schema is versioned and lives in `schemas/`. The current version is symlinked at `schemas/current/`. When making breaking changes to `lib/reporting/schema.py`:
+
+1. Update the `schema_version` default in `OneRoofReport`
+2. Create a new version directory (e.g., `schemas/v0.2.0-alpha/`)
+3. Regenerate the schema: `uv run python -c "from reporting.schema import OneRoofReport; import json; print(json.dumps(OneRoofReport.model_json_schema(), indent=2))" > schemas/v0.2.0-alpha/oneroof_report.schema.json`
+4. Update the `current` symlink
+5. Document changes in the version's `CHANGELOG.md`
+
+### Running Tests
+
+```bash
+# All tests (both bin/ and lib/)
+uv run pytest
+
+# Library tests only
+uv run pytest lib/
+
+# Executable tests only
+uv run pytest bin/
+
+# Specific module
+uv run pytest lib/test_coverage_extractor.py -v
+
+# With coverage
+uv run pytest --cov=lib/reporting --cov-report=html
+```

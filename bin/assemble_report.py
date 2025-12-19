@@ -20,13 +20,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
+import jsonschema
 import typer
-from rich.console import Console
-
 from reporting import (
+    generate_amplicon_efficiency_tsv,
+    generate_amplicon_heatmap_tsv,
     generate_coverage_table_tsv,
     generate_general_stats_tsv,
     generate_multiqc_config,
+    generate_variant_bargraph_tsv,
 )
 from reporting.schema import (
     AlignmentMetrics,
@@ -40,7 +42,20 @@ from reporting.schema import (
     SampleMetrics,
     Summary,
 )
-from reporting.visualizations import coverage_bar_chart, coverage_summary_heatmap
+from reporting.visualizations import (
+    amplicon_dropout_scatter,
+    amplicon_heatmap,
+    amplicon_ranking_bar,
+    completeness_distribution,
+    coverage_bar_chart,
+    coverage_distribution,
+    coverage_summary_heatmap,
+    qc_scatter,
+    qc_status_summary,
+    variant_effect_bar,
+    variant_type_bar,
+)
+from rich.console import Console
 
 app = typer.Typer(
     name="assemble_report",
@@ -59,6 +74,10 @@ DEFAULT_QC_THRESHOLDS = {
     "coverage_warn": 0.80,  # ≥80% genome at 10x for warn
     "completeness_pass": 0.98,  # ≥98% non-N bases for pass
     "completeness_warn": 0.90,  # ≥90% non-N bases for warn
+    "n_pct_warn": 5.0,  # ≥5% N bases for warn
+    "n_pct_fail": 10.0,  # ≥10% N bases for fail
+    "min_reads_warn": 1000,  # <1000 mapped reads for warn
+    "min_reads_fail": 100,  # <100 mapped reads for fail
 }
 
 
@@ -70,7 +89,6 @@ def main() -> None:
     Aggregates per-sample metrics, determines QC status, generates JSON reports,
     MultiQC files, and visualizations.
     """
-    pass
 
 
 def load_sample_metrics(metrics_dir: Path) -> dict[str, dict]:
@@ -96,7 +114,7 @@ def load_sample_metrics(metrics_dir: Path) -> dict[str, dict]:
         sample_id = data.get("sample_id")
         if not sample_id:
             console.print(
-                f"[yellow]Warning: No sample_id in {metrics_file}, skipping[/yellow]"
+                f"[yellow]Warning: No sample_id in {metrics_file}, skipping[/yellow]",
             )
             continue
 
@@ -129,10 +147,13 @@ def determine_qc_status(sample: dict, thresholds: dict) -> tuple[QCStatus, list[
     """
     Determine QC status and notes for a sample based on thresholds.
 
+    Checks are performed in order of severity. A FAIL status cannot be
+    downgraded to WARN, but multiple issues can accumulate in notes.
+
     Args:
-        sample: Sample metrics dict with coverage, consensus, etc.
-        thresholds: Dict with coverage_pass, coverage_warn, completeness_pass,
-                   completeness_warn thresholds
+        sample: Sample metrics dict with coverage, alignment, consensus, etc.
+        thresholds: Dict with threshold values (uses DEFAULT_QC_THRESHOLDS
+                   for any missing keys)
 
     Returns:
         Tuple of (QCStatus, list of human-readable notes)
@@ -140,50 +161,101 @@ def determine_qc_status(sample: dict, thresholds: dict) -> tuple[QCStatus, list[
     notes: list[str] = []
     status = QCStatus.PASS
 
-    # Check coverage threshold (genome coverage at 10x)
+    # Helper to update status (FAIL > WARN > PASS)
+    def update_status(new_status: QCStatus) -> None:
+        nonlocal status
+        if new_status == QCStatus.FAIL:
+            status = QCStatus.FAIL
+        elif new_status == QCStatus.WARN and status != QCStatus.FAIL:
+            status = QCStatus.WARN
+
+    # --- Check minimum read count (alignment metrics) ---
+    alignment = sample.get("alignment", {})
+    mapped_reads = alignment.get("mapped_reads", 0)
+
+    min_reads_fail = thresholds.get(
+        "min_reads_fail",
+        DEFAULT_QC_THRESHOLDS["min_reads_fail"],
+    )
+    min_reads_warn = thresholds.get(
+        "min_reads_warn",
+        DEFAULT_QC_THRESHOLDS["min_reads_warn"],
+    )
+
+    if mapped_reads < min_reads_fail:
+        update_status(QCStatus.FAIL)
+        notes.append(
+            f"Very low read count: {mapped_reads:,} mapped reads (threshold: {min_reads_fail:,})",
+        )
+    elif mapped_reads < min_reads_warn:
+        update_status(QCStatus.WARN)
+        notes.append(
+            f"Low read count: {mapped_reads:,} mapped reads (threshold: {min_reads_warn:,})",
+        )
+
+    # --- Check coverage threshold (genome coverage at 10x) ---
     coverage = sample.get("coverage", {})
     genome_cov_10x = coverage.get("genome_coverage_at_10x", 0)
 
     coverage_pass = thresholds.get(
-        "coverage_pass", DEFAULT_QC_THRESHOLDS["coverage_pass"]
+        "coverage_pass",
+        DEFAULT_QC_THRESHOLDS["coverage_pass"],
     )
     coverage_warn = thresholds.get(
-        "coverage_warn", DEFAULT_QC_THRESHOLDS["coverage_warn"]
+        "coverage_warn",
+        DEFAULT_QC_THRESHOLDS["coverage_warn"],
     )
 
     if genome_cov_10x < coverage_warn:
-        status = QCStatus.FAIL
+        update_status(QCStatus.FAIL)
         notes.append(
-            f"Low coverage: {genome_cov_10x:.1%} genome at ≥10x (threshold: {coverage_warn:.0%})"
+            f"Low coverage: {genome_cov_10x:.1%} genome at ≥10x (threshold: {coverage_warn:.0%})",
         )
     elif genome_cov_10x < coverage_pass:
-        if status != QCStatus.FAIL:
-            status = QCStatus.WARN
+        update_status(QCStatus.WARN)
         notes.append(
-            f"Marginal coverage: {genome_cov_10x:.1%} genome at ≥10x (threshold: {coverage_pass:.0%})"
+            f"Marginal coverage: {genome_cov_10x:.1%} genome at ≥10x (threshold: {coverage_pass:.0%})",
         )
 
-    # Check completeness threshold (if consensus metrics available)
+    # --- Check consensus metrics (if available) ---
     consensus = sample.get("consensus", {})
     if consensus:
+        # Check completeness threshold
         completeness = consensus.get("completeness", 0)
         completeness_pass = thresholds.get(
-            "completeness_pass", DEFAULT_QC_THRESHOLDS["completeness_pass"]
+            "completeness_pass",
+            DEFAULT_QC_THRESHOLDS["completeness_pass"],
         )
         completeness_warn = thresholds.get(
-            "completeness_warn", DEFAULT_QC_THRESHOLDS["completeness_warn"]
+            "completeness_warn",
+            DEFAULT_QC_THRESHOLDS["completeness_warn"],
         )
 
         if completeness < completeness_warn:
-            status = QCStatus.FAIL
+            update_status(QCStatus.FAIL)
             notes.append(
-                f"Low completeness: {completeness:.1%} (threshold: {completeness_warn:.0%})"
+                f"Low completeness: {completeness:.1%} (threshold: {completeness_warn:.0%})",
             )
         elif completeness < completeness_pass:
-            if status != QCStatus.FAIL:
-                status = QCStatus.WARN
+            update_status(QCStatus.WARN)
             notes.append(
-                f"Marginal completeness: {completeness:.1%} (threshold: {completeness_pass:.0%})"
+                f"Marginal completeness: {completeness:.1%} (threshold: {completeness_pass:.0%})",
+            )
+
+        # Check N percentage threshold
+        n_percentage = consensus.get("n_percentage", 0)
+        n_pct_fail = thresholds.get("n_pct_fail", DEFAULT_QC_THRESHOLDS["n_pct_fail"])
+        n_pct_warn = thresholds.get("n_pct_warn", DEFAULT_QC_THRESHOLDS["n_pct_warn"])
+
+        if n_percentage >= n_pct_fail:
+            update_status(QCStatus.FAIL)
+            notes.append(
+                f"Excessive N bases: {n_percentage:.1f}% (threshold: {n_pct_fail:.0f}%)",
+            )
+        elif n_percentage >= n_pct_warn:
+            update_status(QCStatus.WARN)
+            notes.append(
+                f"High N bases: {n_percentage:.1f}% (threshold: {n_pct_warn:.0f}%)",
             )
 
     return status, notes
@@ -263,19 +335,37 @@ def build_sample_metrics(sample_id: str, sample_data: dict) -> SampleMetrics:
         Validated SampleMetrics model
     """
     coverage = sample_data.get("coverage", {})
+    alignment_data = sample_data.get("alignment", {})
 
     # Build AlignmentMetrics from coverage data
     # In Phase 1, we only have coverage metrics, so read counts are placeholders
     alignment = AlignmentMetrics(
-        total_reads=sample_data.get("alignment", {}).get("total_reads", 0),
-        mapped_reads=sample_data.get("alignment", {}).get("mapped_reads", 0),
-        mapping_rate=sample_data.get("alignment", {}).get("mapping_rate", 0.0),
+        total_reads=alignment_data.get("total_reads", 0),
+        mapped_reads=alignment_data.get("mapped_reads", 0),
+        mapping_rate=alignment_data.get("mapping_rate", 0.0),
         mean_coverage=coverage.get("mean_coverage", 0.0),
         median_coverage=coverage.get("median_coverage"),
         genome_coverage_at_1x=coverage.get("genome_coverage_at_1x", 0.0),
         genome_coverage_at_10x=coverage.get("genome_coverage_at_10x", 0.0),
         genome_coverage_at_100x=coverage.get("genome_coverage_at_100x", 0.0),
     )
+
+    # Build haplotyping metrics if present, computing derived fields
+    # The extractor provides reads_assigned; we compute reads_unassigned and
+    # assignment_rate using total_reads from alignment metrics
+    haplotyping = None
+    haplotyping_data = sample_data.get("haplotyping")
+    if haplotyping_data:
+        total_reads = alignment_data.get("total_reads", 0)
+        reads_assigned = haplotyping_data.get("reads_assigned", 0)
+        reads_unassigned = max(0, total_reads - reads_assigned)
+        assignment_rate = reads_assigned / total_reads if total_reads > 0 else 0.0
+
+        haplotyping = {
+            **haplotyping_data,
+            "reads_unassigned": reads_unassigned,
+            "assignment_rate": assignment_rate,
+        }
 
     return SampleMetrics(
         sample_id=sample_id,
@@ -285,7 +375,7 @@ def build_sample_metrics(sample_id: str, sample_data: dict) -> SampleMetrics:
         variants=sample_data.get("variants"),
         consensus=sample_data.get("consensus"),
         metagenomics=sample_data.get("metagenomics"),
-        haplotyping=sample_data.get("haplotyping"),
+        haplotyping=haplotyping,
     )
 
 
@@ -370,6 +460,32 @@ def assemble(
             help="QC thresholds as JSON string",
         ),
     ] = None,
+    amplicon_summary: Annotated[
+        Path | None,
+        typer.Option(
+            "--amplicon-summary",
+            help="Path to amplicon_summary.tsv (optional, for amplicon efficiency visualizations)",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+            resolve_path=True,
+        ),
+    ] = None,
+    schema_version: Annotated[
+        str,
+        typer.Option(
+            "--schema-version",
+            help="Schema version for the output report",
+        ),
+    ] = "0.1.0-alpha",
+    validate_schema: Annotated[
+        bool,
+        typer.Option(
+            "--validate-schema/--no-validate-schema",
+            help="Validate output against JSON schema",
+        ),
+    ] = True,
 ) -> None:
     """
     Assemble OneRoof report from collected metrics.
@@ -443,11 +559,34 @@ def assemble(
 
     # Build the report
     report = OneRoofReport(
+        schema_version=schema_version,
         generated_at=datetime.now(),
         run_metadata=run_metadata,
         summary=summary,
         samples=sample_metrics,
     )
+
+    # Validate against JSON schema if requested
+    if validate_schema:
+        schema_path = (
+            Path(__file__).parent.parent
+            / "schemas"
+            / "current"
+            / "oneroof_report.schema.json"
+        )
+        if schema_path.exists():
+            schema = json.loads(schema_path.read_text())
+            try:
+                jsonschema.validate(report.model_dump(mode="json"), schema)
+                console.print("[green]Report validated against schema[/green]")
+            except jsonschema.ValidationError as e:
+                console.print(
+                    f"[yellow]Schema validation warning: {e.message}[/yellow]",
+                )
+        else:
+            console.print(
+                f"[yellow]Schema file not found at {schema_path}, skipping validation[/yellow]",
+            )
 
     # Write full JSON report
     full_report_path = output_dir / "oneroof_report.json"
@@ -472,6 +611,31 @@ def assemble(
     coverage_table_path = multiqc_dir / "oneroof_coverage_table_mqc.tsv"
     generate_coverage_table_tsv(samples, coverage_table_path)
     console.print(f"[green]Wrote {coverage_table_path}[/green]")
+
+    # Variant bargraph TSV (only if variants present)
+    variant_bargraph_path = multiqc_dir / "oneroof_variants_mqc.tsv"
+    result = generate_variant_bargraph_tsv(samples, variant_bargraph_path)
+    if result:
+        console.print(f"[green]Wrote {variant_bargraph_path}[/green]")
+    else:
+        console.print("[dim]No variant data for MultiQC bargraph[/dim]")
+
+    # Amplicon efficiency TSV (only if amplicon summary provided)
+    if amplicon_summary is not None:
+        amplicon_eff_path = multiqc_dir / "oneroof_amplicon_efficiency_mqc.tsv"
+        result = generate_amplicon_efficiency_tsv(amplicon_summary, amplicon_eff_path)
+        if result:
+            console.print(f"[green]Wrote {amplicon_eff_path}[/green]")
+        else:
+            console.print("[dim]No amplicon data for MultiQC efficiency table[/dim]")
+
+        # Amplicon heatmap TSV
+        amplicon_heatmap_path = multiqc_dir / "oneroof_amplicon_heatmap_mqc.tsv"
+        result = generate_amplicon_heatmap_tsv(amplicon_summary, amplicon_heatmap_path)
+        if result:
+            console.print(f"[green]Wrote {amplicon_heatmap_path}[/green]")
+        else:
+            console.print("[dim]No amplicon data for MultiQC heatmap[/dim]")
 
     # MultiQC config
     multiqc_config_path = multiqc_dir / "multiqc_config.yaml"
@@ -509,6 +673,100 @@ def assemble(
             formats=["html"],
         )
         for path in bar_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+    # Check if any samples have variant data
+    has_variants = any(
+        sample_data.get("variants", {}).get("total_called", 0) > 0
+        for sample_data in samples.values()
+    )
+
+    if has_variants:
+        # Variant type bar chart
+        type_paths = variant_type_bar(
+            samples,
+            viz_dir / "variant_type_bar",
+            formats=["html"],
+        )
+        for path in type_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # Variant effect bar chart
+        effect_paths = variant_effect_bar(
+            samples,
+            viz_dir / "variant_effect_bar",
+            formats=["html"],
+        )
+        for path in effect_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+    # QC Dashboard visualizations (always generated if we have samples)
+    if samples:
+        # QC status summary (pie/donut chart)
+        status_paths = qc_status_summary(
+            samples,
+            viz_dir / "qc_status_summary",
+            formats=["html"],
+        )
+        for path in status_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # Coverage distribution histogram
+        cov_dist_paths = coverage_distribution(
+            samples,
+            viz_dir / "coverage_distribution",
+            formats=["html"],
+        )
+        for path in cov_dist_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # Completeness distribution histogram
+        comp_dist_paths = completeness_distribution(
+            samples,
+            viz_dir / "completeness_distribution",
+            formats=["html"],
+        )
+        for path in comp_dist_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # QC scatter plot (coverage vs completeness)
+        scatter_paths = qc_scatter(
+            samples,
+            viz_dir / "qc_scatter",
+            formats=["html"],
+        )
+        for path in scatter_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+    # Amplicon efficiency visualizations (only if amplicon summary provided)
+    if amplicon_summary is not None:
+        console.print("[blue]Generating amplicon efficiency visualizations...[/blue]")
+
+        # Amplicon ranking bar chart
+        ranking_paths = amplicon_ranking_bar(
+            amplicon_summary,
+            viz_dir / "amplicon_ranking",
+            formats=["html"],
+        )
+        for path in ranking_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # Amplicon dropout scatter plot
+        dropout_paths = amplicon_dropout_scatter(
+            amplicon_summary,
+            viz_dir / "amplicon_dropout",
+            formats=["html"],
+        )
+        for path in dropout_paths:
+            console.print(f"[green]Wrote {path}[/green]")
+
+        # Amplicon coverage heatmap
+        heatmap_paths = amplicon_heatmap(
+            amplicon_summary,
+            viz_dir / "amplicon_heatmap",
+            formats=["html"],
+        )
+        for path in heatmap_paths:
             console.print(f"[green]Wrote {path}[/green]")
 
     console.print("[bold green]Report assembly complete![/bold green]")

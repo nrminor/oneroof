@@ -1,0 +1,82 @@
+# MultiQC configuration for OneRoof reports
+# This file is used as a base template - dynamic values are substituted at runtime
+
+title: "OneRoof Amplicon Sequencing Report"
+subtitle: "Platform: {platform} | Reference: {reference}"
+intro_text: false
+
+# Report section order (higher = earlier in report, lower = later)
+# Ordered for amplicon sequencing workflow: overview first, then amplicon-specific,
+# then detailed metrics, then raw QC
+#
+# Note: report_section_order uses section IDs (the part after # in the URL).
+# Use 'before' or 'after' for relative positioning, or 'order' for absolute.
+report_section_order:
+  oneroof_general_stats:
+    order: 1000   # Quick sample overview at top
+  oneroof_amplicon_heatmap:
+    order: 950    # Visual overview of coverage across samples/amplicons
+  oneroof_amplicon_efficiency:
+    order: 900    # Identify problematic amplicons
+  oneroof_coverage_table:
+    order: 850    # Detailed per-sample coverage
+  oneroof_variants:
+    order: 800    # Variant breakdown
+  fastqc:
+    order: 700    # Raw read QC (less critical after filtering)
+  multiqc_software_versions:
+    order: 600    # Software versions at the bottom
+
+# Search patterns for OneRoof custom content files
+sp:
+  oneroof_general_stats:
+    fn: "*_oneroof_general_stats.tsv"
+  oneroof_coverage_table:
+    fn: "*_oneroof_coverage_table.tsv"
+  oneroof_variants:
+    fn: "*_oneroof_variants_mqc.tsv"
+  oneroof_amplicon_efficiency:
+    fn: "*_oneroof_amplicon_efficiency_mqc.tsv"
+  oneroof_amplicon_heatmap:
+    fn: "*_oneroof_amplicon_heatmap_mqc.tsv"
+
+# Custom colors for QC status indicators
+custom_colours:
+  pass: "#22c55e"
+  warn: "#f59e0b"
+  fail: "#ef4444"
+
+# Table column visibility defaults
+table_columns_visible:
+  FastQC:
+    percent_duplicates: false
+    percent_gc: true
+    avg_sequence_length: true
+    percent_fails: false
+    total_sequences: true
+
+# Don't include these in the report
+exclude_modules:
+  - "snippy"
+
+# Clean up sample names - remove suffixes so FastQC and OneRoof samples match
+fn_clean_exts:
+  - ".per-base"
+  - ".consensus"
+  - "_coverage_metrics"
+  - "_variant_effects"
+  - ".validated.filtered.fastq.gz"
+  - ".validated.filtered"
+  - ".filtered.fastq.gz"
+  - ".filtered"
+  - ".fastq.gz"
+  - ".fastq"
+  - ".fq.gz"
+  - ".fq"
+  - "_fastqc"
+
+# Conditional formatting colours for QC status
+table_cond_formatting_colours:
+  - pass: "#b3e6b3"   # Light green
+  - warn: "#ffe6b3"   # Light orange
+  - fail: "#ffb3b3"   # Light red

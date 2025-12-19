@@ -1,8 +1,14 @@
 include { DECONTAMINATE } from "../subworkflows/decontaminate"
 include { FASTQC  } from "../modules/fastqc"
-include { MULTIQC } from "../modules/multiqc"
 
 workflow QUALITY_CONTROL {
+    /*
+     * Run quality control on reads: optional decontamination and FastQC.
+     * 
+     * Note: MULTIQC has been moved to the main workflow level to allow
+     * combining FastQC outputs with OneRoof metrics from later pipeline stages.
+     */
+
     take:
     ch_reads
     ch_contam_fasta
@@ -24,10 +30,7 @@ workflow QUALITY_CONTROL {
 
     }
 
-    MULTIQC(
-        FASTQC.out.zip.collect()
-    )
-
     emit:
-    FASTQC.out.fastq
+    fastq = FASTQC.out.fastq
+    fastqc_zip = FASTQC.out.zip
 }

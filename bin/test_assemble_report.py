@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
 """Tests for the assemble_report module."""
 
 import json
 from pathlib import Path
 
 import pytest
-
 from assemble_report import (
     DEFAULT_QC_THRESHOLDS,
     compute_summary,
@@ -13,7 +11,6 @@ from assemble_report import (
     load_sample_metrics,
 )
 from reporting.schema import QCStatus
-
 
 # --- Fixtures ---
 
@@ -31,6 +28,42 @@ def sample_coverage_metrics() -> dict:
         "genome_coverage_at_100x": 0.92,
         "min_coverage": 0,
         "max_coverage": 3500,
+    }
+
+
+@pytest.fixture
+def sample_alignment_metrics() -> dict:
+    """Sample alignment metrics with good values."""
+    return {
+        "sample_id": "sample1",
+        "total_reads": 50000,
+        "mapped_reads": 48000,
+        "unmapped_reads": 2000,
+        "mapping_rate": 0.96,
+    }
+
+
+@pytest.fixture
+def sample_alignment_metrics_warn() -> dict:
+    """Sample alignment metrics with marginal values (warn)."""
+    return {
+        "sample_id": "sample2",
+        "total_reads": 800,
+        "mapped_reads": 750,
+        "unmapped_reads": 50,
+        "mapping_rate": 0.94,
+    }
+
+
+@pytest.fixture
+def sample_alignment_metrics_fail() -> dict:
+    """Sample alignment metrics with poor values (fail)."""
+    return {
+        "sample_id": "sample3",
+        "total_reads": 80,
+        "mapped_reads": 50,
+        "unmapped_reads": 30,
+        "mapping_rate": 0.625,
     }
 
 
@@ -83,13 +116,13 @@ def metrics_dir_multiple(
 ) -> Path:
     """Create a temp directory with multiple samples' metrics."""
     (tmp_path / "sample1_coverage_metrics.json").write_text(
-        json.dumps(sample_coverage_metrics)
+        json.dumps(sample_coverage_metrics),
     )
     (tmp_path / "sample2_coverage_metrics.json").write_text(
-        json.dumps(sample_coverage_metrics_warn)
+        json.dumps(sample_coverage_metrics_warn),
     )
     (tmp_path / "sample3_coverage_metrics.json").write_text(
-        json.dumps(sample_coverage_metrics_fail)
+        json.dumps(sample_coverage_metrics_fail),
     )
     return tmp_path
 
@@ -107,7 +140,9 @@ class TestLoadSampleMetrics:
     """Tests for load_sample_metrics function."""
 
     def test_load_single_sample(
-        self, metrics_dir_single: Path, sample_coverage_metrics: dict
+        self,
+        metrics_dir_single: Path,
+        sample_coverage_metrics: dict,
     ) -> None:
         """Test loading a single sample's metrics."""
         samples = load_sample_metrics(metrics_dir_single)
@@ -173,59 +208,118 @@ class TestDetermineQCStatus:
     """Tests for determine_qc_status function."""
 
     def test_pass_case_above_all_thresholds(
-        self, sample_coverage_metrics: dict
+        self,
+        sample_coverage_metrics: dict,
+        sample_alignment_metrics: dict,
     ) -> None:
         """Test that sample above all thresholds gets PASS status."""
-        sample = {"coverage": sample_coverage_metrics}
+        sample = {
+            "coverage": sample_coverage_metrics,
+            "alignment": sample_alignment_metrics,
+        }
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
 
         assert status == QCStatus.PASS
         assert notes == []
 
-    def test_warn_case_between_thresholds(
-        self, sample_coverage_metrics_warn: dict
+    def test_warn_case_coverage_between_thresholds(
+        self,
+        sample_coverage_metrics_warn: dict,
+        sample_alignment_metrics: dict,
     ) -> None:
-        """Test that sample between thresholds gets WARN status."""
-        sample = {"coverage": sample_coverage_metrics_warn}
+        """Test that sample with coverage between thresholds gets WARN status."""
+        sample = {
+            "coverage": sample_coverage_metrics_warn,
+            "alignment": sample_alignment_metrics,
+        }
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
 
         assert status == QCStatus.WARN
         assert len(notes) == 1
         assert "Marginal coverage" in notes[0]
 
-    def test_fail_case_below_thresholds(
-        self, sample_coverage_metrics_fail: dict
+    def test_warn_case_low_read_count(
+        self,
+        sample_coverage_metrics: dict,
+        sample_alignment_metrics_warn: dict,
     ) -> None:
-        """Test that sample below thresholds gets FAIL status."""
-        sample = {"coverage": sample_coverage_metrics_fail}
+        """Test that sample with low read count gets WARN status."""
+        sample = {
+            "coverage": sample_coverage_metrics,
+            "alignment": sample_alignment_metrics_warn,
+        }
+        status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
+
+        assert status == QCStatus.WARN
+        assert len(notes) == 1
+        assert "Low read count" in notes[0]
+
+    def test_fail_case_below_coverage_threshold(
+        self,
+        sample_coverage_metrics_fail: dict,
+        sample_alignment_metrics: dict,
+    ) -> None:
+        """Test that sample below coverage thresholds gets FAIL status."""
+        sample = {
+            "coverage": sample_coverage_metrics_fail,
+            "alignment": sample_alignment_metrics,
+        }
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
 
         assert status == QCStatus.FAIL
-        assert len(notes) == 1
-        assert "Low coverage" in notes[0]
+        assert any("Low coverage" in note for note in notes)
 
-    def test_custom_thresholds(self, sample_coverage_metrics_warn: dict) -> None:
+    def test_fail_case_very_low_read_count(
+        self,
+        sample_coverage_metrics: dict,
+        sample_alignment_metrics_fail: dict,
+    ) -> None:
+        """Test that sample with very low read count gets FAIL status."""
+        sample = {
+            "coverage": sample_coverage_metrics,
+            "alignment": sample_alignment_metrics_fail,
+        }
+        status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
+
+        assert status == QCStatus.FAIL
+        assert any("Very low read count" in note for note in notes)
+
+    def test_custom_thresholds(
+        self,
+        sample_coverage_metrics_warn: dict,
+        sample_alignment_metrics: dict,
+    ) -> None:
         """Test that custom thresholds are respected."""
-        sample = {"coverage": sample_coverage_metrics_warn}
+        sample = {
+            "coverage": sample_coverage_metrics_warn,
+            "alignment": sample_alignment_metrics,
+        }
 
         # With lower thresholds, this sample should pass
         lenient_thresholds = {
             "coverage_pass": 0.80,
             "coverage_warn": 0.60,
+            "min_reads_warn": 100,
+            "min_reads_fail": 10,
         }
         status, notes = determine_qc_status(sample, lenient_thresholds)
 
         assert status == QCStatus.PASS
         assert notes == []
 
-    def test_completeness_check_when_consensus_present(self) -> None:
+    def test_completeness_check_when_consensus_present(
+        self,
+        sample_alignment_metrics: dict,
+    ) -> None:
         """Test that completeness is checked when consensus metrics present."""
         sample = {
             "coverage": {
                 "genome_coverage_at_10x": 0.99,  # Good coverage
             },
+            "alignment": sample_alignment_metrics,
             "consensus": {
                 "completeness": 0.92,  # Between warn (0.90) and pass (0.98) thresholds
+                "n_percentage": 2.0,  # Below warn threshold
             },
         }
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
@@ -233,14 +327,46 @@ class TestDetermineQCStatus:
         assert status == QCStatus.WARN
         assert any("completeness" in note.lower() for note in notes)
 
-    def test_fail_overrides_warn(self) -> None:
+    def test_n_percentage_warn(self, sample_alignment_metrics: dict) -> None:
+        """Test that high N percentage triggers WARN."""
+        sample = {
+            "coverage": {"genome_coverage_at_10x": 0.99},
+            "alignment": sample_alignment_metrics,
+            "consensus": {
+                "completeness": 0.99,
+                "n_percentage": 7.0,  # Between warn (5%) and fail (10%)
+            },
+        }
+        status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
+
+        assert status == QCStatus.WARN
+        assert any("High N bases" in note for note in notes)
+
+    def test_n_percentage_fail(self, sample_alignment_metrics: dict) -> None:
+        """Test that excessive N percentage triggers FAIL."""
+        sample = {
+            "coverage": {"genome_coverage_at_10x": 0.99},
+            "alignment": sample_alignment_metrics,
+            "consensus": {
+                "completeness": 0.99,
+                "n_percentage": 15.0,  # Above fail (10%)
+            },
+        }
+        status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
+
+        assert status == QCStatus.FAIL
+        assert any("Excessive N bases" in note for note in notes)
+
+    def test_fail_overrides_warn(self, sample_alignment_metrics: dict) -> None:
         """Test that FAIL status takes precedence over WARN."""
         sample = {
             "coverage": {
                 "genome_coverage_at_10x": 0.50,  # Below fail threshold
             },
+            "alignment": sample_alignment_metrics,
             "consensus": {
                 "completeness": 0.92,  # Between warn and pass (would be WARN)
+                "n_percentage": 2.0,
             },
         }
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
@@ -254,7 +380,9 @@ class TestDetermineQCStatus:
         status, notes = determine_qc_status(sample, DEFAULT_QC_THRESHOLDS)
 
         assert status == QCStatus.FAIL
-        assert "Low coverage" in notes[0]
+        # Should fail on read count (checked first) and coverage
+        assert any("read count" in note.lower() for note in notes)
+        assert any("coverage" in note.lower() for note in notes)
 
 
 # --- TestComputeSummary ---

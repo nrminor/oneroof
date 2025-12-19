@@ -12,7 +12,6 @@ backward compatibility as the format evolves.
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +19,7 @@ from pydantic import BaseModel, Field
 class QCStatus(str, Enum):
     """Quality control status for a sample."""
 
-    PASS = "pass"
+    PASS = "pass"  # noqa: S105
     WARN = "warn"
     FAIL = "fail"
 
@@ -39,15 +38,21 @@ class AlignmentMetrics(BaseModel):
     mapped_reads: int = Field(description="Reads aligned to reference")
     mapping_rate: float = Field(ge=0, le=1, description="Fraction of reads mapped")
     mean_coverage: float = Field(ge=0, description="Mean depth across reference")
-    median_coverage: Optional[float] = Field(default=None, ge=0)
+    median_coverage: float | None = Field(default=None, ge=0)
     genome_coverage_at_1x: float = Field(
-        ge=0, le=1, description="Fraction of genome with ≥1x"
+        ge=0,
+        le=1,
+        description="Fraction of genome with ≥1x",
     )
     genome_coverage_at_10x: float = Field(
-        ge=0, le=1, description="Fraction of genome with ≥10x"
+        ge=0,
+        le=1,
+        description="Fraction of genome with ≥10x",
     )
     genome_coverage_at_100x: float = Field(
-        ge=0, le=1, description="Fraction of genome with ≥100x"
+        ge=0,
+        le=1,
+        description="Fraction of genome with ≥100x",
     )
 
 
@@ -56,16 +61,19 @@ class VariantMetrics(BaseModel):
 
     total_called: int = Field(ge=0, description="Total variants called")
     consensus_variants: int = Field(
-        ge=0, description="Variants above consensus threshold"
+        ge=0,
+        description="Variants above consensus threshold",
     )
     subclonal_variants: int = Field(
-        ge=0, description="Variants below consensus threshold"
+        ge=0,
+        description="Variants below consensus threshold",
     )
     snps: int = Field(ge=0)
     insertions: int = Field(ge=0)
     deletions: int = Field(ge=0)
     by_effect: dict[str, int] = Field(
-        default_factory=dict, description="Counts by SnpEff effect"
+        default_factory=dict,
+        description="Counts by SnpEff effect",
     )
 
 
@@ -83,8 +91,8 @@ class MetagenomicsHit(BaseModel):
     """Single hit from metagenomic profiling."""
 
     taxon: str
-    taxid: Optional[int] = None
-    ani: Optional[float] = Field(default=None, ge=0, le=100)
+    taxid: int | None = None
+    ani: float | None = Field(default=None, ge=0, le=100)
     relative_abundance: float = Field(ge=0, le=1)
 
 
@@ -94,7 +102,7 @@ class MetagenomicsMetrics(BaseModel):
     top_hits: list[MetagenomicsHit] = Field(default_factory=list)
     unknown_fraction: float = Field(ge=0, le=1, description="Fraction not classified")
     primary_on_target: bool = Field(
-        description="Whether top hit matches expected target"
+        description="Whether top hit matches expected target",
     )
 
 
@@ -107,10 +115,12 @@ class HaplotypingMetrics(BaseModel):
     assignment_rate: float = Field(ge=0, le=1, description="Fraction of reads assigned")
     num_snps: int = Field(ge=0, description="SNP positions used for phasing")
     haplotype_abundances: list[float] = Field(
-        default_factory=list, description="Abundance % per haplotype"
+        default_factory=list,
+        description="Abundance % per haplotype",
     )
     haplotype_depths: list[float] = Field(
-        default_factory=list, description="Depth per haplotype"
+        default_factory=list,
+        description="Depth per haplotype",
     )
 
 
@@ -120,14 +130,15 @@ class SampleMetrics(BaseModel):
     sample_id: str
     qc_status: QCStatus
     qc_notes: list[str] = Field(
-        default_factory=list, description="Human-readable QC notes"
+        default_factory=list,
+        description="Human-readable QC notes",
     )
 
     alignment: AlignmentMetrics
-    variants: Optional[VariantMetrics] = None
-    consensus: Optional[ConsensusMetrics] = None
-    metagenomics: Optional[MetagenomicsMetrics] = None
-    haplotyping: Optional[HaplotypingMetrics] = None  # ONT only
+    variants: VariantMetrics | None = None
+    consensus: ConsensusMetrics | None = None
+    metagenomics: MetagenomicsMetrics | None = None
+    haplotyping: HaplotypingMetrics | None = None  # ONT only
 
 
 class ReferenceInfo(BaseModel):
@@ -144,8 +155,8 @@ class PrimerInfo(BaseModel):
     """Information about primer scheme."""
 
     provided: bool
-    path: Optional[str] = None
-    amplicon_count: Optional[int] = None
+    path: str | None = None
+    amplicon_count: int | None = None
 
 
 class RunParameters(BaseModel):
@@ -164,11 +175,11 @@ class RunMetadata(BaseModel):
     reference: ReferenceInfo
     primers: PrimerInfo
     parameters: RunParameters
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration_seconds: Optional[int] = None
-    nextflow_version: Optional[str] = None
-    oneroof_version: Optional[str] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    duration_seconds: int | None = None
+    nextflow_version: str | None = None
+    oneroof_version: str | None = None
 
 
 class Summary(BaseModel):
@@ -187,12 +198,12 @@ class Summary(BaseModel):
 class OneRoofReport(BaseModel):
     """Top-level report structure."""
 
-    schema_version: str = "1.0.0"
+    schema_version: str = "0.1.0-alpha"
     generated_at: datetime
     run_metadata: RunMetadata
     summary: Summary
     samples: dict[str, SampleMetrics]
 
     # Optional aggregated data (included at "standard" and "full" levels)
-    coverage_by_position: Optional[dict] = None
-    variant_matrix: Optional[dict] = None
+    coverage_by_position: dict | None = None
+    variant_matrix: dict | None = None

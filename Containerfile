@@ -46,10 +46,10 @@ RUN cd $HOME && dorado download
 # Install everything else with Pixi:
 # --------------------------------
 # 1) copy the required dependency and configuration files into the image
-#    Note: bin/oneroof_cli/ is needed for the editable install declared in pyproject.toml
+#    Note: lib/ contains the Python packages needed for the editable install
 COPY pyproject.toml $HOME/pyproject.toml
 COPY pixi.lock $HOME/pixi.lock
-COPY bin/oneroof_cli $HOME/bin/oneroof_cli
+COPY lib $HOME/lib
 
 # 2) install pixi
 RUN cd $HOME && PIXI_ARCH=x86_64 curl -fsSL https://pixi.sh/install.sh | bash

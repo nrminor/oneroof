@@ -375,6 +375,14 @@ def run_pipeline(
             rich_help_panel=PANEL_PRIMER_TRIM,
         ),
     ] = None,
+    no_primer_trim: Annotated[
+        bool,
+        typer.Option(
+            "--no-primer-trim/--primer-trim",
+            help="Disable primer trimming (identify amplicons but keep full sequences).",
+            rich_help_panel=PANEL_PRIMER_TRIM,
+        ),
+    ] = False,
     # -------------------------------------------------------------------------
     # Alignment & Coverage
     # -------------------------------------------------------------------------
@@ -705,6 +713,7 @@ def run_pipeline(
         "max_mismatch": max_mismatch,
         "forward_window": forward_window,
         "reverse_window": reverse_window,
+        "no_primer_trim": no_primer_trim if no_primer_trim else None,
         # Alignment & Coverage
         "secondary": secondary if secondary else None,
         "dedup": dedup if dedup else None,

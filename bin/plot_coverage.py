@@ -191,7 +191,7 @@ def construct_plot(coverage_lf: pl.LazyFrame, label: str, depth: int) -> ggplot:
     )
 
 
-def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | tuple[ggplot, ggplot]:
+def finish_plot(core_plot: ggplot, contig_count: int) -> tuple[ggplot, ...]:
     """
     Finalize the plot by adding faceting based on the number of contigs.
 
@@ -205,7 +205,7 @@ def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | tuple[ggplot, 
     contig_count (int): The number of contigs in the dataset.
 
     Returns:
-    Tuple[ggplot]: A tuple containing either one or two ggplot objects:
+    tuple[ggplot, ...]: A tuple containing either one or two ggplot objects:
         - For single contig: (plot_with_free_x,)
         - For multiple contigs: (plot_with_free_x, plot_with_free_xy)
 
@@ -222,7 +222,7 @@ def finish_plot(core_plot: ggplot, contig_count: int) -> ggplot | tuple[ggplot, 
     # just make 1
     match contig_count:
         case 1:
-            return core_plot + facet_wrap("~chromosome", scales="free_x")
+            return (core_plot + facet_wrap("~chromosome", scales="free_x"),)
         case _:
             return (
                 core_plot + facet_wrap("~chromosome", scales="free_x"),
@@ -326,38 +326,22 @@ def main() -> None:
 
     # finish plot by handling faceting differently depending on whether there are
     # multiple contigs in the reference
-    rendered = finish_plot(core_plot, contig_count)
+    plots = finish_plot(core_plot, contig_count)
 
-    # if the rendered can be unpacked into two plots, write both separately. Otherwise,
-    # just output the one plot with a fixed Y-axis
-    multi_segment_plot_count = 2
-    if isinstance(rendered, tuple) and len(rendered) == multi_segment_plot_count:
-        fixed_plot, free_plot = rendered
+    # output filename suffixes based on plot count
+    suffixes = (
+        ("coverage",)
+        if len(plots) == 1
+        else ("fixed_y.coverage", "free_scales.coverage")
+    )
+
+    for plot, suffix in zip(plots, suffixes):
         ggsave(
-            fixed_plot,
-            f"{args.label}.fixed_y.coverage.pdf",
+            plot,
+            f"{args.label}.{suffix}.pdf",
             format="pdf",
             height=6,
             width=11,
-        )
-        ggsave(
-            free_plot,
-            f"{args.label}.free_scales.coverage.pdf",
-            format="pdf",
-            height=6,
-            width=11,
-        )
-    elif isinstance(rendered, ggplot):
-        ggsave(
-            rendered,
-            f"{args.label}.coverage.pdf",
-            format="pdf",
-            height=6,
-            width=11,
-        )
-    else:
-        assert isinstance(rendered, ggplot) or len(rendered) >= 1, (
-            f"Unexpected behavior for plot rendering: {rendered}"
         )
 
     # write out a table of the percentage of positions that are greater than the cutoff

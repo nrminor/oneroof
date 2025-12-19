@@ -217,7 +217,7 @@ graph TD
     I --> J[READ_DOWNSAMPLING]
     J --> K[AMPLICON_STATS]
     J --> L[MERGE_BY_SAMPLE]
-    K --> M[CREATE_AMPLICON_TSV]
+    K --> M[GENERATE_AMPLICON_SUMMARY]
 ```
 
 **Key Component**: `FIND_AND_TRIM_AMPLICONS` uses a high-performance Rust script (`bin/find_and_trim_amplicons.rs`) that:

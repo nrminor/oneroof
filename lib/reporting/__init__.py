@@ -15,14 +15,20 @@ Modules:
 
 from .multiqc import (
     DEFAULT_MULTIQC_TEMPLATE,
+    generate_amplicon_efficiency_tsv,
+    generate_amplicon_heatmap_tsv,
     generate_coverage_table_tsv,
     generate_general_stats_tsv,
     generate_multiqc_config,
+    generate_variant_bargraph_tsv,
 )
 
 __all__ = [
     "DEFAULT_MULTIQC_TEMPLATE",
+    "generate_amplicon_efficiency_tsv",
+    "generate_amplicon_heatmap_tsv",
     "generate_coverage_table_tsv",
     "generate_general_stats_tsv",
     "generate_multiqc_config",
+    "generate_variant_bargraph_tsv",
 ]

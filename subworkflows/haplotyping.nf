@@ -1,5 +1,6 @@
 include { COMPRESS_AND_INDEX_VCF } from "../modules/bcftools"
 include { PHASE_READS_WITH_DEVIDER } from "../modules/devider"
+include { EXTRACT_HAPLOTYPING_METRICS } from "../modules/reporting"
 
 workflow HAPLOTYPING {
     take:
@@ -19,5 +20,12 @@ workflow HAPLOTYPING {
         .combine(ch_ref)                              // add reference
 
     PHASE_READS_WITH_DEVIDER(ch_devider_input)
+
+    // Extract haplotyping metrics from Devider output
+    EXTRACT_HAPLOTYPING_METRICS(PHASE_READS_WITH_DEVIDER.out)
+
+    emit:
+    devider_output      = PHASE_READS_WITH_DEVIDER.out
+    haplotyping_metrics = EXTRACT_HAPLOTYPING_METRICS.out
 }
 

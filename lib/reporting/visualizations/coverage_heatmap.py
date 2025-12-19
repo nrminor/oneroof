@@ -124,7 +124,9 @@ def coverage_summary_heatmap(
             .sort(metric_order)
             .title(None),
             alt.Y("sample_id:N").title("Sample"),
-            alt.Color("value:Q").scale(type="symlog", scheme="viridis", constant=1).title("Value"),
+            alt.Color("value:Q")
+            .scale(type="symlog", scheme="viridis", constant=1)
+            .title("Value"),
             tooltip=[
                 alt.Tooltip("sample_id:N", title="Sample"),
                 alt.Tooltip("metric:N", title="Metric"),

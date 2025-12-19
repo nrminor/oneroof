@@ -9,6 +9,10 @@
 """
 Summarize amplicon coverage from stats files and primer position data.
 
+Creates a complete sample × amplicon matrix, ensuring that amplicon dropouts
+(amplicons with zero reads for a given sample) are explicitly represented
+with reads=0 rather than being silently missing.
+
 Supports two input modes for position data:
   1. --primer-tsv: Use primer_pairs.tsv from prepare_primers.py (preferred)
   2. --bed: Use BED file with primer coordinates (legacy)
@@ -100,7 +104,9 @@ def _parse_stats_files(stats_pattern: str) -> pl.LazyFrame:
             # Extract sample name: first segment before '.'
             pl.col("file").str.extract(r"^([^.]+)", group_index=1).alias("sample_name"),
             # Extract amplicon name: second segment (between first and second '.')
-            pl.col("file").str.extract(r"^[^.]+\.([^.]+)", group_index=1).alias("amplicon_name"),
+            pl.col("file")
+            .str.extract(r"^[^.]+\.([^.]+)", group_index=1)
+            .alias("amplicon_name"),
         )
         .select(
             "sample_name",
@@ -117,14 +123,34 @@ def _create_summary(
 ) -> None:
     """
     Join stats with positions and write summary TSV.
+
+    Creates a complete matrix of samples × amplicons, filling in zeros
+    for amplicons with no reads (dropouts). This ensures that amplicon
+    dropouts are explicitly represented rather than silently missing.
     """
+    # Get unique sample names from stats
+    samples_lf = stats_lf.select("sample_name").unique()
+
+    # Cross-join to create complete sample × amplicon matrix
+    # This ensures every amplicon appears for every sample
+    matrix_lf = samples_lf.join(positions_lf, how="cross")
+
+    # Left-join actual stats onto the matrix
+    # Amplicons with no reads will have null, which we fill with 0
     result = (
-        stats_lf.join(positions_lf, on="amplicon_name", how="left")
+        matrix_lf.join(
+            stats_lf,
+            on=["sample_name", "amplicon_name"],
+            how="left",
+        )
+        .with_columns(
+            pl.col("reads").fill_null(0),
+        )
         .select(
             "sample_name",
             "amplicon_name",
-            pl.col("start_pos").cast(pl.String).fill_null("NA"),
-            pl.col("end_pos").cast(pl.String).fill_null("NA"),
+            pl.col("start_pos").cast(pl.String),
+            pl.col("end_pos").cast(pl.String),
             "reads",
         )
         .sort("sample_name", "amplicon_name")

@@ -28,45 +28,48 @@ COLORS = {
 HEATMAP_SCHEME = "viridis"
 
 
-def _oneroof_theme() -> dict[str, Any]:
+@alt.theme.register("oneroof", enable=True)
+def _oneroof_theme() -> alt.theme.ThemeConfig:
     """Return the OneRoof Altair theme configuration."""
-    return {
-        "config": {
+    return alt.theme.ThemeConfig(
+        {
             "background": "#ffffff",
-            "title": {
-                "fontSize": 16,
-                "fontWeight": "bold",
-                "anchor": "start",
-                "color": "#1e293b",
+            "config": {
+                "title": {
+                    "fontSize": 16,
+                    "fontWeight": "bold",
+                    "anchor": "start",
+                    "color": "#1e293b",
+                },
+                "axis": {
+                    "labelFontSize": 11,
+                    "titleFontSize": 12,
+                    "titleColor": "#475569",
+                    "labelColor": "#64748b",
+                    "gridColor": "#e2e8f0",
+                    "domainColor": "#cbd5e1",
+                },
+                "legend": {
+                    "labelFontSize": 11,
+                    "titleFontSize": 12,
+                    "titleColor": "#475569",
+                    "labelColor": "#64748b",
+                },
+                "view": {
+                    "strokeWidth": 0,
+                },
+                "range": {
+                    "category": [
+                        COLORS["primary"],
+                        COLORS["secondary"],
+                        COLORS["success"],
+                        COLORS["warning"],
+                        COLORS["danger"],
+                    ],
+                },
             },
-            "axis": {
-                "labelFontSize": 11,
-                "titleFontSize": 12,
-                "titleColor": "#475569",
-                "labelColor": "#64748b",
-                "gridColor": "#e2e8f0",
-                "domainColor": "#cbd5e1",
-            },
-            "legend": {
-                "labelFontSize": 11,
-                "titleFontSize": 12,
-                "titleColor": "#475569",
-                "labelColor": "#64748b",
-            },
-            "view": {
-                "strokeWidth": 0,
-            },
-            "range": {
-                "category": [
-                    COLORS["primary"],
-                    COLORS["secondary"],
-                    COLORS["success"],
-                    COLORS["warning"],
-                    COLORS["danger"],
-                ],
-            },
-        },
-    }
+        }
+    )
 
 
 def register_oneroof_theme() -> None:
@@ -75,9 +78,11 @@ def register_oneroof_theme() -> None:
 
     Call this once at the start of visualization generation to ensure
     consistent styling across all charts.
+
+    Note: The theme is auto-registered via decorator, but this function
+    ensures it's enabled when called explicitly.
     """
-    alt.themes.register("oneroof", _oneroof_theme)  # type: ignore[arg-type]
-    alt.themes.enable("oneroof")
+    alt.theme.enable("oneroof")
 
 
 def save_chart(

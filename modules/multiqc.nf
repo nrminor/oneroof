@@ -26,13 +26,13 @@ process MULTIQC {
     path multiqc_config
 
     output:
-    path "*.html", emit: report
-    path "*_data", emit: data, optional: true
+    path "oneroof_multiqc_report.html", emit: report
+    path "oneroof_multiqc_report_data", emit: data, optional: true
 
     script:
     def config_arg = multiqc_config.name != 'NO_CONFIG' ? "--config ${multiqc_config}" : ""
     """
-    multiqc . ${config_arg}
+    multiqc . ${config_arg} --filename oneroof_multiqc_report
     """
 
 }

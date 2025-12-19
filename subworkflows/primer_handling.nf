@@ -25,7 +25,7 @@ include {
     AMPLICON_STATS
 } from "../modules/seqkit"
 include { READ_DOWNSAMPLING        } from "../modules/rasusa"
-include { CREATE_AMPLICON_TSV      } from "../modules/primer_patterns"
+include { GENERATE_AMPLICON_SUMMARY } from "../modules/primer_patterns"
 
 
 workflow PRIMER_HANDLING {
@@ -98,8 +98,8 @@ workflow PRIMER_HANDLING {
     // Compute per-amplicon statistics (grouped by sample)
     AMPLICON_STATS(READ_DOWNSAMPLING.out.groupTuple(by: 0))
 
-    // Create amplicon summary TSV joining stats with positions
-    CREATE_AMPLICON_TSV(
+    // Generate amplicon summary TSV joining stats with positions
+    GENERATE_AMPLICON_SUMMARY(
         AMPLICON_STATS.out.collect(),
         ch_primer_pairs,
     )
@@ -112,5 +112,5 @@ workflow PRIMER_HANDLING {
     primer_pairs     = ch_primer_pairs // path to primer_pairs.tsv
     respliced_bed    = ch_respliced_bed // path to respliced.bed (empty if TSV input)
     amplicon_stats   = AMPLICON_STATS.out // per-sample amplicon statistics
-    amplicon_summary = CREATE_AMPLICON_TSV.out.summary_tsv // amplicon_summary.tsv
+    amplicon_summary = GENERATE_AMPLICON_SUMMARY.out.summary_tsv // amplicon_summary.tsv
 }

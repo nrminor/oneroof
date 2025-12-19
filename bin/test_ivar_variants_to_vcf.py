@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for ivar_variants_to_vcf.py module."""
 
 import gzip
@@ -89,15 +88,15 @@ CGAACTTTAAAATCTGTGTGGCTGTCACTCGGCTGCATGCTTAGTGCACTCACGCAGTATAATTAATAAC
 
 
 @pytest.fixture
-def output_vcf_path():
+def output_vcf_path(tmp_path: Path) -> Path:
     """Create a temporary output VCF path."""
-    return Path(tempfile.mktemp(suffix=".vcf"))
+    return tmp_path / "output.vcf"
 
 
 @pytest.fixture
-def output_vcf_gz_path():
+def output_vcf_gz_path(tmp_path: Path) -> Path:
     """Create a temporary output gzipped VCF path."""
-    return Path(tempfile.mktemp(suffix=".vcf.gz"))
+    return tmp_path / "output.vcf.gz"
 
 
 class TestPydanticModels:

@@ -21,6 +21,8 @@ website:
         href: docs/developer.html
       - text: "Architecture"
         href: docs/pipeline_architecture.html
+      - text: "Reporting"
+        href: docs/reporting.html
       - text: "File Reference"
         href: docs/whats-that-file.html
       - text: "Data Management"

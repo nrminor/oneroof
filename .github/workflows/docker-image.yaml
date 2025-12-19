@@ -12,6 +12,7 @@ on:
         - 'Cargo.toml'
         - 'Cargo.lock'
         - 'bin/find_and_trim_amplicons.rs'
+        - 'lib/**'
     pull_request:
         branches: [ "main" ]
         paths:
@@ -23,6 +24,7 @@ on:
         - 'Cargo.toml'
         - 'Cargo.lock'
         - 'bin/find_and_trim_amplicons.rs'
+        - 'lib/**'
 
 jobs:
 

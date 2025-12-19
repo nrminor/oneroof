@@ -1,4 +1,4 @@
-process CREATE_AMPLICON_TSV {
+process GENERATE_AMPLICON_SUMMARY {
     /*
     Summarize amplicon coverage by joining stats with primer position data.
     
@@ -20,6 +20,6 @@ process CREATE_AMPLICON_TSV {
 
     script:
     """
-    create_amplicon_tsv.py --primer-tsv ${primer_pairs_tsv} --pattern "stats_*.tsv"
+    generate_amplicon_summary.py --primer-tsv ${primer_pairs_tsv} --pattern "stats_*.tsv"
     """
 }

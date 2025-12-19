@@ -116,15 +116,12 @@ dev = [
 compile-bytecode = true
 
 [build-system]
-requires = ["setuptools >= 40.8.0", "cffi >=1.15.0,!=1.17.0"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"
 
-[tool.setuptools.packages.find]
-where = ["bin"]
-include = ["oneroof_cli*"]
-
-[tool.setuptools.package-dir]
-"" = "bin"
+[tool.uv.build-backend]
+module-root = "lib"
+module-name = ["oneroof_cli", "reporting"]
 
 [project.scripts]
 "oneroof" = "oneroof_cli:main"
@@ -138,8 +135,8 @@ venv = ".venv"
 typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]
-pythonpath = ["bin"]
-testpaths = ["bin"]
+pythonpath = ["bin", "lib"]
+testpaths = ["bin", "lib"]
 
 [tool.tox]
 requires = ["tox>=4.19", "tox-uv>=1.15"]

@@ -8,6 +8,7 @@ include { METAGENOMICS } from "../subworkflows/metagenomics"
 include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
 include { ASSEMBLE_REPORT } from "../modules/reporting"
+include { MULTIQC } from "../modules/multiqc"
 
 workflow ILLUMINA {
 
@@ -31,7 +32,7 @@ workflow ILLUMINA {
 
         GATHER_ILLUMINA ( )
 
-        ILLUMINA_CORRECTION (
+        correction_outputs = ILLUMINA_CORRECTION (
             GATHER_ILLUMINA.out,
             ch_contam_fasta
         )
@@ -39,7 +40,7 @@ workflow ILLUMINA {
         if ( params.primer_bed || params.primer_tsv ) {
 
             PRIMER_HANDLING (
-                ILLUMINA_CORRECTION.out,
+                correction_outputs.reads,
                 ch_primer_bed,
                 ch_refseq,
                 ch_primer_tsv
@@ -57,19 +58,23 @@ workflow ILLUMINA {
                 ch_refseq
             )
 
+            ch_amplicon_summary = PRIMER_HANDLING.out.amplicon_summary
+
         } else {
 
             METAGENOMICS(
-                ILLUMINA_CORRECTION.out,
+                correction_outputs.reads,
                 ch_metagenome_ref,
                 ch_meta_ref_link,
                 ch_sylph_tax_db
             )
 
             alignment_outputs = ALIGNMENT (
-                ILLUMINA_CORRECTION.out,
+                correction_outputs.reads,
                 ch_refseq
             )
+
+            ch_amplicon_summary = Channel.empty()
 
         }
 
@@ -87,13 +92,13 @@ workflow ILLUMINA {
         )
 
         PHYLO (
-            CONSENSUS.out
+            CONSENSUS.out.concat
         )
 
 
         SLACK_ALERT(
             alignment_outputs.coverage_summary,
-            CONSENSUS.out.collect(),
+            CONSENSUS.out.concat.collect(),
             variant_outputs.merge_vcf_files
         )
 
@@ -111,23 +116,58 @@ workflow ILLUMINA {
             // Get reference name from refseq filename
             reference_name = file(params.refseq).baseName
 
-            // Collect all coverage metrics JSON files
-            ch_metrics = alignment_outputs.coverage_metrics
+            // Collect all metrics JSON files from all subworkflows
+            // Each metrics channel emits tuple(sample_id, metrics_json)
+            // We extract just the JSON file and collect all into a single channel
+            ch_coverage_metrics = alignment_outputs.coverage_metrics
                 .map { sample_id, metrics_json -> metrics_json }
+
+            ch_alignment_metrics = alignment_outputs.alignment_metrics
+                .map { sample_id, metrics_json -> metrics_json }
+
+            ch_variant_metrics = variant_outputs.variant_metrics
+                .map { sample_id, metrics_json -> metrics_json }
+
+            ch_consensus_metrics = CONSENSUS.out.consensus_metrics
+                .map { sample_id, metrics_json -> metrics_json }
+
+            ch_metagenomics_metrics = METAGENOMICS.out.metagenomics_metrics
+                .map { sample_id, metrics_json -> metrics_json }
+
+            // Combine all metrics channels (no haplotyping for Illumina)
+            ch_metrics = ch_coverage_metrics
+                .mix(ch_alignment_metrics)
+                .mix(ch_variant_metrics)
+                .mix(ch_consensus_metrics)
+                .mix(ch_metagenomics_metrics)
                 .collect()
 
             // MultiQC config template (use default if not specified)
-            ch_multiqc_template = params.multiqc_config_template
-                ? Channel.fromPath(params.multiqc_config_template)
-                : Channel.fromPath("${projectDir}/assets/multiqc_config.yaml")
+            multiqc_template = params.multiqc_config_template
+                ? file(params.multiqc_config_template)
+                : file("${projectDir}/conf/multiqc_config.yaml")
+
+            // Amplicon summary (placeholder if primers not provided)
+            ch_amplicon_summary_for_report = ch_amplicon_summary
+                .ifEmpty(file("NO_AMPLICON_SUMMARY"))
 
             ASSEMBLE_REPORT(
                 ch_metrics,
                 params.platform,
                 reference_name,
                 qc_thresholds,
-                ch_multiqc_template.first()
+                multiqc_template,
+                ch_amplicon_summary_for_report
             )
+
+            // Run MultiQC with FastQC outputs and OneRoof custom content
+            if ( params.generate_multiqc ) {
+                MULTIQC(
+                    correction_outputs.fastqc_zip.collect(),
+                    ASSEMBLE_REPORT.out.multiqc_tsv.collect(),
+                    ASSEMBLE_REPORT.out.multiqc_config
+                )
+            }
 
         }
 

@@ -69,8 +69,10 @@ def empty_fasta_file(temp_dir):
 
 @pytest.fixture
 def malformed_fasta_file(temp_dir):
-    """Create a malformed FASTA file."""
-    malformed_content = "This is not a valid FASTA file\nNo headers here"
+    """Create a malformed FASTA file (empty, no sequences)."""
+    # Use an empty file - valid FASTA structure but no content
+    # This avoids Biopython's deprecation warning about comments before headers
+    malformed_content = ""
     malformed_path = temp_dir / "malformed.consensus.fasta"
     malformed_path.write_text(malformed_content)
     return temp_dir

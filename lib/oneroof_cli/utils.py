@@ -112,20 +112,18 @@ def run_nextflow(command: str) -> None:
         command: The complete Nextflow command string to execute.
 
     Notes:
-        - Appends -resume to the command if not already present
-        - Saves the resume-enabled command to .nfresume for later use
-        - Executes the command via subprocess
+        - Saves a resume-enabled version of the command to .nfresume for later use
+        - Executes the original command as-is (respects --resume/--no-resume flag)
     """
+    # Save resume-enabled version for 'oneroof resume' command
     if command.endswith("-resume"):
         resume_command = command
     else:
         resume_command = f"{command} -resume"
-
-    # Save for future resume
     RESUME_FILE.write_text(resume_command, encoding="utf-8")
 
-    # Execute
-    split_command = shlex.split(resume_command)
+    # Execute the original command (not the resume version)
+    split_command = shlex.split(command)
     subprocess.run(split_command, check=True)  # noqa: S603
 
 

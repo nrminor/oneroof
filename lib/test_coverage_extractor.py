@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for the coverage metrics extractor."""
 
 from pathlib import Path

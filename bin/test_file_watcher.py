@@ -99,7 +99,7 @@ class TestCredentials:
             watch_duration=24,
         )
         with pytest.raises(FrozenInstanceError):
-            creds.watch_path = "/new/path"
+            setattr(creds, "watch_path", "/new/path")
 
 
 # =============================================================================

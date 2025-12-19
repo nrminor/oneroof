@@ -502,7 +502,7 @@ class TestEdgeCases:
 
     def test_empty_dataframe(self):
         """Test handling of empty dataframe"""
-        df = pd.DataFrame(columns=["sample_id", "coverage"])
+        df = pd.DataFrame(columns=pd.Index(["sample_id", "coverage"]))
         message, count = slack_alerts.passing_samples(df, coverage_threshold=20)
         assert count == 0
         assert message == "No passing samples."

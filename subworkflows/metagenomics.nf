@@ -23,6 +23,8 @@ include {
     MERGE_TAXONOMY
 } from "../modules/sylph"
 
+include { EXTRACT_METAGENOMICS_METRICS } from "../modules/reporting"
+
 
 workflow METAGENOMICS {
 
@@ -85,6 +87,9 @@ workflow METAGENOMICS {
     ch_profiles = PROFILE_SAMPLES.out.profile
         .filter { _sample_id, tsv -> tsv.countLines() > 1 }
 
+    // Extract metagenomics metrics from non-empty profiles
+    EXTRACT_METAGENOMICS_METRICS(ch_profiles)
+
     // -------------------------------------------------------------------------
     // Step 4: Add taxonomy (optional)
     // -------------------------------------------------------------------------
@@ -117,7 +122,8 @@ workflow METAGENOMICS {
     }
 
     emit:
-    profiles = ch_profiles
-    taxonomy = ch_taxprofiles
-    merged   = ch_merged
+    profiles             = ch_profiles
+    taxonomy             = ch_taxprofiles
+    merged               = ch_merged
+    metagenomics_metrics = EXTRACT_METAGENOMICS_METRICS.out
 }

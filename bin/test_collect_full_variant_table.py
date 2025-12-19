@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for collect_full_variant_table.py module."""
 
 import polars as pl

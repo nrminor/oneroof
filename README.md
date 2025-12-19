@@ -37,7 +37,7 @@ Though many excellent pipelines currently exist, e.g. `nf-core/viralrecon`, `ep
 
 Overall, `oneroof` can be summarized as a variant-calling pipeline written in and managed by Nextflow. Its software dependencies are provided through containers or through an environment assembled by [`pixi`](https://prefix.dev/). To run it on your own Nanopore pod5s with Docker containers, simply run something like:
 
-``` bash
+```bash
 nextflow run nrminor/oneroof \
 --pod5_dir my_pod5_dir \
 --primer_bed my_primers.bed \
@@ -50,7 +50,7 @@ These are the core elements required to run on Nanopore data: a directory of pod
 
 And for Illumina paired-end reads, it’s even simpler:
 
-``` bash
+```bash
 nextflow run nrminor/oneroof \
 --illumina_fastq_dir my_illumina_reads/
 ```
@@ -116,25 +116,25 @@ Note that `oneroof` checks for how to gather data in a particular order for Nano
 
 To reproduce the environment required by this pipeline, make sure you are on a Mac, a linux machine, or a Windows machine using Windows Subsystem for Linux. Then, to reproduce the environment, install pixi with:
 
-``` bash
+```bash
 curl -fsSL https://pixi.sh/install.sh | bash
 ```
 
 Download the pipeline with:
 
-``` bash
+```bash
 git clone https://github.com/nrminor/oneroof.git && cd oneroof
 ```
 
 And then open a `pixi` subshell within your terminal with:
 
-``` bash
+```bash
 pixi shell --frozen
 ```
 
 As long as you are using a supported system, the pipeline should run within that subshell. You can also run the pipeline within that subshell without containers using the “containerless” profile:
 
-``` bash
+```bash
 nextflow run . \
 -profile containerless \
 --pod5_dir my_pod5_dir \
@@ -160,14 +160,14 @@ For users who have cloned the repository and are working locally, we provide the
 
 The CLI is available automatically when you enter the pixi environment:
 
-``` bash
+```bash
 pixi shell --frozen
 oneroof --help
 ```
 
 Or install it directly with pip or uv:
 
-``` bash
+```bash
 # With pip
 pip install -e .
 
@@ -177,7 +177,7 @@ uv pip install -e .
 
 **Example usage:**
 
-``` bash
+```bash
 # See all available commands
 oneroof --help
 
@@ -213,7 +213,7 @@ OneRoof includes a limited but growing test suite, which validates pipeline func
 
 Before contributing or deploying changes, ensure all tests pass:
 
-``` bash
+```bash
 # Ensure you're in the Pixi environment
 pixi shell --frozen
 
@@ -253,7 +253,7 @@ Contributions, feature requests, improvement suggestions, and bug reports via Gi
 
 > Lail, Andrew J., William C. Vuyk, Heather Machkovech, Nicholas R. Minor, Nura R. Hassan, Rhea Dalvie, Isla E. Emmen et al. “Amplicon sequencing of pasteurized retail dairy enables genomic surveillance of H5N1 avian influenza virus in United States cattle.” PloS one 20, no. 6 (2025): <https://doi.org/10.1371/journal.pone.0325203>.
 
-``` bibtex
+```bibtex
 @article{Lail2025-xf,
   title = "Amplicon sequencing of pasteurized retail dairy enables genomic surveillance of {H5N1} avian influenza virus in United States cattle",
   author = "Lail, Andrew J and Vuyk, William C and Machkovech, Heather and Minor, Nicholas R and Hassan, Nura R and Dalvie, Rhea and Emmen, Isla E and Wolf, Sydney and Kalweit, Annabelle and Wilson, Nancy and Newman, Christina M and Tiburcio, Patrick Barros and Weiler, Andrea and Friedrich, Thomas C and O'Connor, David H",
@@ -271,7 +271,7 @@ Contributions, feature requests, improvement suggestions, and bug reports via Gi
 
 > Kwon, Taeyong, Jessie D. Trujillo, Mariano Carossino, Heather M. Machkovech, Konner Cool, Eu Lim Lyoo, Gagandeep Singh et al. “Pathogenicity and transmissibility of bovine-derived HPAI H5N1 B3. 13 virus in pigs.” Emerging Microbes & Infections just-accepted (2025): <https://doi.org/10.1080/22221751.2025.2509742>.
 
-``` bibtex
+```bibtex
 @ARTICLE{Kwon2025-yq,
   title = "Pathogenicity and transmissibility of bovine-derived {HPAI} {H5N1} B3.13 virus in pigs",
   author = "Kwon, Taeyong and Trujillo, Jessie D and Carossino, Mariano and Machkovech, Heather M and Cool, Konner and Lyoo, Eu Lim and Singh, Gagandeep and Kafle, Sujan and Elango, Shanmugasundaram and Vediyappan, Govindsamy and Wei, Wanting and Minor, Nicholas and Matias-Ferreyra, Franco S and Morozov, Igor and Gaudreault, Natasha N and Balasuriya, Udeni B R and Hensley, Lisa E and Diel, Diego G and Ma, Wenjun and Friedrich, Thomas C and Richt, Juergen A",

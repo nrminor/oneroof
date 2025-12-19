@@ -61,6 +61,7 @@
 !/conf/nanopore_tests/*.config
 !/conf/*.config
 !/conf/*.yml
+!/conf/*.yaml
 
 # bin of executable scripts. Scripts written in Python, Rust (rust-scripts), Typescript
 # (which can be executed natively by Deno and Bun now), Javascript, R, Perl, Lua, shell,
@@ -79,19 +80,7 @@
 !/bin/*.awk
 !/bin/README.md
 
-# oneroof CLI package (Typer-based CLI wrapper)
-!/bin/oneroof_cli/
-!/bin/oneroof_cli/*.py
-!/bin/oneroof_cli/commands/
-!/bin/oneroof_cli/commands/*.py
 
-# reporting package (metrics extraction, visualization, report assembly)
-!/bin/reporting/
-!/bin/reporting/*.py
-!/bin/reporting/extractors/
-!/bin/reporting/extractors/*.py
-!/bin/reporting/visualizations/
-!/bin/reporting/visualizations/*.py
 
 # assets (templates, configs)
 !/assets/
@@ -102,9 +91,24 @@
 !/Cargo.toml
 !/Cargo.lock
 
-# groovy libraries
+# lib directory: groovy utilities and Python packages
 !/lib
 !/lib/*.groovy
+!/lib/*.py
+
+# oneroof CLI package (Typer-based CLI wrapper)
+!/lib/oneroof_cli/
+!/lib/oneroof_cli/*.py
+!/lib/oneroof_cli/commands/
+!/lib/oneroof_cli/commands/*.py
+
+# reporting package (metrics extraction, visualization, report assembly)
+!/lib/reporting/
+!/lib/reporting/*.py
+!/lib/reporting/extractors/
+!/lib/reporting/extractors/*.py
+!/lib/reporting/visualizations/
+!/lib/reporting/visualizations/*.py
 
 # documentation
 !/docs

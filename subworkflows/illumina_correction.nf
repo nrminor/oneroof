@@ -35,5 +35,6 @@ workflow ILLUMINA_CORRECTION {
     )
 
     emit:
-    EARLY_READ_DOWNSAMPLING.out
+    reads = EARLY_READ_DOWNSAMPLING.out
+    fastqc_zip = QUALITY_CONTROL.out.fastqc_zip
 }

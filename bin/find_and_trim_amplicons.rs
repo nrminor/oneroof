@@ -2685,4 +2685,221 @@ mod tests {
             result.expect("find_amplicon failed with asymmetric windows (fwd=20, rev=10)");
         assert_eq!(amplicon.orientation, Orientation::Forward);
     }
+
+    // --no-trim / find_only tests
+
+    /// Helper to create a test processor with find_only mode enabled
+    fn create_test_processor_find_only(
+        primers: PrimerPair,
+        max_mismatch: u8,
+        min_len: usize,
+        max_len: usize,
+    ) -> (PrimerTrimProcessor, SharedBuffer) {
+        let buffer = Arc::new(Mutex::new(Vec::new()));
+        let writer: Box<dyn std::io::Write + Send> = Box::new(SharedVecWriter {
+            buffer: buffer.clone(),
+        });
+        let writer = Arc::new(Mutex::new(writer));
+        let stats = Arc::new(TrimStats::default());
+
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            max_mismatch,
+            min_len,
+            max_len,
+            0, // forward_window
+            0, // reverse_window
+            writer,
+            OutputFormat::Fastq,
+            stats,
+            true, // find_only = true
+        );
+
+        (processor, buffer)
+    }
+
+    #[test]
+    #[allow(clippy::panic)] // let-else for FASTQ line count validation
+    fn test_find_only_writes_full_sequence() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let (processor, buffer) = create_test_processor_find_only(primers, 0, 5, 100);
+
+        // Amplicon coordinates would normally trim to positions 4-12 (insert only)
+        let amplicon = AmpliconMatch {
+            start: 4,
+            end: 12,
+            fwd_cost: 0,
+            rev_cost: 0,
+            orientation: Orientation::Forward,
+        };
+
+        // Full sequence: ACGT (primer) + ATATATAT (insert) + TGCA (primer)
+        let record = MockRecord {
+            id: b"test_read".to_vec(),
+            seq: b"ACGTATATATATTGCA".to_vec(),
+            qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
+        };
+
+        processor
+            .write_trimmed_record(&record, &amplicon)
+            .expect("write_trimmed_record failed with find_only=true");
+
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTQ output contained invalid UTF-8");
+        let lines: Vec<&str> = output.lines().collect();
+
+        let [header, seq, plus, qual] = lines.as_slice() else {
+            panic!("expected 4 FASTQ lines, got {}", lines.len());
+        };
+
+        assert_eq!(*header, "@test_read");
+        // With find_only=true, the FULL sequence should be written, not just the insert
+        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence");
+        assert_eq!(*plus, "+");
+        assert_eq!(*qual, "IIIIIIIIIIIIIIII", "find_only should preserve full quality");
+    }
+
+    #[test]
+    #[allow(clippy::panic)] // let-else for FASTA line count validation
+    fn test_find_only_writes_full_sequence_fasta() {
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let buffer = Arc::new(Mutex::new(Vec::new()));
+        let writer: Box<dyn std::io::Write + Send> = Box::new(SharedVecWriter {
+            buffer: buffer.clone(),
+        });
+        let writer = Arc::new(Mutex::new(writer));
+        let stats = Arc::new(TrimStats::default());
+
+        let processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            5,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fasta,
+            stats,
+            true, // find_only = true
+        );
+
+        let amplicon = AmpliconMatch {
+            start: 4,
+            end: 12,
+            fwd_cost: 0,
+            rev_cost: 0,
+            orientation: Orientation::Forward,
+        };
+
+        let record = MockRecord {
+            id: b"test_read".to_vec(),
+            seq: b"ACGTATATATATTGCA".to_vec(),
+            qual: None,
+        };
+
+        processor
+            .write_trimmed_record(&record, &amplicon)
+            .expect("write_trimmed_record failed with find_only=true (FASTA)");
+
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTA output contained invalid UTF-8");
+        let lines: Vec<&str> = output.lines().collect();
+
+        let [header, seq] = lines.as_slice() else {
+            panic!("expected 2 FASTA lines, got {}", lines.len());
+        };
+
+        assert_eq!(*header, ">test_read");
+        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence in FASTA");
+    }
+
+    #[test]
+    #[allow(clippy::panic)] // let-else for FASTQ line count validation
+    fn test_find_only_via_process_record() {
+        // Test the full processing path with find_only=true
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let (writer, buffer) = create_test_writer();
+        let stats = Arc::new(TrimStats::default());
+
+        let mut processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            5,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fastq,
+            stats.clone(),
+            true, // find_only = true
+        );
+
+        // Read with primers that would normally be trimmed
+        let record = MockRecord {
+            id: b"test_read".to_vec(),
+            seq: b"ACGTATATATATTGCA".to_vec(),
+            qual: Some(b"IIIIIIIIIIIIIIII".to_vec()),
+        };
+
+        processor
+            .process_record(record)
+            .expect("process_record failed with find_only=true");
+
+        // Verify statistics still track the amplicon
+        assert_eq!(stats.total_reads.load(Ordering::Relaxed), 1);
+        assert_eq!(stats.amplicons_found.load(Ordering::Relaxed), 1);
+
+        // Verify output contains full sequence
+        let output = String::from_utf8(buffer.lock().expect("test buffer mutex poisoned").clone())
+            .expect("FASTQ output contained invalid UTF-8");
+        let lines: Vec<&str> = output.lines().collect();
+
+        let [_header, seq, _plus, _qual] = lines.as_slice() else {
+            panic!("expected 4 FASTQ lines, got {}", lines.len());
+        };
+
+        assert_eq!(*seq, "ACGTATATATATTGCA", "find_only should preserve full sequence via process_record");
+    }
+
+    #[test]
+    fn test_find_only_still_filters_no_amplicon() {
+        // Even with find_only=true, reads without valid amplicons should be filtered
+        let primers = PrimerPair::new(b"ACGT", b"TGCA");
+        let (writer, buffer) = create_test_writer();
+        let stats = Arc::new(TrimStats::default());
+
+        let mut processor = PrimerTrimProcessor::new(
+            primers,
+            0,
+            5,
+            100,
+            0,
+            0,
+            writer,
+            OutputFormat::Fastq,
+            stats.clone(),
+            true, // find_only = true
+        );
+
+        // Read with no primers
+        let record = MockRecord {
+            id: b"test_read".to_vec(),
+            seq: b"GGGGGGGGGGGG".to_vec(),
+            qual: Some(b"IIIIIIIIIIII".to_vec()),
+        };
+
+        processor
+            .process_record(record)
+            .expect("process_record should succeed even when no amplicon found");
+
+        // Verify no output was written
+        let output = buffer.lock().expect("test buffer mutex poisoned");
+        assert_eq!(output.len(), 0, "find_only should still filter reads without amplicons");
+        drop(output);
+
+        // Verify statistics track the failure
+        assert_eq!(stats.total_reads.load(Ordering::Relaxed), 1);
+        assert_eq!(stats.amplicons_found.load(Ordering::Relaxed), 0);
+        assert_eq!(stats.no_forward_primer.load(Ordering::Relaxed), 1);
+    }
 }

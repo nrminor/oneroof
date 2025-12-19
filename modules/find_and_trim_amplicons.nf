@@ -39,6 +39,7 @@ process FIND_AND_TRIM_AMPLICONS {
         --max-len ${params.max_len} \\
         --forward-window ${params.forward_window} \\
         --reverse-window ${params.reverse_window} \\
+        ${params.no_primer_trim ? '--no-trim' : ''} \\
         --threads ${task.cpus} \\
         --format fasta \\
         --no-compress \\

@@ -1,0 +1,299 @@
+---
+title: "Reporting & Visualization"
+author: "OneRoof Development Team"
+date: today
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 3
+    toc-location: right
+    number-sections: true
+    code-fold: true
+    highlight-style: github
+  gfm:
+    toc: true
+    toc-depth: 3
+---
+
+OneRoof generates comprehensive reports from pipeline runs, including structured JSON data, MultiQC integration, and interactive visualizations. This document describes the reporting outputs and configuration options.
+
+## Report Outputs
+
+Each pipeline run produces the following in the report directory:
+
+```
+09_report/
+├── oneroof_report.json           # Full structured report
+├── oneroof_report_summary.json   # Summary without per-sample details
+├── multiqc/
+│   ├── multiqc_config.yaml       # MultiQC configuration
+│   ├── oneroof_general_stats_mqc.tsv
+│   ├── oneroof_coverage_table_mqc.tsv
+│   ├── oneroof_variants_mqc.tsv          # If variants present
+│   ├── oneroof_amplicon_efficiency_mqc.tsv  # If primers provided
+│   └── oneroof_amplicon_heatmap_mqc.tsv     # If primers provided
+└── visualizations/
+    ├── coverage_heatmap.html
+    ├── coverage_bar.html
+    ├── qc_status_summary.html
+    ├── coverage_distribution.html
+    ├── completeness_distribution.html
+    ├── qc_scatter.html
+    ├── variant_type_bar.html      # If variants present
+    ├── variant_effect_bar.html    # If variants present
+    ├── amplicon_ranking.html      # If primers provided
+    ├── amplicon_dropout.html      # If primers provided
+    └── amplicon_heatmap.html      # If primers provided
+
+06_QC/
+├── oneroof_multiqc_report.html   # Unified MultiQC report
+└── oneroof_multiqc_report_data/  # MultiQC data files
+```
+
+## JSON Report Schema
+
+The JSON report follows a versioned schema (currently `0.1.0-alpha`). The full schema is available at `schemas/current/oneroof_report.schema.json`.
+
+### Top-Level Structure
+
+```json
+{
+  "schema_version": "0.1.0-alpha",
+  "generated_at": "2024-01-15T10:30:00Z",
+  "run_metadata": { ... },
+  "summary": { ... },
+  "samples": { ... }
+}
+```
+
+### Run Metadata
+
+Contains pipeline configuration:
+
+| Field | Description |
+|-------|-------------|
+| `platform` | `"ont"` or `"illumina"` |
+| `reference.name` | Reference sequence name |
+| `reference.length` | Reference length in bases |
+| `primers.provided` | Whether primer scheme was used |
+| `parameters.min_depth_coverage` | Minimum depth for consensus |
+| `parameters.min_consensus_freq` | Consensus variant frequency threshold |
+| `parameters.min_variant_frequency` | Subclonal variant frequency threshold |
+
+### Summary Statistics
+
+Aggregate metrics across all samples:
+
+| Field | Description |
+|-------|-------------|
+| `sample_count` | Total samples processed |
+| `samples_pass` | Samples passing QC |
+| `samples_warn` | Samples with QC warnings |
+| `samples_fail` | Samples failing QC |
+| `mean_coverage_depth` | Average coverage across samples |
+| `mean_genome_coverage` | Average genome fraction at ≥10x |
+| `total_variants_called` | Sum of variants across samples |
+
+### Per-Sample Metrics
+
+Each sample includes:
+
+- **`qc_status`**: One of `"pass"`, `"warn"`, or `"fail"`
+- **`qc_notes`**: Human-readable explanations for non-passing status
+- **`alignment`**: Read mapping statistics
+- **`variants`**: Variant calling results (if available)
+- **`consensus`**: Consensus sequence quality metrics (if available)
+- **`metagenomics`**: Sylph profiling results (if enabled)
+- **`haplotyping`**: Devider haplotype phasing (Nanopore only, if enabled)
+
+## QC Thresholds
+
+Samples are classified as pass/warn/fail based on configurable thresholds:
+
+| Metric | Pass | Warn | Fail |
+|--------|------|------|------|
+| Genome coverage (≥10x) | ≥95% | ≥80% | <80% |
+| Completeness (non-N) | ≥98% | ≥90% | <90% |
+| N percentage | <1% | <5% | ≥5% |
+| Mapped reads | ≥1000 | ≥100 | <100 |
+
+### Customizing Thresholds
+
+Thresholds can be adjusted in `conf/reporting.config`:
+
+```groovy
+params {
+    qc_coverage_pass       = 0.95
+    qc_coverage_warn       = 0.80
+    qc_completeness_pass   = 0.98
+    qc_completeness_warn   = 0.90
+    qc_n_pct_warn          = 5.0
+    qc_n_pct_fail          = 10.0
+    qc_min_reads_warn      = 1000
+    qc_min_reads_fail      = 100
+}
+```
+
+## Visualizations
+
+All visualizations are generated as self-contained HTML files with interactive features (hover tooltips, zoom, pan).
+
+### Coverage Visualizations
+
+**Coverage Heatmap**: Multi-sample view showing coverage depth across samples. Useful for identifying systematic coverage patterns.
+
+**Coverage Bar Chart**: Per-sample mean coverage comparison.
+
+**Coverage Distribution**: Histogram of coverage values across samples.
+
+### QC Dashboard
+
+**QC Status Summary**: Donut chart showing pass/warn/fail distribution.
+
+**QC Scatter Plot**: Coverage vs. completeness, colored by QC status. Helps identify samples that need attention.
+
+**Completeness Distribution**: Histogram of consensus completeness values.
+
+### Variant Visualizations
+
+Generated only when variants are called:
+
+**Variant Type Bar**: Stacked bar chart showing SNPs, insertions, deletions, and MNPs per sample.
+
+**Variant Effect Bar**: Stacked bar chart showing variant effects (missense, synonymous, etc.) per sample.
+
+### Amplicon Efficiency
+
+Generated only when primers are provided:
+
+**Amplicon Ranking**: Bar chart of amplicons sorted by median read count, colored by performance tier (good/moderate/poor).
+
+**Amplicon Dropout Scatter**: Scatter plot of median reads vs. dropout rate. Amplicons in the upper-left (low reads, high dropout) may need primer redesign.
+
+**Amplicon Heatmap**: Sample × amplicon matrix showing read counts. Rows are samples (alphabetical), columns are amplicons (by genomic position). Color intensity represents read count on a log scale.
+
+## MultiQC Integration
+
+OneRoof adds custom content to MultiQC reports. The unified report is output to `06_QC/oneroof_multiqc_report.html`.
+
+### General Statistics Table
+
+New columns added to the MultiQC General Statistics table:
+
+- Mean Coverage
+- Genome % (at ≥10x)
+- Completeness %
+- N %
+
+These columns include conditional formatting (green/yellow/red) based on QC thresholds.
+
+### Coverage Summary Section
+
+A dedicated table section with detailed coverage statistics:
+
+- Mean and median coverage
+- Genome fraction at 1x, 10x, 100x
+- Min/max coverage values
+
+### Variant Summary Section
+
+A stacked bar chart showing variant types per sample (if variants are called):
+
+- SNPs, insertions, deletions, and MNPs
+- Only samples with non-zero variants are shown
+
+### Amplicon Efficiency Section
+
+When primers are provided, two additional sections appear:
+
+**Amplicon Efficiency Table**: Sortable table with per-amplicon metrics:
+
+- Median reads across samples
+- Dropout percentage (samples with zero reads)
+- Sample count
+- Performance tier (good/moderate/poor with color coding)
+
+**Amplicon Coverage Heatmap**: Sample × amplicon matrix showing read counts:
+
+- Rows are samples (sorted alphabetically)
+- Columns are amplicons (sorted by genomic position)
+- Color intensity represents read count
+
+### Section Ordering
+
+Sections appear in this order (configurable in `conf/multiqc_config.yaml`):
+
+1. OneRoof General Stats (top)
+2. Amplicon Coverage Heatmap
+3. Amplicon Efficiency Table
+4. Coverage Summary Table
+5. Variant Summary
+6. FastQC
+7. Software Versions (bottom)
+
+## Configuration Reference
+
+Full reporting configuration in `conf/reporting.config`:
+
+```groovy
+params {
+    // Report generation flags
+    generate_json_report   = true
+    generate_multiqc       = true
+    generate_static_plots  = true
+
+    // Report detail level: "summary", "standard", or "full"
+    report_level           = "standard"
+
+    // QC thresholds (see above)
+
+    // Custom MultiQC config template (optional)
+    multiqc_config_template = null
+}
+```
+
+### MultiQC Configuration
+
+The MultiQC configuration template lives at `conf/multiqc_config.yaml`. It controls:
+
+- Report title and subtitle
+- Section ordering
+- Search patterns for custom content files
+- Table column visibility
+- Conditional formatting colors
+
+To customize, either edit `conf/multiqc_config.yaml` directly or provide your own template via `--multiqc_config_template`.
+
+## Programmatic Access
+
+The JSON report can be consumed by downstream tools:
+
+```python
+import json
+from pathlib import Path
+
+report = json.loads(Path("oneroof_report.json").read_text())
+
+# Access summary
+print(f"Samples passing QC: {report['summary']['samples_pass']}")
+
+# Iterate samples
+for sample_id, metrics in report["samples"].items():
+    if metrics["qc_status"] == "fail":
+        print(f"{sample_id}: {metrics['qc_notes']}")
+```
+
+### Schema Validation
+
+Reports can be validated against the JSON schema:
+
+```python
+import json
+import jsonschema
+
+report = json.loads(Path("oneroof_report.json").read_text())
+schema = json.loads(Path("schemas/current/oneroof_report.schema.json").read_text())
+
+jsonschema.validate(report, schema)  # Raises on invalid
+```
