@@ -2,88 +2,140 @@
  * Reference sequence resolution processes
  *
  * These processes resolve reference inputs that can be either:
- * - Local file paths (validated and normalized)
- * - NCBI accessions (fetched via Entrez API)
+ * - Local file paths (validated and normalized via *_LOCAL processes)
+ * - NCBI accessions (fetched via Entrez API via *_ACCESSION processes)
  *
  * Sequences are normalized to contain only valid IUPAC nucleotide characters,
  * with invalid characters replaced by 'N'.
  *
- * Usage in main.nf:
- *   RESOLVE_REFSEQ(Channel.value(params.refseq))
- *   RESOLVE_REF_GBK(Channel.value(params.ref_gbk))
+ * The workflow must determine which process to call based on whether the input
+ * is a local file path or an NCBI accession. This separation ensures proper
+ * Nextflow file staging for local files.
+ *
+ * Usage in workflows:
+ *   if (file(params.refseq).exists()) {
+ *       RESOLVE_REFSEQ_LOCAL(Channel.fromPath(params.refseq))
+ *       ch_refseq = RESOLVE_REFSEQ_LOCAL.out.refseq
+ *   } else {
+ *       RESOLVE_REFSEQ_ACCESSION(Channel.value(params.refseq))
+ *       ch_refseq = RESOLVE_REFSEQ_ACCESSION.out.refseq
+ *   }
  */
 
 
 /*
- * Resolve a FASTA reference from a local path or NCBI accession.
+ * Resolve a FASTA reference from a local file path.
  *
+ * The file is properly staged by Nextflow, validated, and normalized.
  * This process is REQUIRED - if it fails, the pipeline should stop.
- * Uses 'finish' error strategy to allow other running processes to complete
- * before terminating.
  */
-process RESOLVE_REFSEQ {
+process RESOLVE_REFSEQ_LOCAL {
 
-    tag "${ref_input}"
+    tag "${local_ref.name}"
 
-    // Use standard Nextflow caching (respects -resume) rather than storeDir
-    // to avoid cross-run cache conflicts when switching references
     publishDir "${params.results}/reference_assets", mode: 'copy', overwrite: true
 
     errorStrategy { task.attempt < 3 ? 'retry' : 'finish' }
     maxRetries 2
 
     input:
-    val ref_input  // Local path string or NCBI accession
+    path local_ref
 
     output:
     path "*.fasta", emit: refseq
 
     script:
-    // Determine output filename based on input
-    // For accessions: NC_045512.2.fasta
-    // For local files: preserve original basename
-    def output_name = ref_input.contains('/') || ref_input.contains('\\')
-        ? file(ref_input).baseName + '.fasta'
-        : ref_input.replaceAll(/[^A-Za-z0-9._-]/, '_') + '.fasta'
-
+    def output_name = local_ref.baseName + '.resolved.fasta'
     """
-    fetch_reference.py fasta "${ref_input}" --output "${output_name}"
+    fetch_reference.py fasta "${local_ref}" --output "${output_name}"
     """
 }
 
 
 /*
- * Resolve a GenBank reference from a local path or NCBI accession.
+ * Resolve a FASTA reference from an NCBI accession.
  *
- * This process is OPTIONAL - if it fails, the pipeline continues without
- * variant annotation. Uses 'ignore' error strategy as final fallback.
+ * The accession is fetched via Entrez API, validated, and normalized.
+ * This process is REQUIRED - if it fails, the pipeline should stop.
  */
-process RESOLVE_REF_GBK {
+process RESOLVE_REFSEQ_ACCESSION {
 
-    tag "${ref_input}"
+    tag "${accession}"
 
-    // Use standard Nextflow caching (respects -resume) rather than storeDir
-    // to avoid cross-run cache conflicts when switching references
+    publishDir "${params.results}/reference_assets", mode: 'copy', overwrite: true
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'finish' }
+    maxRetries 2
+
+    input:
+    val accession
+
+    output:
+    path "*.fasta", emit: refseq
+
+    script:
+    def output_name = accession.replaceAll(/[^A-Za-z0-9._-]/, '_') + '.fasta'
+    """
+    fetch_reference.py fasta "${accession}" --output "${output_name}"
+    """
+}
+
+
+/*
+ * Resolve a GenBank reference from a local file path.
+ *
+ * The file is properly staged by Nextflow, validated, and normalized.
+ * This process is OPTIONAL - if it fails, the pipeline continues without
+ * variant annotation.
+ */
+process RESOLVE_REF_GBK_LOCAL {
+
+    tag "${local_ref.name}"
+
     publishDir "${params.results}/reference_assets", mode: 'copy', overwrite: true
 
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     maxRetries 2
 
     input:
-    val ref_input  // Local path string or NCBI accession
+    path local_ref
 
     output:
     path "*.gbk", emit: ref_gbk, optional: true
 
     script:
-    // Determine output filename based on input
-    // For accessions: NC_045512.2.gbk
-    // For local files: preserve original basename
-    def output_name = ref_input.contains('/') || ref_input.contains('\\')
-        ? file(ref_input).baseName + '.gbk'
-        : ref_input.replaceAll(/[^A-Za-z0-9._-]/, '_') + '.gbk'
-
+    def output_name = local_ref.baseName + '.resolved.gbk'
     """
-    fetch_reference.py genbank "${ref_input}" --output "${output_name}"
+    fetch_reference.py genbank "${local_ref}" --output "${output_name}"
+    """
+}
+
+
+/*
+ * Resolve a GenBank reference from an NCBI accession.
+ *
+ * The accession is fetched via Entrez API, validated, and normalized.
+ * This process is OPTIONAL - if it fails, the pipeline continues without
+ * variant annotation.
+ */
+process RESOLVE_REF_GBK_ACCESSION {
+
+    tag "${accession}"
+
+    publishDir "${params.results}/reference_assets", mode: 'copy', overwrite: true
+
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 2
+
+    input:
+    val accession
+
+    output:
+    path "*.gbk", emit: ref_gbk, optional: true
+
+    script:
+    def output_name = accession.replaceAll(/[^A-Za-z0-9._-]/, '_') + '.gbk'
+    """
+    fetch_reference.py genbank "${accession}" --output "${output_name}"
     """
 }

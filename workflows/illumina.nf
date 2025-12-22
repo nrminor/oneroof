@@ -9,7 +9,8 @@ include { PHYLO } from "../subworkflows/phylo"
 include { SLACK_ALERT } from "../subworkflows/slack_alert"
 include { ASSEMBLE_REPORT } from "../modules/reporting"
 include { MULTIQC } from "../modules/multiqc"
-include { RESOLVE_REFSEQ ; RESOLVE_REF_GBK } from "../modules/reference"
+include { RESOLVE_REFSEQ_LOCAL ; RESOLVE_REFSEQ_ACCESSION } from "../modules/reference"
+include { RESOLVE_REF_GBK_LOCAL ; RESOLVE_REF_GBK_ACCESSION } from "../modules/reference"
 
 workflow ILLUMINA {
 
@@ -25,13 +26,24 @@ workflow ILLUMINA {
     main:
         assert params.platform == "illumina"
 
-        // Resolve reference sequences (handles both local paths and NCBI accessions)
-        RESOLVE_REFSEQ(Channel.value(params.refseq))
-        ch_refseq = RESOLVE_REFSEQ.out.refseq
+        // Resolve reference FASTA (local file or NCBI accession)
+        if (file(params.refseq).exists()) {
+            RESOLVE_REFSEQ_LOCAL(Channel.fromPath(params.refseq))
+            ch_refseq = RESOLVE_REFSEQ_LOCAL.out.refseq
+        } else {
+            RESOLVE_REFSEQ_ACCESSION(Channel.value(params.refseq))
+            ch_refseq = RESOLVE_REFSEQ_ACCESSION.out.refseq
+        }
 
+        // Resolve reference GenBank (local file or NCBI accession)
         if (params.ref_gbk) {
-            RESOLVE_REF_GBK(Channel.value(params.ref_gbk))
-            ch_ref_gbk = RESOLVE_REF_GBK.out.ref_gbk
+            if (file(params.ref_gbk).exists()) {
+                RESOLVE_REF_GBK_LOCAL(Channel.fromPath(params.ref_gbk))
+                ch_ref_gbk = RESOLVE_REF_GBK_LOCAL.out.ref_gbk
+            } else {
+                RESOLVE_REF_GBK_ACCESSION(Channel.value(params.ref_gbk))
+                ch_ref_gbk = RESOLVE_REF_GBK_ACCESSION.out.ref_gbk
+            }
         } else {
             ch_ref_gbk = Channel.empty()
         }
