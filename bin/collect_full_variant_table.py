@@ -27,24 +27,33 @@ from loguru import logger
 DEFAULT_CONSENSUS_THRESHOLD = 0.8
 VARIANT_EFFECTS_SUFFIX = "_variant_effects.tsv"
 
-SNPSIFT_COLUMNS = [
-    "chrom",
-    "ref",
-    "pos",
-    "alt",
-    "af",
-    "ac",
-    "dp",
-    "ref_dp",
-    "alt_dp",
-    "alt_freq",
-    "mq",
-    "gene",
-    "effect",
-    "hgvs_p",
-    "cds_pos",
-    "aa_pos",
+# Single source of truth for SnpSift column definitions.
+# Each tuple: (original_header_name, final_column_name, polars_dtype)
+# This ensures consistent type inference across all input files,
+# avoiding errors when columns are empty in some files but numeric in others.
+SNPSIFT_COLUMN_DEFS = [
+    ("CHROM", "chrom", pl.String),
+    ("REF", "ref", pl.String),
+    ("POS", "pos", pl.Int64),
+    ("ALT", "alt", pl.String),
+    ("AF", "af", pl.Float64),
+    ("AC", "ac", pl.Int64),
+    ("DP", "dp", pl.Int64),
+    ("GEN[0].REF_DP", "ref_dp", pl.Int64),
+    ("GEN[0].ALT_DP", "alt_dp", pl.Int64),
+    ("GEN[0].ALT_FREQ", "alt_freq", pl.Float64),
+    ("MQ", "mq", pl.Float64),
+    ("ANN[0].GENE", "gene", pl.String),
+    ("ANN[0].EFFECT", "effect", pl.String),
+    ("ANN[0].HGVS_P", "hgvs_p", pl.String),
+    ("ANN[0].CDS_POS", "cds_pos", pl.Int64),
+    ("ANN[0].AA_POS", "aa_pos", pl.Int64),
 ]
+
+# Derived constants from the single source of truth
+SNPSIFT_SCHEMA = {orig: dtype for orig, _, dtype in SNPSIFT_COLUMN_DEFS}
+SNPSIFT_RENAME_MAP = {orig: final for orig, final, _ in SNPSIFT_COLUMN_DEFS}
+SNPSIFT_COLUMNS = [final for _, final, _ in SNPSIFT_COLUMN_DEFS]
 
 FINAL_COLUMNS = [
     "sample_id",
@@ -160,37 +169,12 @@ def load_single_file(sample_id: str, file_path: Path) -> pl.LazyFrame:
         pl.scan_csv(
             file_path,
             separator="\t",
-            has_header=True,
+            has_header=False,
+            skip_rows=1,
+            schema=SNPSIFT_SCHEMA,
             null_values=["", "."],
         )
-        .select(
-            pl.all().name.map(
-                lambda c: c.lower()
-                .replace("[", "_")
-                .replace("]", "")
-                .replace(".", "_"),
-            ),
-        )
-        .rename(
-            {
-                "chrom": "chrom",
-                "ref": "ref",
-                "pos": "pos",
-                "alt": "alt",
-                "af": "af",
-                "ac": "ac",
-                "dp": "dp",
-                "gen_0_ref_dp": "ref_dp",
-                "gen_0_alt_dp": "alt_dp",
-                "gen_0_alt_freq": "alt_freq",
-                "mq": "mq",
-                "ann_0_gene": "gene",
-                "ann_0_effect": "effect",
-                "ann_0_hgvs_p": "hgvs_p",
-                "ann_0_cds_pos": "cds_pos",
-                "ann_0_aa_pos": "aa_pos",
-            },
-        )
+        .rename(SNPSIFT_RENAME_MAP)
         .select(SNPSIFT_COLUMNS)
         .with_columns(pl.lit(sample_id).alias("sample_id"))
     )
@@ -208,7 +192,7 @@ def variant_id_expr() -> pl.Expr:
         [
             pl.col("chrom"),
             pl.lit(":"),
-            pl.col("pos").cast(pl.Utf8),
+            pl.col("pos").cast(pl.String),
             pl.lit(":"),
             pl.col("ref"),
             pl.lit(">"),
