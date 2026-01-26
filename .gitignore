@@ -15,6 +15,7 @@
 # and the Deno Javascript runtime. A OCI-compliant Containerfile with this environment
 # is also provided.
 !flake.nix
+!flake.lock
 !pyproject.toml
 !pixi.lock
 !uv.lock

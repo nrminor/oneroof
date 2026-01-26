@@ -52,45 +52,28 @@
           else
             null;
 
-        # Build refman using cargo-binstall
-        refman = pkgs.stdenv.mkDerivation {
-          name = "refman";
-          version = "latest";
+        # Build refman from source
+        refman = pkgs.rustPlatform.buildRustPackage rec {
+          pname = "refman";
+          version = "1.3.5";
 
-          nativeBuildInputs = with pkgs; [
-            cargo-binstall
-            pkg-config
-            openssl
-            cacert
-          ];
+          src = pkgs.fetchFromGitHub {
+            owner = "nrminor";
+            repo = "refman";
+            rev = "refman-${version}";
+            hash = "sha256-zKw6/J3x4PupBYbwqTMspXT2ii+fvjtdE/6C3hg04B4=";
+          };
 
-          buildInputs = with pkgs; [
-            openssl
-          ];
+          cargoHash = "sha256-cc8TUf6MdsRgTZmh5mLxNzQopuSVXYdkdiFaoix38mA=";
 
-          dontUnpack = true;
-          dontBuild = true;
+          nativeBuildInputs = with pkgs; [ pkg-config ];
+          buildInputs = with pkgs; [ openssl ];
 
-          installPhase = ''
-            export HOME=$TMPDIR
-            export CARGO_HOME=$TMPDIR/.cargo
-            export RUSTUP_HOME=$TMPDIR/.rustup
-            export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          # Use system OpenSSL instead of vendoring
+          OPENSSL_NO_VENDOR = 1;
 
-            # Create output directory
-            mkdir -p $out/bin
-
-            # Install refman using cargo-binstall
-            ${pkgs.cargo-binstall}/bin/cargo-binstall \
-              --no-confirm \
-              --no-symlinks \
-              --root $TMPDIR \
-              refman
-
-            # Move the binary to the output
-            mv $TMPDIR/bin/refman $out/bin/refman
-            chmod +x $out/bin/refman
-          '';
+          # Skip doctests (they have incomplete examples in refman)
+          doCheck = false;
         };
 
       in
@@ -112,7 +95,7 @@
             pkgs.pixi
             pkgs.just
             pkgs.just-lsp
-            pkgs.pre-commit
+            pkgs.prek
             rustToolchain
             pkgs.cargo-binstall
             refman
@@ -136,7 +119,7 @@
             if [ -f .pre-commit-config.yaml ]; then
               if [ ! -f .git/hooks/pre-commit ] || [ ! -f .pre-commit-installed.stamp ]; then
                 echo "📝 Installing pre-commit hooks..."
-                pre-commit install
+                prek install
                 touch .pre-commit-installed.stamp
                 echo "✅ Pre-commit hooks installed successfully"
               fi
