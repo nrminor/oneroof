@@ -14,7 +14,7 @@ workflow QUALITY_CONTROL {
     ch_contam_fasta
 
     main:
-    if ( params.contam_fasta && file(params.contam_fasta).isFile() ) {
+    if ( (params.contam_fasta && file(params.contam_fasta).isFile()) || params.contam_link ) {
         DECONTAMINATE(
             ch_reads,
             ch_contam_fasta

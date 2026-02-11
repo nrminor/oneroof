@@ -60,9 +60,10 @@ process RUN_DEACON {
     script:
     def dbName = file(contam_index).getSimpleName()
     """
-    zcat ${reads} \
-    | deacon filter ${contam_index} --log ${dbName}.log.json \
-    | pigz > ${barcode}.decontam.fastq.gz
+    deacon filter ${contam_index} ${reads} \
+        --output ${barcode}.decontam.fastq.gz \
+        --summary ${dbName}.summary.json \
+        --threads ${task.cpus}
     """
 
 }

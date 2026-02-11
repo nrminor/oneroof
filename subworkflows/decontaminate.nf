@@ -6,15 +6,20 @@ workflow DECONTAMINATE {
     ch_contam_fasta
 
     main:
+    def has_local_fasta = params.contam_fasta && file(params.contam_fasta).isFile()
 
-    INDEX_CONTAMINANTS(ch_contam_fasta)
+    ch_built_index = has_local_fasta
+        ? INDEX_CONTAMINANTS(ch_contam_fasta)
+        : Channel.empty()
 
-    RUN_DEACON(ch_fastqs.combine(INDEX_CONTAMINANTS.out))
+    ch_fetched_index = (!has_local_fasta && params.contam_link)
+        ? GET_INDEX()
+        : Channel.empty()
 
-    GET_INDEX()
+    ch_index = ch_built_index.mix(ch_fetched_index)
 
-    RUN_DEACON(ch_fastqs.combine(GET_INDEX.out))
+    ch_decontaminated = RUN_DEACON(ch_fastqs.combine(ch_index))
 
     emit:
-    RUN_DEACON.out
+    ch_decontaminated
 }
