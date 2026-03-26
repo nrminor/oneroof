@@ -28,15 +28,13 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 
-  "License :: OSI Approved :: MIT License",
-
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Rust",
-  "Programming Language :: Other",          # Nextflow (Groovy-based DSL)
+  "Programming Language :: Other", # Nextflow (Groovy-based DSL)
 ]
 dependencies = [
   "biopython>=1.84",
@@ -50,7 +48,7 @@ dependencies = [
   "pyyaml",
   "pytz>=2025.1",
   "pydantic>=2.9.2,<3",
-  "polars-lts-cpu[calamine,numpy,openpyxl,pandas,pyarrow,xlsx2csv,xlsxwriter]>=1.22.0",
+  "polars[calamine,numpy,openpyxl,pandas,pyarrow,xlsx2csv,xlsxwriter]>=1.22.0",
   "multiqc>=1.33",
   "slack-sdk>=3.39.0",
   "duckdb>=1.2.0",
@@ -99,10 +97,6 @@ fq = { version = ">=0.12,<0.13", channel = "bioconda" }
 [dependency-groups]
 dev = [
   "basedpyright>=1.21.0",
-  "ipykernel>=6.29.5",
-  "ipython>=8.12.3",
-  "jupyter>=0.6.4",
-  # "marimo[sql]>=0.18.4",
   "pip>=24.2",
   "pytest>=8.3.3",
   "quarto>=0.1.0",
@@ -116,7 +110,7 @@ dev = [
 compile-bytecode = true
 
 [build-system]
-requires = ["uv_build>=0.9.18,<0.10.0"]
+requires = ["uv_build>=0.9.18,<0.12.0"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]

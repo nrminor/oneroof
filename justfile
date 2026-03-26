@@ -1,6 +1,9 @@
 @default:
     just --list
 
+choose:
+    just --choose
+
 # Render only docs/index.qmd to generate README
 [group('docs')]
 [private]
@@ -129,12 +132,12 @@ python: py-lints py-format py-sort-imports
 # Run all Python tests with pytest
 [group('python-test')]
 py-test:
-    pytest bin/ -v
+    pytest -v
 
 # Run Python tests with coverage report
 [group('python-test')]
 py-test-cov:
-    pytest bin/ --cov=bin --cov-report=html --cov-report=term-missing
+    pytest --cov=bin --cov=lib --cov-report=html --cov-report=term-missing
 
 # Run Python tests for a specific module
 [group('python-test')]
@@ -149,7 +152,7 @@ py-test-tox:
 # Run Python tests in parallel
 [group('python-test')]
 py-test-parallel:
-    pytest bin/ -n auto -v
+    pytest -n auto -v
 
 # Clean Python test artifacts
 [group('python-test')]

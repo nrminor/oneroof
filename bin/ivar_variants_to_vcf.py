@@ -213,7 +213,7 @@ def calculate_strand_bias_pvalue(
         "tuple[float, float]",
         fisher_exact(contingency_table, alternative="two-sided"),
     )
-    return pvalue
+    return float(pvalue)
 
 
 def create_strand_bias_expr(threshold: float = 0.05) -> pl.Expr:
@@ -236,13 +236,15 @@ def create_strand_bias_expr(threshold: float = 0.05) -> pl.Expr:
             ],
         )
         .map_elements(
-            lambda x: calculate_strand_bias_pvalue(
-                x["REF_DP"],
-                x["REF_RV"],
-                x["ALT_DP"],
-                x["ALT_RV"],
-            )
-            < threshold,
+            lambda x: bool(
+                calculate_strand_bias_pvalue(
+                    int(x["REF_DP"]),
+                    int(x["REF_RV"]),
+                    int(x["ALT_DP"]),
+                    int(x["ALT_RV"]),
+                )
+                < float(threshold),
+            ),
             return_dtype=pl.Boolean,
         )
         .alias("has_strand_bias")

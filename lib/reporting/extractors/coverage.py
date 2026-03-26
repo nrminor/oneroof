@@ -48,18 +48,23 @@ def load_coverage_bed(bed_path: Path) -> pl.DataFrame:
     Returns:
         DataFrame with columns: chrom, start, end, depth
     """
-    return pl.read_csv(
-        bed_path,
-        separator="\t",
-        has_header=False,
-        new_columns=["chrom", "start", "end", "depth"],
-        schema={
-            "chrom": pl.Utf8,
-            "start": pl.Int64,
-            "end": pl.Int64,
-            "depth": pl.Int64,
-        },
-    )
+    schema = {
+        "chrom": pl.Utf8,
+        "start": pl.Int64,
+        "end": pl.Int64,
+        "depth": pl.Int64,
+    }
+
+    try:
+        return pl.read_csv(
+            bed_path,
+            separator="\t",
+            has_header=False,
+            new_columns=["chrom", "start", "end", "depth"],
+            schema=schema,
+        )
+    except pl.exceptions.NoDataError:
+        return pl.DataFrame(schema=schema)
 
 
 def compute_coverage_stats(df: pl.DataFrame) -> dict:

@@ -314,15 +314,16 @@ class TestConcatConsensus:
 
         (temp_dir / "sample.consensus.fasta").write_text(">seq\nATCG")
 
-        # Mock the open function to raise a PermissionError when writing
-        original_open = open
+        # Mock Path.open (the API used by concat_consensus.py) to raise
+        # a PermissionError when writing the output file.
+        original_open = Path.open
 
-        def mock_open_func(file, mode="r", *args, **kwargs):
-            if "w" in mode and "all_sample_consensus.fasta" in str(file):
+        def mock_open_func(path_obj, mode="r", *args, **kwargs):
+            if "w" in mode and path_obj.name == "all_sample_consensus.fasta":
                 raise PermissionError("Permission denied")
-            return original_open(file, mode, *args, **kwargs)
+            return original_open(path_obj, mode, *args, **kwargs)
 
-        with patch("builtins.open", side_effect=mock_open_func):
+        with patch.object(Path, "open", autospec=True, side_effect=mock_open_func):
             with pytest.raises(PermissionError):
                 main()
 
