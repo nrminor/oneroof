@@ -2039,7 +2039,7 @@ wheels = [
 
 [[package]]
 name = "oneroof"
-version = "2.2.1"
+version = "2.2.4"
 source = { editable = "." }
 dependencies = [
     { name = "altair" },

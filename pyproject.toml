@@ -1,6 +1,6 @@
 [project]
 name = "oneroof"
-version = "2.2.1"
+version = "2.2.4"
 description = "Base-, Variant-, and Consensus-calling under One Proverbial Roof."
 authors = [
   { name = "Nicholas R. Minor", email = "nrminor@wisc.edu" },
@@ -82,11 +82,11 @@ fastqc = ">=0.12.1,<0.13"
 nextclade = ">=3.18.1,<4"
 chopper = ">=0.9.0,<0.10"
 rasusa = ">=2.0.0,<2.1"
-deacon = ">=0.2.0,<0.3"
 devider = ">=0.0.1,<0.0.2"
 sylph = ">=0.8.1,<0.9"
 rust-script = ">=0.36.0,<0.37"
 sylph-tax = ">=1.8.0,<2"
+deacon = ">=0.15.0,<0.16"
 
 [tool.pixi.target.osx-64.dependencies]
 fq = { version = ">=0.12,<0.13", channel = "bioconda" }
